@@ -229,24 +229,13 @@ package cc.minos.bbb
 			n.authToken = user.authToken;
 			n.me = user.me;
 			n.userID = user.userID;
-			n.externUserID = user.externUserID;
 			n.name = user.name;
 			n.hasStream = user.hasStream;
-			n.viewingStream = user.viewingStream;
 			n.streamName = user.streamName;
 			n.presenter = user.presenter;
 			n.raiseHand = user.raiseHand;
-			n.role = user.role;
+			n.role = user.role;	
 			n.room = user.room;
-			//n.customdata = user.customdata;
-			n.media = user.media;
-			n.phoneUser = user.phoneUser;
-			n.talking = user.talking;
-			n.userStatus = user.userStatus;
-			n.voiceJoined = user.voiceJoined;
-			n.voiceLocked = user.voiceLocked;
-			n.voiceMuted = user.voiceMuted;
-			n.voiceUserid = user.voiceUserid;
 			
 			return n;
 		}

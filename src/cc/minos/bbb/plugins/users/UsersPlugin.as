@@ -41,6 +41,16 @@ package cc.minos.bbb.plugins.users
 			participantsSOService.addEventListener( PariticipantEvent.LEFT, onPariticipant );
 			
 			listenersSOService = new ListenersSOService( this );
+			listenersSOService.addEventListener( ListenerEvent.USER_VOICE_JOINED, onListener );
+			listenersSOService.addEventListener( ListenerEvent.USER_VOICE_LEFT, onListener );
+			listenersSOService.addEventListener( ListenerEvent.USER_VOICE_LOCKED, onListener );
+			listenersSOService.addEventListener( ListenerEvent.USER_VOICE_MUTED, onListener );
+			listenersSOService.addEventListener( ListenerEvent.USER_VOICE_TALKING, onListener );
+		}
+		
+		private function onListener( e:ListenerEvent ):void
+		{
+			dispatchEvent( e );
 		}
 		
 		private function onPariticipant( e:PariticipantEvent ):void
@@ -54,13 +64,24 @@ package cc.minos.bbb.plugins.users
 			listenersSOService.connect();
 		}
 		
+		override public function stop():void 
+		{
+			me = null;
+			users.length = 0;
+			participantsSOService.disconnect();
+			listenersSOService.disconnect();
+		}
+		
 		public function addUser( newuser:BBBUser ):void
 		{
 			if ( !hasUser( newuser.userID ) )
 			{
-				//trace( "adding user[" + newuser.name + "," + newuser.userID + "]" );
-				if ( newuser.userID == me.userID )
+				if ( newuser.userID == bbb.conferenceParameters.userid )
+				{
+					newuser.externUserID = bbb.conferenceParameters.externUserID;
 					newuser.me = true;
+					me = newuser;
+				}
 				users.push( newuser );
 				refresh();
 			}
@@ -133,20 +154,20 @@ package cc.minos.bbb.plugins.users
 			return null;
 		}
 		
-		public function getUserWithExternUserID( userID:String ):BBBUser
-		{
-			var p:BBBUser;
-			for ( var i:int = 0; i < users.length; i++ )
-			{
-				p = users[ i ];
-				if ( p.externUserID == userID )
-				{
-					return BBBUser.copy( p );
-				}
-			}
-			
-			return null;
-		}
+		/*public function getUserWithExternUserID( userID:String ):BBBUser
+		   {
+		   var p:BBBUser;
+		   for ( var i:int = 0; i < users.length; i++ )
+		   {
+		   p = users[ i ];
+		   if ( p.externUserID == userID )
+		   {
+		   return BBBUser.copy( p );
+		   }
+		   }
+		
+		   return null;
+		 }*/
 		
 		public function isUserPresenter( userID:String ):Boolean
 		{
@@ -187,16 +208,16 @@ package cc.minos.bbb.plugins.users
 		}
 		
 		public function getVoiceUser( voiceUserID:Number ):BBBUser
-		{
-			for ( var i:int = 0; i < users.length; i++ )
-			{
-				var aUser:BBBUser = users[ i ];
-				if ( aUser.voiceUserid == voiceUserID )
-					return aUser;
-			}
-			
-			return null;
-		}
+		   {
+		   for ( var i:int = 0; i < users.length; i++ )
+		   {
+		   var aUser:BBBUser = users[ i ];
+		   if ( aUser.voiceUserid == voiceUserID )
+		   return aUser;
+		   }
+		
+		   return null;
+		 }
 		
 		public function getMe():BBBUser
 		{
@@ -228,6 +249,16 @@ package cc.minos.bbb.plugins.users
 				uids.push( u.userID );
 			}
 			return uids;
+		}
+		
+		public function getUsers():Array
+		{
+			var us:Array = [];
+			for ( var i:int = 0; i < users.length; i++ )
+			{
+				us.push( users[ i ] );
+			}
+			return us;
 		}
 		
 		private function refresh():void

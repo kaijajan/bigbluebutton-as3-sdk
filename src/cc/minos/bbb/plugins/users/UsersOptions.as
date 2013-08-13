@@ -15,7 +15,6 @@ package cc.minos.bbb.plugins.users
 		
 		public function UsersOptions()
 		{
-			//TODO
 		}
 	}
 }

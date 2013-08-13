@@ -22,7 +22,7 @@ package cc.minos.bbb
 	 */
 	public class BigBlueButton extends EventDispatcher
 	{
-		public const version:Number = 0.1;
+		public const version:Number = 0.8;
 		
 		private var _conferenceParameters:ConferenceParameters;
 		public var plugins:Dictionary = new Dictionary();

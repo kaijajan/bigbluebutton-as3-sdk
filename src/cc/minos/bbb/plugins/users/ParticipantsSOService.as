@@ -43,6 +43,12 @@ package cc.minos.bbb.plugins.users
 			queryForParticipants();
 		}
 		
+		public function disconnect():void
+		{
+			if ( _participantsSO )
+				_participantsSO.close();
+		}
+		
 		private function netStatusHandler( e:NetStatusEvent ):void
 		{
 			trace( "participantsSO netStatus: " + e.info.code );
@@ -93,8 +99,6 @@ package cc.minos.bbb.plugins.users
 			user.userID = joinedUser.userid;
 			user.name = joinedUser.name;
 			user.role = joinedUser.role;
-			user.externUserID = joinedUser.externUserID;
-			user.isLeavingFlag = false;
 			
 			trace( "登陸用戶信息 [" + user.userID + "," + user.name + "," + user.role + "]" );
 			
@@ -109,6 +113,9 @@ package cc.minos.bbb.plugins.users
 			dispatchEvent( joinedEvent );
 		}
 		
+		/**
+		 *
+		 */
 		private function becomePresenterIfLoneModerator():void
 		{
 		}
