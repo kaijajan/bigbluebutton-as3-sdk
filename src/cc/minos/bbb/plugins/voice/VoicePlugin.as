@@ -19,10 +19,14 @@ package cc.minos.bbb.plugins.voice
 		private var onCall:Boolean = false;
 		private var rejoining:Boolean = false;
 		private var userHangup:Boolean = false;
+		private var options:VoiceOptions;
 		
-		public function VoicePlugin()
+		public function VoicePlugin( options:VoiceOptions = null )
 		{
 			super();
+			this.options = options;
+			if ( this.options == null )
+				this.options = new VoiceOptions();
 			this.name = "[VoicePlugin]";
 			this.shortcut = "voice";
 			this.application = "sip";
@@ -58,7 +62,7 @@ package cc.minos.bbb.plugins.voice
 			//left ? rejoin
 		}
 		
-		public function join():void
+		override public function start():void 
 		{
 			me = bbb.plugins[ 'users' ].getMe();
 			if ( me == null )
@@ -91,7 +95,7 @@ package cc.minos.bbb.plugins.voice
 				streamManager.initMicrophone();
 		}
 		
-		public function left():void
+		override public function stop():void 
 		{
 			//userHangup = true;
 			if ( onCall )

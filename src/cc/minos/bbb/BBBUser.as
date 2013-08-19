@@ -1,6 +1,8 @@
 package cc.minos.bbb
 {
+	import cc.minos.bbb.events.StreamStartedEvent;
 	import cc.minos.event.EventProxy;
+	
 	//import cc.minos.talk3.proxy.events.StreamStartedEvent;
 	
 	/**
@@ -134,7 +136,7 @@ package cc.minos.bbb
 		public function set voiceJoined( v:Boolean ):void
 		{
 			_voiceJoined = v;
-			verifyMedia();
+			buildStatus();
 		}
 		
 		private var _voiceMuted:Boolean = false;
@@ -156,24 +158,29 @@ package cc.minos.bbb
 		public function buildStatus():void
 		{
 			var showingWebcam:String = "";
-			var isPresenter:String = "";
+			//var isPresenter:String = "";
+			var showingMic:String = "";
 			var handRaised:String = "";
 			if ( hasStream )
 				showingWebcam = "streamIcon";
-			if ( presenter )
-				isPresenter = "presIcon";
+			//if ( presenter )
+			//isPresenter = "presIcon";
+			if ( voiceJoined )
+				showingMic = "audioIcon";
 			if ( raiseHand )
 				handRaised = "raiseHand";
-			status = showingWebcam + isPresenter + handRaised;
+			
+			status = showingWebcam + showingMic + handRaised;
+		
 		}
 		
 		public function changeStatus( status:Status ):void
 		{
 			//_status.changeStatus(status);
-			if ( status.name == "presenter" )
-			{
-				presenter = status.value
-			}
+			/*if ( status.name == "presenter" )
+			   {
+			   presenter = status.value
+			 }*/
 			switch ( status.name )
 			{
 				case "presenter": 
@@ -220,7 +227,7 @@ package cc.minos.bbb
 		
 		private function sendStreamStartedEvent():void
 		{
-			//EventProxy.broadcastEvent( new StreamStartedEvent( userID, name, streamName ) );
+			EventProxy.broadcastEvent( new StreamStartedEvent( userID, name, streamName ) );
 		}
 		
 		public static function copy( user:BBBUser ):BBBUser
@@ -230,11 +237,12 @@ package cc.minos.bbb
 			n.me = user.me;
 			n.userID = user.userID;
 			n.name = user.name;
+			n.externUserID = user.externUserID;
 			n.hasStream = user.hasStream;
 			n.streamName = user.streamName;
 			n.presenter = user.presenter;
 			n.raiseHand = user.raiseHand;
-			n.role = user.role;	
+			n.role = user.role;
 			n.room = user.room;
 			
 			return n;

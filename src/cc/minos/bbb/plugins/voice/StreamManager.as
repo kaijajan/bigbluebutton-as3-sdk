@@ -1,5 +1,6 @@
 package cc.minos.bbb.plugins.voice
 {
+	import cc.minos.utils.VersionUtil;
 	import flash.events.ActivityEvent;
 	import flash.events.AsyncErrorEvent;
 	import flash.events.EventDispatcher;
@@ -34,7 +35,7 @@ package cc.minos.bbb.plugins.voice
 			this.connection = connection;
 		}
 		
-		public function initMicrophone():void
+		public function initMicrophone( enabledEchoCancel:Boolean = true ):void
 		{
 			mic = Microphone.getMicrophone( -1 );
 			if ( mic == null )
@@ -43,16 +44,14 @@ package cc.minos.bbb.plugins.voice
 			}
 			else
 			{
-				setupMicrophone();
+				setupMicrophone( enabledEchoCancel );
 				mic.addEventListener( StatusEvent.STATUS, micStatusHandler );
 			}
 		}
 		
-		private function setupMicrophone():void
+		private function setupMicrophone( enabledEchoCancel:Boolean = true ):void
 		{
-			var phoneOptions:PhoneOptions = new PhoneOptions();
-			
-			if (( getFlashPlayerVersion() >= 10.3 ) && ( phoneOptions.enabledEchoCancel ) )
+			if (( VersionUtil.getFlashPlayerVersion() >= 10.3 ) && enabledEchoCancel )
 			{
 				trace( "Using acoustic echo cancellation." );
 				mic = Microphone( Microphone[ "getEnhancedMicrophone" ]() );
@@ -243,19 +242,5 @@ package cc.minos.bbb.plugins.voice
 			trace( "Recieve ON METADATA from SIP" );
 		}
 		
-		private function getFlashPlayerVersion():Number
-		{
-			var versionString:String = Capabilities.version;
-			var pattern:RegExp = /^(\w*) (\d*),(\d*),(\d*),(\d*)$/;
-			var result:Object = pattern.exec( versionString );
-			if ( result != null )
-			{
-				return Number( result[ 2 ] + "." + result[ 3 ] );
-			}
-			else
-			{
-				return 0;
-			}
-		}
 	}
 }

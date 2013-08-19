@@ -12,7 +12,7 @@ package cc.minos.bbb.plugins.users
 	 * ...
 	 * @author Minos
 	 */
-	public class ParticipantsSOService extends EventDispatcher
+	public class ParticipantsSOService extends EventDispatcher implements IParticipantsCallback
 	{
 		private static const SO_NAME:String = "participantsSO";
 		private static const GET_PARTICIPANTS:String = "participants.getParticipants";
@@ -101,12 +101,11 @@ package cc.minos.bbb.plugins.users
 			user.role = joinedUser.role;
 			
 			trace( "登陸用戶信息 [" + user.userID + "," + user.name + "," + user.role + "]" );
+			plugin.addUser( user );
 			
 			participantStatusChange( user.userID, "hasStream", joinedUser.status.hasStream );
 			participantStatusChange( user.userID, "presenter", joinedUser.status.presenter );
 			participantStatusChange( user.userID, "raiseHand", joinedUser.status.raiseHand );
-			
-			plugin.addUser( user );
 			
 			var joinedEvent:PariticipantEvent = new PariticipantEvent( PariticipantEvent.JOINED )
 			joinedEvent.userID = user.userID;
@@ -118,6 +117,15 @@ package cc.minos.bbb.plugins.users
 		 */
 		private function becomePresenterIfLoneModerator():void
 		{
+			if ( plugin.hasOnlyOneModerator() )
+			{
+				var user:BBBUser = plugin.getTheOnlyModerator();
+				if ( user )
+				{
+					trace( "setting presenter because only one moderator" );
+					assignPresenter( user.userID, user.name, 1 );
+				}
+			}
 		}
 		
 		/**
@@ -141,7 +149,7 @@ package cc.minos.bbb.plugins.users
 		{
 			var nc:NetConnection = plugin.connection;
 			nc.call( SET_PARTICIPANT_STATUS, // Remote function name
-				responder, userID, "hasStream", "true,stream=" + streamName ); //_netConnection.call
+				responder, userID, "hasStream", "true,stream=" + streamName ); 
 		}
 		
 		/**
@@ -201,7 +209,13 @@ package cc.minos.bbb.plugins.users
 		 */
 		public function assignPresenterCallback( userID:String, name:String, assignedBy:String ):void
 		{
-		
+			var user:BBBUser = plugin.getUser( userID );
+			if ( user )
+			{
+				var switchEvent:PariticipantEvent = new PariticipantEvent( PariticipantEvent.SWITCHED_PRESENTER );
+				switchEvent.userID = userID;
+				dispatchEvent( switchEvent );
+			}
 		}
 		
 		/**
@@ -224,10 +238,12 @@ package cc.minos.bbb.plugins.users
 		public function participantStatusChange( userID:String, status:String, value:Object ):void
 		{
 			trace( "狀態更新 [" + userID + "," + status + "," + value + "]" );
-			
+			plugin.newUserStatus( userID, status, value );
 			if ( status == "presenter" )
 			{
-				trace( "更新主持人" );
+				//var presenterEvent:PariticipantEvent = new PariticipantEvent( PariticipantEvent.PRESENTER_NAME_CHANGE );
+				//presenterEvent.userID = userID;
+				//dispatchEvent( presenterEvent );
 			}
 		}
 	}

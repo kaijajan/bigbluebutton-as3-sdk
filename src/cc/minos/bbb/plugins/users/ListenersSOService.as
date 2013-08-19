@@ -13,7 +13,7 @@ package cc.minos.bbb.plugins.users
 	 * ...
 	 * @author Minos
 	 */
-	public class ListenersSOService extends EventDispatcher
+	public class ListenersSOService extends EventDispatcher implements IListenersCallback
 	{
 		private static const SO_NAME:String = "meetMeUsersSO";
 		private static const GET_MEETMEUSERS:String = "voice.getMeetMeUsers";

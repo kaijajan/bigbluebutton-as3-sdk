@@ -22,7 +22,7 @@ package cc.minos.bbb
 	 */
 	public class BigBlueButton extends EventDispatcher
 	{
-		public const version:Number = 0.8;
+		public static const version:Number = 0.8;
 		
 		private var _conferenceParameters:ConferenceParameters;
 		public var plugins:Dictionary = new Dictionary();
@@ -31,8 +31,10 @@ package cc.minos.bbb
 		private var _userid:Number = -1;
 		private var logoutOnUserCommand:Boolean = false;
 		
+		private var _messageListeners:Array = [];
 		public function BigBlueButton()
 		{
+			//buildListeners();
 			buildNetConnection();
 		}
 		
@@ -250,10 +252,61 @@ package cc.minos.bbb
 			return "OK";
 		}
 		
+		public function sendMessage( service:String, onSuccess:Function, onFailed:Function, message:Object = null ):void
+		{
+			var responder:Responder = new Responder( function( result:Object ):void
+				{ // On successful result
+					onSuccess( "Successfully sent [" + service + "]." );
+				}, function( status:Object ):void
+				{ // status - On error occurred
+					var errorReason:String = "Failed to send [" + service + "]:\n";
+					for ( var x:Object in status )
+					{
+						errorReason += "\t" + x + " : " + status[ x ];
+					}
+				} );
+			if ( message != null )
+				_netConnection.call( service, responder, message );
+			else
+				_netConnection.call( service, responder );
+		}
+		
+		public function addMessageListener( listener:IMessageListener ):void
+		{
+			_messageListeners.push( listener );
+		}
+		
+		public function removeMessageListener( listener:IMessageListener ):void
+		{
+			for ( var ob:int = 0; ob < _messageListeners.length; ob++ )
+			{
+				if ( _messageListeners[ ob ] == listener )
+				{
+					_messageListeners.splice( ob, 1 );
+					break;
+				}
+			}
+		}
+		
+		private function notifyListeners( messageName:String, message:Object ):void
+		{
+			if ( messageName != null && messageName != "" )
+			{
+				for ( var notify:String in _messageListeners )
+				{
+					_messageListeners[ notify ].onMessage( messageName, message );
+				}
+			}
+			else
+			{
+				trace( "Message name is undefined" );
+			}
+		}
+		
 		public function onMessageFromServer( messageName:String, result:Object ):void
 		{
 			trace( "Got message from server [" + messageName + "]" );
-			//notifyListeners( messageName, result );
+			notifyListeners( messageName, result );
 		}
 		
 		public function onBWCheck( ... rest ):Number

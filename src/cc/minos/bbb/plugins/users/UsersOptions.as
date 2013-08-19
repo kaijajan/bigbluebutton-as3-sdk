@@ -9,9 +9,7 @@ package cc.minos.bbb.plugins.users
 	public class UsersOptions
 	{
 		
-		///////////////////////
-		// METHODS
-		///////////////////////
+		public var allowKickUser:Boolean = true;
 		
 		public function UsersOptions()
 		{

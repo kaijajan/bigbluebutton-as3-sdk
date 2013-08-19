@@ -20,12 +20,14 @@ package cc.minos.bbb.plugins.users
 		private var participantsSOService:ParticipantsSOService;
 		private var listenersSOService:ListenersSOService;
 		
-		public var users:Vector.<BBBUser>;
+		public var users:Array;
 		
 		public function UsersPlugin( options:UsersOptions = null )
 		{
 			super();
 			this.options = options;
+			if ( this.options == null )
+				this.options = new UsersOptions();
 			this.name = "[UsersPlugin]";
 			this.shortcut = "users";
 		}
@@ -33,12 +35,14 @@ package cc.minos.bbb.plugins.users
 		override public function init():void
 		{
 			me = new BBBUser();
-			users = new Vector.<BBBUser>();
+			users = [];
 			
 			participantsSOService = new ParticipantsSOService( this );
 			participantsSOService.addEventListener( PariticipantEvent.JOINED, onPariticipant );
 			participantsSOService.addEventListener( PariticipantEvent.KICKED, onPariticipant );
 			participantsSOService.addEventListener( PariticipantEvent.LEFT, onPariticipant );
+			participantsSOService.addEventListener( PariticipantEvent.PRESENTER_NAME_CHANGE, onPariticipant );
+			participantsSOService.addEventListener( PariticipantEvent.SWITCHED_PRESENTER, onPariticipant );
 			
 			listenersSOService = new ListenersSOService( this );
 			listenersSOService.addEventListener( ListenerEvent.USER_VOICE_JOINED, onListener );
@@ -46,6 +50,26 @@ package cc.minos.bbb.plugins.users
 			listenersSOService.addEventListener( ListenerEvent.USER_VOICE_LOCKED, onListener );
 			listenersSOService.addEventListener( ListenerEvent.USER_VOICE_MUTED, onListener );
 			listenersSOService.addEventListener( ListenerEvent.USER_VOICE_TALKING, onListener );
+		}
+		
+		public function addStream( userID:String, streamName:String ):void
+		{
+			participantsSOService.addStream( userID, streamName );
+		}
+		
+		public function removeStream( userID:String, streamName:String ):void
+		{
+			participantsSOService.removeStream( userID, streamName );
+		}
+		
+		public function assignPresenter( userid:String, name:String, assignedBy:Number ):void
+		{
+			participantsSOService.assignPresenter( userid, name, assignedBy );
+		}
+		
+		public function raiseHand( userID:String, raise:Boolean ):void
+		{
+			participantsSOService.raiseHand( userID, raise );
 		}
 		
 		private function onListener( e:ListenerEvent ):void
@@ -64,7 +88,7 @@ package cc.minos.bbb.plugins.users
 			listenersSOService.connect();
 		}
 		
-		override public function stop():void 
+		override public function stop():void
 		{
 			me = null;
 			users.length = 0;
@@ -122,7 +146,8 @@ package cc.minos.bbb.plugins.users
 				p = users[ i ];
 				if ( p.role == BBBUser.MODERATOR )
 				{
-					return BBBUser.copy( p );
+					return p;
+						//return BBBUser.copy( p );
 				}
 			}
 			return null;
@@ -136,7 +161,8 @@ package cc.minos.bbb.plugins.users
 				p = users[ i ];
 				if ( isUserPresenter( p.userID ) )
 				{
-					return BBBUser.copy( p );
+					return p;
+						//return BBBUser.copy( p );
 				}
 			}
 			
@@ -208,16 +234,16 @@ package cc.minos.bbb.plugins.users
 		}
 		
 		public function getVoiceUser( voiceUserID:Number ):BBBUser
-		   {
-		   for ( var i:int = 0; i < users.length; i++ )
-		   {
-		   var aUser:BBBUser = users[ i ];
-		   if ( aUser.voiceUserid == voiceUserID )
-		   return aUser;
-		   }
-		
-		   return null;
-		 }
+		{
+			for ( var i:int = 0; i < users.length; i++ )
+			{
+				var aUser:BBBUser = users[ i ];
+				if ( aUser.voiceUserid == voiceUserID )
+					return aUser;
+			}
+			
+			return null;
+		}
 		
 		public function getMe():BBBUser
 		{
@@ -232,6 +258,7 @@ package cc.minos.bbb.plugins.users
 		public function newUserStatus( userID:String, status:String, value:Object ):void
 		{
 			var aUser:BBBUser = getUser( userID );
+			trace( "newUserStatus", userID );
 			if ( aUser != null )
 			{
 				var s:Status = new Status( status, value );
@@ -286,10 +313,10 @@ package cc.minos.bbb.plugins.users
 		 */
 		private function sortFunction( a:Object, b:Object, array:Array = null ):int
 		{
-			if ( a.presenter )
+			/*if ( a.presenter )
 				return -1;
 			else if ( b.presenter )
-				return 1;
+				return 1;*/
 			if ( a.role == BBBUser.MODERATOR && b.role == BBBUser.MODERATOR )
 			{
 				// do nothing go to the end and check names
