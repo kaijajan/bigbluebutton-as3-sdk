@@ -1,2 +1,2 @@
-bbb-api-as
+minos.as.bbb
 ==========
