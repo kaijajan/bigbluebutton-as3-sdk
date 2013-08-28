@@ -232,13 +232,7 @@ package cc.minos.bigbluebutton.plugins.users
 		public function participantStatusChange( userID:String, status:String, value:Object ):void
 		{
 			trace( "狀態更新 [" + userID + "," + status + "," + value + "]" );
-			plugin.newUserStatus( userID, status, value );
-			if ( status == "presenter" )
-			{
-				var presenterEvent:UsersEvent = new UsersEvent( UsersEvent.PRESENTER_NAME_CHANGE );
-				presenterEvent.userID = userID;
-				plugin.dispatchEvent( presenterEvent );
-			}
+			plugin.newUserStatus( userID, status , value );
 		}
 	}
 

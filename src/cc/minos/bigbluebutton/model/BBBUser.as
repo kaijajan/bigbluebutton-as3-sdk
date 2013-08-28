@@ -61,25 +61,22 @@ package cc.minos.bigbluebutton.model
 			_presenter = p;
 		}
 		
-		public function changeStatus( status:Status ):void
+		/*public function changeStatus( status:Status ):void
 		{
 			switch ( status.name )
 			{
 				case "presenter": 
-					presenter = status.value;
+					presenter = status.value as Boolean;
 					break;
 				case "hasStream": 
-					var streamInfo:Array = String( status.value ).split( /,/ );
-					hasStream = ( String( streamInfo[ 0 ] ).toUpperCase() == "TRUE" );
-					var streamNameInfo:Array = String( streamInfo[ 1 ] ).split( /=/ );
-					streamName = streamNameInfo[ 1 ];
+					hasStream = status.value as Boolean;
 					break;
 				case "raiseHand": 
 					raiseHand = status.value as Boolean;
 					break;
 			}
 			buildStatus();
-		}
+		}*/
 		
 		public function buildStatus():void
 		{
@@ -94,6 +91,8 @@ package cc.minos.bigbluebutton.model
 				status += "locked";
 			if ( raiseHand )
 				status += "hand";
+			if ( talking )
+				status += "talking";
 		}
 		
 		public function get voiceJoined():Boolean

@@ -38,6 +38,8 @@ package cc.minos.bigbluebutton.plugins
 		{
 			proxy = new VideoProxy( this, options );
 			
+			camWidth = options.videoWidth;
+			camHeight = options.videoHeight;
 			if ( bbb.hasPlugin( "users" ) )
 				bbb.getPlugin( "users" ).addEventListener( UsersEvent.SWITCHED_PRESENTER, onSwitchedPresenter );
 		}
@@ -112,7 +114,7 @@ package cc.minos.bigbluebutton.plugins
 				
 				_camera.setKeyFrameInterval( options.camKeyFrameInterval );
 				_camera.setMode( camWidth, camHeight, options.camModeFps );
-				_camera.setQuality( options.camQualityBandwidth, options.camQualityPicture );
+				_camera.setQuality( options.camQualityBandwidth, options.videoQuality );
 				
 				var d:Date = new Date();
 				var curTime:Number = d.getTime();

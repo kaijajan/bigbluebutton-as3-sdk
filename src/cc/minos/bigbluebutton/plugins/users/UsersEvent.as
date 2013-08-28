@@ -21,6 +21,9 @@ package cc.minos.bigbluebutton.plugins.users
 		public static const USER_VOICE_LEFT:String = "userVoiceLeft";
 		public static const USER_VOICE_TALKING:String = "userVoiceTalking";
 		
+		public static const USER_VIDEO_STREAM_STARTED:String = "userVideoStreamStarted";
+		public static const USER_VIDEO_STREAM_STOPED:String = "userVideoStreamStoped";
+		
 		public static const ROOM_MUTE_STATE:String = "roomMuteState";
 		
 		public var userID:String;

@@ -82,7 +82,6 @@ package cc.minos.bigbluebutton.plugins
 			participantsSOService.raiseHand( userID, raise );
 		}
 		
-		
 		//  ---------------------------------    users manager    ----------------------------------  //
 		
 		public function addUser( newuser:BBBUser ):void
@@ -228,13 +227,35 @@ package cc.minos.bigbluebutton.plugins
 		public function newUserStatus( userID:String, status:String, value:Object ):void
 		{
 			var aUser:BBBUser = getUser( userID );
-			trace( "newUserStatus", userID );
 			if ( aUser != null )
 			{
-				var s:Status = new Status( status, value );
-				aUser.changeStatus( s );
+				switch ( status )
+				{
+					case "presenter": 
+						aUser.presenter = value as Boolean;
+						var presenterEvent:UsersEvent = new UsersEvent( UsersEvent.PRESENTER_NAME_CHANGE );
+						presenterEvent.userID = userID;
+						dispatchEvent( presenterEvent );
+						break;
+					case "hasStream": 
+						var streamInfo:Array = String( value ).split( /,/ );
+						aUser.hasStream = ( String( streamInfo[ 0 ] ).toUpperCase() == "TRUE" );
+						var streamNameInfo:Array = String( streamInfo[ 1 ] ).split( /=/ );
+						aUser.streamName = streamNameInfo[ 1 ];
+						if ( aUser.hasStream )
+						{
+							var streamEvent:UsersEvent = new UsersEvent( UsersEvent.USER_VIDEO_STREAM_STARTED );
+							streamEvent.userID = aUser.userID;
+							dispatchEvent( streamEvent );
+						}
+						break;
+					case "raiseHand": 
+						aUser.raiseHand = value as Boolean;
+						break;
+				}
+				aUser.buildStatus();
+				refresh();
 			}
-			refresh();
 		}
 		
 		public function getUserIDs():Array
@@ -298,14 +319,14 @@ package cc.minos.bigbluebutton.plugins
 				return -1;
 			else if ( b.raiseHand )
 				return 1;
-			else if ( a.phoneUser && b.phoneUser )
+			/*else if ( a.phoneUser && b.phoneUser )
 			{
 				
 			}
 			else if ( a.phoneUser )
 				return -1;
 			else if ( b.phoneUser )
-				return 1;
+				return 1;*/
 			
 			/*
 			 * Check name (case-insensitive) in the event of a tie up above. If the name

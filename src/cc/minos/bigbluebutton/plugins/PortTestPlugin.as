@@ -8,12 +8,11 @@ package cc.minos.bigbluebutton.plugins
 	 */
 	public class PortTestPlugin extends Plugin
 	{
-		private var protocol:String = "RTMP";
 		
 		public function PortTestPlugin()
 		{
 			super();
-			this.application = "video";
+			this.application = "video/portTest";
 			this.shortcut = 'test';
 			this.name = '[PortTestPlugin]';
 		}
@@ -58,9 +57,20 @@ package cc.minos.bigbluebutton.plugins
 		
 		private function connect( protocol:String = "", port:String = "", testTimeout:Number = 10000 ):void
 		{
+			this.protocol = protocol;
 			var portTest:PortTest = new PortTest( protocol, bbb.conferenceParameters.host, port, this.application, testTimeout );
 			portTest.addConnectionSuccessListener( connectionListener );
 			portTest.connect();
+		}
+		
+		public function get protocol():String 
+		{
+			return bbb.conferenceParameters.protocol;
+		}
+		
+		public function set protocol( value:String ):void
+		{
+			bbb.conferenceParameters.protocol = value;
 		}
 	
 	}
