@@ -1,8 +1,9 @@
 package cc.minos.bigbluebutton
 {
-	import cc.minos.bigbluebutton.events.BigBlueButtonEvent;
-	import cc.minos.bigbluebutton.model.ConferenceParameters;
-	import cc.minos.bigbluebutton.plugins.Plugin;
+	import cc.minos.bigbluebutton.events.*;
+	import cc.minos.bigbluebutton.extensions.*;
+	import cc.minos.bigbluebutton.model.*;
+	import cc.minos.bigbluebutton.plugins.*;
 	import flash.events.AsyncErrorEvent;
 	import flash.events.EventDispatcher;
 	import flash.events.IOErrorEvent;
@@ -18,48 +19,21 @@ package cc.minos.bigbluebutton
 	 * ...
 	 * @author Minos
 	 */
-	public class BigBlueButton extends EventDispatcher
+	public class BigBlueButton extends EventDispatcher implements IPluginManager, IMessageManager
 	{
-		public static const version:Number = 0.8;
+		public static const API:Number = 0.81;
 		
-		private var _conferenceParameters:ConferenceParameters;
 		public var plugins:Dictionary = new Dictionary();
+		private var _conferenceParameters:ConferenceParameters;
 		private var _netConnection:NetConnection;
 		private var tried_tunneling:Boolean = false;
 		private var logoutOnUserCommand:Boolean = false;
+		private var _messageListeners:Vector.<IMessageListener>;
 		
 		public function BigBlueButton()
 		{
+			_messageListeners = new Vector.<IMessageListener>();
 			buildNetConnection();
-		}
-		
-		public function addPlugin( pi:Plugin ):void
-		{
-			plugins[ pi.shortcut ] = pi;
-			pi.setup( this );
-			trace( "Loading Plugin: " + pi.name );
-			pi.init();
-		}
-		
-		public function delPlugin( shortcut:String ):void
-		{
-			var pi:Plugin = getPlugin( shortcut );
-			if ( pi )
-			{
-				pi.stop();
-				plugins[ pi.shortcut ] = null;
-				pi = null;
-			}
-		}
-		
-		public function getPlugin( shortcut:String ):Plugin
-		{
-			return plugins[ shortcut ];
-		}
-		
-		public function hasPlugin( shortcut:String ):Boolean
-		{
-			return getPlugin( shortcut ) != null;
 		}
 		
 		public function connect( tunnel:Boolean = false ):void
@@ -71,17 +45,16 @@ package cc.minos.bigbluebutton
 			tried_tunneling = tunnel;
 			try
 			{
-				var uri:String = _conferenceParameters.protocol +"://" + _conferenceParameters.host + "/bigbluebutton/" + _conferenceParameters.room;
-				_netConnection.connect( 
-					uri, 
-					_conferenceParameters.username, 
-					_conferenceParameters.role, 
-					_conferenceParameters.conference, 
-					_conferenceParameters.room, 
-					_conferenceParameters.voicebridge, 
-					_conferenceParameters.record, 
-					_conferenceParameters.externUserID, 
-					_conferenceParameters.internalUserID );
+				var uri:String = _conferenceParameters.protocol + "://" + _conferenceParameters.host + "/bigbluebutton/" + _conferenceParameters.room;
+				_netConnection.connect( uri, //
+					_conferenceParameters.username, //
+					_conferenceParameters.role, //
+					_conferenceParameters.room, //
+					_conferenceParameters.voicebridge, //
+					_conferenceParameters.record, //
+					_conferenceParameters.externUserID, //
+					_conferenceParameters.internalUserID
+					);
 				
 			}
 			catch ( e:ArgumentError )
@@ -100,7 +73,7 @@ package cc.minos.bigbluebutton
 		
 		public function disconnect( logoutOnUserCommand:Boolean ):void
 		{
-			
+			this.logoutOnUserCommand = logoutOnUserCommand;
 			_netConnection.close();
 		}
 		
@@ -156,30 +129,30 @@ package cc.minos.bigbluebutton
 					break;
 				case "NetConnection.Connect.Closed": 
 					//LogUtil.debug( NAME + ":Connection to viewers application closed" );
-	//          if (logoutOnUserCommand) {
-						sendConnectionFailedEvent( BigBlueButtonEvent.CONNECTION_CLOSED );
-	//          } else {
-	//            autoReconnectTimer.addEventListener("timer", autoReconnectTimerHandler);
-	//            autoReconnectTimer.start();		
+					//          if (logoutOnUserCommand) {
+					sendConnectionFailedEvent( BigBlueButtonEvent.CONNECTION_CLOSED );
+					//          } else {
+					//            autoReconnectTimer.addEventListener("timer", autoReconnectTimerHandler);
+					//            autoReconnectTimer.start();		
 //          }
 					break;
 				case "NetConnection.Connect.InvalidApp": 
-					trace( ":viewers application not found on server" );
+					trace( "viewers application not found on server" );
 					sendConnectionFailedEvent( BigBlueButtonEvent.INVALID_APP );
 					break;
 				case "NetConnection.Connect.AppShutDown": 
-					trace( ":viewers application has been shutdown" );
+					trace( "viewers application has been shutdown" );
 					sendConnectionFailedEvent( BigBlueButtonEvent.APP_SHUTDOWN );
 					break;
 				case "NetConnection.Connect.Rejected": 
-					trace( ":Connection to the server rejected. Uri: " + _netConnection.uri + ". Check if the red5 specified in the uri exists and is running" );
+					trace( "Connection to the server rejected. Uri: " + _netConnection.uri + ". Check if the red5 specified in the uri exists and is running" );
 					sendConnectionFailedEvent( BigBlueButtonEvent.CONNECTION_REJECTED );
 					break;
 				case "NetConnection.Connect.NetworkChange": 
 					trace( "Detected network change. User might be on a wireless and temporarily dropped connection. Doing nothing. Just making a note." );
 					break;
 				default: 
-					trace( ":Default status to the viewers application" );
+					trace( "Default status to the viewers application" );
 					sendConnectionFailedEvent( BigBlueButtonEvent.UNKNOWN_REASON );
 					break;
 			}
@@ -237,24 +210,8 @@ package cc.minos.bigbluebutton
 			trace( "setUserId: " + id );
 			if ( isNaN( id ) )
 				return "FAILED";
+			
 			return "OK";
-		}
-		
-		public function sendMessage( service:String, onSuccess:Function = null, onFailed:Function = null, message:Object = null ):void
-		{
-			var responder:Responder = new Responder( function( result:Object ):void
-				{
-					if ( onSuccess !=null )
-						onSuccess( result );
-				}, function( status:Object ):void
-				{
-					if ( onFailed !=null )
-						onFailed( status );
-				} );
-			if ( message != null )
-				_netConnection.call( service, responder, message );
-			else
-				_netConnection.call( service, responder );
 		}
 		
 		public function onBWCheck( ... rest ):Number
@@ -268,6 +225,101 @@ package cc.minos.bigbluebutton
 			if ( rest.length > 0 )
 				p_bw = rest[ 0 ];
 			trace( "bandwidth = " + p_bw + " Kbps." );
+		}
+		
+		/* cc.minos.bigbluebutton.extensions.IMessageManager */
+		
+		public function addMessageListener( listener:IMessageListener ):void
+		{
+			_messageListeners.push( listener );
+		}
+		
+		public function removeMessageListener( listener:IMessageListener ):void
+		{
+			for ( var ob:int = 0; ob < _messageListeners.length; ob++ )
+			{
+				if ( _messageListeners[ ob ] == listener )
+				{
+					_messageListeners.splice( ob, 1 );
+					break;
+				}
+			}
+		}
+		
+		private function notifyListeners( messageName:String, message:Object ):void
+		{
+			if ( messageName != null && messageName != "" )
+			{
+				for ( var notify:String in _messageListeners )
+				{
+					_messageListeners[ notify ].onMessage( messageName, message );
+				}
+			}
+			else
+			{
+				trace( "Message name is undefined" );
+			}
+		}
+		
+		public function onMessageFromServer( messageName:String, result:Object ):void
+		{
+			//trace( "Got message from server [" + messageName + "]" );
+			notifyListeners( messageName, result );
+		}
+		
+		/**
+		 *
+		 * @param	service			:	應用
+		 * @param	onSuccess		:	成功回調函數
+		 * @param	onFailed		:	失敗回調函數
+		 * @param	message			:	信息
+		 */
+		public function sendMessage( service:String, onSuccess:Function = null, onFailed:Function = null, message:Object = null ):void
+		{
+			var responder:Responder = new Responder( function( result:Object ):void
+				{
+					if ( onSuccess != null )
+						onSuccess( result );
+				}, function( status:Object ):void
+				{
+					if ( onFailed != null )
+						onFailed( status );
+				} );
+			if ( message != null )
+				_netConnection.call( service, responder, message );
+			else
+				_netConnection.call( service, responder );
+		}
+		
+		/* cc.minos.bigbluebutton.extensions.IPluginManager */
+		
+		public function addPlugin( pi:Plugin ):void
+		{
+			plugins[ pi.shortcut ] = pi;
+			pi.setup( this );
+			//trace( "Loading Plugin: " + pi.name );
+			pi.init();
+		}
+		
+		public function delPlugin( shortcut:String ):void
+		{
+			var pi:Plugin = getPlugin( shortcut );
+			if ( pi )
+			{
+				pi.stop();
+				delete plugins[ pi.shortcut ];
+				pi = null;
+			}
+		}
+		
+		public function getPlugin( shortcut:String ):Plugin
+		{
+			return plugins[ shortcut ];
+		}
+		
+		public function hasPlugin( shortcut:String ):Boolean
+		{
+			return getPlugin( shortcut ) != null;
 		}
 	}
 

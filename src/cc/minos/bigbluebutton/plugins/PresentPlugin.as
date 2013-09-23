@@ -1,7 +1,10 @@
 package cc.minos.bigbluebutton.plugins
 {
+	import cc.minos.bigbluebutton.extensions.IMessageListener;
 	import cc.minos.bigbluebutton.plugins.present.*;
+	import cc.minos.bigbluebutton.plugins.present.events.CursorEvent;
 	import cc.minos.bigbluebutton.plugins.present.events.PresentationEvent;
+	import cc.minos.console.Console;
 	import cc.minos.utils.ArrayUtil;
 	import flash.events.TimerEvent;
 	import flash.net.FileReference;
@@ -13,7 +16,7 @@ package cc.minos.bigbluebutton.plugins
 	 * ...
 	 * @author Minos
 	 */
-	public class PresentPlugin extends Plugin
+	public class PresentPlugin extends Plugin implements IMessageListener
 	{
 		private var service:PresentationService;
 		private var soService:PresentSOService;
@@ -22,6 +25,7 @@ package cc.minos.bigbluebutton.plugins
 		private var conference:String;
 		private var room:String;
 		
+		private var _currentPresentation:String;
 		public var presentationNames:Array;
 		public var slides:Array;
 		
@@ -44,14 +48,39 @@ package cc.minos.bigbluebutton.plugins
 			service = new PresentationService();
 			service.addCompleteListener( onPresentationDataCompleted );
 			uploadService = new FileUploadService( this, host + "/bigbluebutton/presentation/upload", conference, room );
+			
+			this.addEventListener( PresentationEvent.PRESENTATION_ADDED_EVENT, onPresentation );
+			this.addEventListener( PresentationEvent.PRESENTATION_REMOVED_EVENT, onPresentation );
+		}
+		
+		private function onPresentation( e:PresentationEvent ):void
+		{
+			if ( e.type == PresentationEvent.PRESENTATION_ADDED_EVENT )
+			{
+				if ( !ArrayUtil.containsValue( presentationNames, e.presentationName ) )
+					presentationNames.push( e.presentationName );
+			}
+			else if ( e.type == PresentationEvent.PRESENTATION_REMOVED_EVENT )
+			{
+				for ( var i:int = 0; i < presentationNames.length; i++ )
+				{
+					if ( presentationNames[ i ] == e.presentationName )
+						presentationNames.splice( i, 1 );
+				}
+			}
 		}
 		
 		private function onPresentationDataCompleted( presentationName:String, slides:Array ):void
 		{
 			if ( slides.length > 0 )
 			{
-				trace( 'presentation has been loaded  presentationName=' + presentationName );
-				updatePresentationNames( presentationName );
+				if ( presentationName == _currentPresentation )
+					return;
+				
+				Console.log( 'presentation has been loaded  presentationName=' + presentationName );
+				if ( !ArrayUtil.containsValue( presentationNames, presentationName ) )
+					presentationNames.push( presentationName );
+				_currentPresentation = presentationName;
 				
 				var loadedEvent:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_LOADED );
 				loadedEvent.presentationName = presentationName;
@@ -60,25 +89,18 @@ package cc.minos.bigbluebutton.plugins
 				
 				if ( presenter )
 				{
-					//sharePresentation( true , presentationName );
-					//soService.clearPresentation();
+					sharePresentation( true, presentationName );
 				}
 				else
 				{
-					//load current slide
-					
+					loadCurrentSlideLocally();
 				}
-				loadCurrentSlideLocally();
+				
 			}
 			else
 			{
 				trace( 'failed to load presentation' );
 			}
-		}
-		
-		public function updatePresentationNames( presentationName:String ):void {
-			if( !ArrayUtil.containsValue( presentationNames, presentationName ) )
-					presentationNames.push( presentationName );
 		}
 		
 		public function get userID():String
@@ -100,11 +122,13 @@ package cc.minos.bigbluebutton.plugins
 		override public function start():void
 		{
 			soService.connect();
+			bbb.addMessageListener( this );
 		}
 		
 		override public function stop():void
 		{
 			soService.disconnect();
+			bbb.removeMessageListener( this );
 		}
 		
 		public function startUpload( presentationName:String, file:FileReference ):void
@@ -164,8 +188,7 @@ package cc.minos.bigbluebutton.plugins
 		
 		public function removePresentation( presentationName:String ):void
 		{
-			if ( presentationName != null && presentationName != "" )
-				soService.removePresentation( presentationName );
+			soService.removePresentation( presentationName );
 		}
 		
 		private function sendViewerNotify( e:TimerEvent ):void
@@ -191,6 +214,27 @@ package cc.minos.bigbluebutton.plugins
 		public function resizeSlide( newSizeInPercent:Number ):void
 		{
 			soService.resizeSlide( newSizeInPercent );
+		}
+		
+		/* INTERFACE cc.minos.bigbluebutton.extensions.IMessageListener */
+		
+		public function onMessage( messageName:String, message:Object ):void
+		{
+			switch ( messageName )
+			{
+				case "PresentationCursorUpdateCommand": 
+					onPresentationCursorUpdateCommand( message );
+					break;
+				default: 
+			}
+		}
+		
+		private function onPresentationCursorUpdateCommand( message:Object ):void
+		{
+			var e:CursorEvent = new CursorEvent( CursorEvent.UPDATE_CURSOR );
+			e.xPercent = message.xPercent;
+			e.yPercent = message.yPercent;
+			dispatchEvent( e );
 		}
 	}
 

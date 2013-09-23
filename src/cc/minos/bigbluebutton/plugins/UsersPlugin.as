@@ -5,7 +5,9 @@ package cc.minos.bigbluebutton.plugins
 	import cc.minos.bigbluebutton.model.Status;
 	import cc.minos.bigbluebutton.plugins.users.*;
 	import cc.minos.bigbluebutton.Role;
+	import flash.events.TimerEvent;
 	import flash.net.NetConnection;
+	import flash.utils.Timer;
 	
 	/**
 	 * ...
@@ -21,6 +23,7 @@ package cc.minos.bigbluebutton.plugins
 		private var listenersSOService:ListenersSOService;
 		
 		public var users:Array;
+		private var refreshTimer:Timer;
 		
 		public function UsersPlugin( options:UsersOptions = null )
 		{
@@ -34,6 +37,8 @@ package cc.minos.bigbluebutton.plugins
 		
 		override public function init():void
 		{
+			refreshTimer = new Timer( 200 );
+			
 			me = new BBBUser();
 			users = [];
 			participantsSOService = new ParticipantsSOService( this );
@@ -44,6 +49,7 @@ package cc.minos.bigbluebutton.plugins
 		{
 			participantsSOService.connect();
 			listenersSOService.connect();
+			refreshTimer.addEventListener( TimerEvent.TIMER, onRefreshTimer );
 		}
 		
 		override public function stop():void
@@ -52,6 +58,7 @@ package cc.minos.bigbluebutton.plugins
 			users.length = 0;
 			participantsSOService.disconnect();
 			listenersSOService.disconnect();
+			refreshTimer.removeEventListener( TimerEvent.TIMER, onRefreshTimer );
 		}
 		
 		override public function get uri():String
@@ -279,10 +286,17 @@ package cc.minos.bigbluebutton.plugins
 			return us;
 		}
 		
-		private function refresh():void
+		private function onRefreshTimer( e:TimerEvent ):void
 		{
 			users.sort( sortFunction );
 			dispatchEvent( new UsersEvent( UsersEvent.REFRESH ) );
+			refreshTimer.stop();
+		}
+		
+		private function refresh():void
+		{
+			if ( !refreshTimer.running )
+				refreshTimer.start();
 		}
 		
 		public function get room():String
@@ -320,13 +334,13 @@ package cc.minos.bigbluebutton.plugins
 			else if ( b.raiseHand )
 				return 1;
 			/*else if ( a.phoneUser && b.phoneUser )
-			{
-				
-			}
-			else if ( a.phoneUser )
-				return -1;
-			else if ( b.phoneUser )
-				return 1;*/
+			   {
+			
+			   }
+			   else if ( a.phoneUser )
+			   return -1;
+			   else if ( b.phoneUser )
+			 return 1;*/
 			
 			/*
 			 * Check name (case-insensitive) in the event of a tie up above. If the name

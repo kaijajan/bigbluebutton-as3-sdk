@@ -19,6 +19,10 @@ package cc.minos.bigbluebutton.plugins.users
 		private const SO_NAME:String = "meetMeUsersSO";
 		private const GET_MEETMEUSERS:String = "voice.getMeetMeUsers";
 		private const GET_ROOMMUTED_STATE:String = "voice.isRoomMuted";
+		private const SET_LOCK_USER:String = "voice.lockMuteUser";
+		private const SET_MUTE_USER:String = "voice.muteUnmuteUser";
+		private const SET_MUTE_ALL_USER:String = "voice.muteAllUsers";
+		private const SET_KILL_USER:String = "voice.kickUSer";
 		
 		private var plugin:UsersPlugin;
 		private var _listenersSO:SharedObject;
@@ -28,7 +32,6 @@ package cc.minos.bigbluebutton.plugins.users
 		public function ListenersSOService( plugin:UsersPlugin )
 		{
 			this.plugin = plugin;
-			
 			responder = new Responder( function( result:Object ):void
 				{
 				}, function( status:Object ):void
@@ -175,20 +178,24 @@ package cc.minos.bigbluebutton.plugins.users
 		
 		public function lockMuteUser( userid:Number, lock:Boolean ):void
 		{
-			connection.call( "voice.lockMuteUser", responder, userid, lock );
+			connection.call( SET_LOCK_USER, responder, userid, lock );
 		}
 		
 		public function muteUnmuteUser( userid:Number, mute:Boolean ):void
 		{
-			connection.call( "voice.muteUnmuteUser", responder, userid, mute );
+			connection.call( SET_MUTE_USER, responder, userid, mute );
 		}
 		
 		public function muteAllUsers( mute:Boolean ):void
 		{
-			connection.call( "voice.muteAllUsers", responder, mute );
+			connection.call( SET_MUTE_ALL_USER, responder, mute );
 			_listenersSO.send( "muteStateCallback", mute );
 		}
 		
+		/**
+		 *
+		 * @param	mute
+		 */
 		public function muteStateCallback( mute:Boolean ):void
 		{
 			var e:UsersEvent = new UsersEvent( UsersEvent.ROOM_MUTE_STATE );
@@ -196,11 +203,18 @@ package cc.minos.bigbluebutton.plugins.users
 			plugin.dispatchEvent( e );
 		}
 		
+		/**
+		 *
+		 * @param	userId
+		 */
 		public function ejectUser( userId:Number ):void
 		{
-			connection.call( "voice.kickUSer", responder, userId );
+			connection.call( SET_KILL_USER, responder, userId );
 		}
 		
+		/**
+		 *
+		 */
 		private function getRoomMuteState():void
 		{
 			connection.call( GET_ROOMMUTED_STATE, new Responder( function( result:Object ):void

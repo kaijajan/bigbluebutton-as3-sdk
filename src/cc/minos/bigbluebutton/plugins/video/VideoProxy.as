@@ -1,6 +1,7 @@
 package cc.minos.bigbluebutton.plugins.video
 {
 	import cc.minos.bigbluebutton.plugins.VideoPlugin;
+	import cc.minos.console.Console;
 	import cc.minos.utils.VersionUtil;
 	import flash.events.AsyncErrorEvent;
 	import flash.events.EventDispatcher;
@@ -23,10 +24,10 @@ package cc.minos.bigbluebutton.plugins.video
 		private var options:VideoOptions;
 		private var plugin:VideoPlugin;
 		
-		public function VideoProxy( plugin:VideoPlugin, options:VideoOptions )
+		public function VideoProxy( plugin:VideoPlugin )
 		{
 			this.plugin = plugin;
-			this.options = options;
+			this.options = plugin.options;
 			nc = new NetConnection();
 			nc.client = this;
 			nc.addEventListener( AsyncErrorEvent.ASYNC_ERROR, onAsyncError );
@@ -54,6 +55,7 @@ package cc.minos.bigbluebutton.plugins.video
 		
 		private function onNetStatus( e:NetStatusEvent ):void
 		{
+			Console.log( e.info.code );
 			switch ( e.info.code )
 			{
 				case "NetConnection.Connect.Success": 
@@ -61,7 +63,6 @@ package cc.minos.bigbluebutton.plugins.video
 					plugin.dispatchEvent( new VideoEvent( VideoEvent.VIDEO_APPLICATION_CONNECTED ) );
 					break;
 				default: 
-					trace( "[" + e.info.code + "] for [VideoProxy]" );
 					break;
 			}
 		}
@@ -80,7 +81,7 @@ package cc.minos.bigbluebutton.plugins.video
 			ns.attachCamera( camera );
 			if (( VersionUtil.getFlashPlayerVersion() >= 11 ) && options.enableH264 )
 			{
-				trace( "Using H264 codec for video." );
+				Console.log( "使用視頻編碼: H264" );
 				var h264:H264VideoStreamSettings = new H264VideoStreamSettings();
 				h264.setProfileLevel( options.h264Profile, options.h264Level );
 				//h264.setQuality( options.camQualityBandwidth , options.videoQuality );
@@ -94,7 +95,8 @@ package cc.minos.bigbluebutton.plugins.video
 		
 		public function stopBroadcasting():void
 		{
-			trace( "Closing netstream for webcam publishing" );
+			Console.log( "停止視頻發布" );
+			
 			if ( ns != null )
 			{
 				ns.attachCamera( null );
@@ -106,7 +108,7 @@ package cc.minos.bigbluebutton.plugins.video
 		
 		public function disconnect():void
 		{
-			trace( "VideoProxy:: disconnecting from Video application" );
+			Console.log( "斷開視頻組件" );
 			stopBroadcasting();
 			if ( nc != null )
 				nc.close();
@@ -122,9 +124,6 @@ package cc.minos.bigbluebutton.plugins.video
 			var p_bw:Number;
 			if ( rest.length > 0 )
 				p_bw = rest[ 0 ];
-			// your application should do something here 
-			// when the bandwidth check is complete 
-			trace( "bandwidth = " + p_bw + " Kbps." );
 		}
 	
 	}

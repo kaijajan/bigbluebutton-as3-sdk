@@ -18,7 +18,7 @@ package cc.minos.bigbluebutton.model
 		private var _presenter:Boolean = false;
 		private var _raiseHand:Boolean = false;
 		private var _role:String = Role.VIEWER;
-		private var _userStatus:String = "";
+		//private var _userStatus:String = "";
 		
 		public var streamName:String = "";
 		public var isLeavingFlag:Boolean = false;
@@ -30,7 +30,7 @@ package cc.minos.bigbluebutton.model
 		private var _voiceJoined:Boolean = false;
 		private var _voiceMuted:Boolean = false;
 		private var _voiceLocked:Boolean = false;
-		public var status:String = "";
+		public var status:Array = [];
 		
 		public function BBBUser()
 		{
@@ -61,38 +61,22 @@ package cc.minos.bigbluebutton.model
 			_presenter = p;
 		}
 		
-		/*public function changeStatus( status:Status ):void
+		public function buildStatus():Array
 		{
-			switch ( status.name )
-			{
-				case "presenter": 
-					presenter = status.value as Boolean;
-					break;
-				case "hasStream": 
-					hasStream = status.value as Boolean;
-					break;
-				case "raiseHand": 
-					raiseHand = status.value as Boolean;
-					break;
-			}
-			buildStatus();
-		}*/
-		
-		public function buildStatus():void
-		{
-			status = "";
+			status = [];
 			if ( hasStream )
-				status += "video";
+				status.push( "hasstream" );
 			if ( voiceJoined )
-				status += "voice";
+				status.push( "voicejoined" );
 			if ( voiceMuted )
-				status += "muted";
+				status.push( "voicemuted" );
 			if ( voiceLocked )
-				status += "locked";
+				status.push( "voicelocked" );
 			if ( raiseHand )
-				status += "hand";
+				status.push( "raisehand" );
 			if ( talking )
-				status += "talking";
+				status.push( "talking" );
+			return status;
 		}
 		
 		public function get voiceJoined():Boolean

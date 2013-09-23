@@ -3,6 +3,7 @@ package cc.minos.bigbluebutton.plugins.users
 	import cc.minos.bigbluebutton.events.BigBlueButtonEvent;
 	import cc.minos.bigbluebutton.model.BBBUser;
 	import cc.minos.bigbluebutton.plugins.UsersPlugin;
+	import cc.minos.console.Console;
 	import flash.events.AsyncErrorEvent;
 	import flash.events.EventDispatcher;
 	import flash.events.NetStatusEvent;
@@ -87,30 +88,30 @@ package cc.minos.bigbluebutton.plugins.users
 			if ( user != null )
 			{
 				user.isLeavingFlag = true;
-				var leftEvent:UsersEvent = new UsersEvent( UsersEvent.LEFT );
-				leftEvent.userID = userID;
-				plugin.dispatchEvent( leftEvent );
+				sendParticipantsEvent( UsersEvent.LEFT, userID );
 				plugin.removeUser( userID );
 			}
 		}
 		
 		public function participantJoined( joinedUser:Object ):void
 		{
+			//Console.logObject( joinedUser );
+			
 			var user:BBBUser = new BBBUser();
 			user.userID = joinedUser.userid;
 			user.name = joinedUser.name;
 			user.role = joinedUser.role;
+			user.externUserID = joinedUser.externUserID;
+			user.isLeavingFlag = false;
 			
-			trace( "登陸用戶信息 [" + user.userID + "," + user.name + "," + user.role + "]" );
+			trace( "User Joined [" + user.userID + "," + user.name + "," + user.role + "]" );
 			plugin.addUser( user );
 			
 			participantStatusChange( user.userID, "hasStream", joinedUser.status.hasStream );
 			participantStatusChange( user.userID, "presenter", joinedUser.status.presenter );
 			participantStatusChange( user.userID, "raiseHand", joinedUser.status.raiseHand );
 			
-			var joinedEvent:UsersEvent = new UsersEvent( UsersEvent.JOINED )
-			joinedEvent.userID = user.userID;
-			plugin.dispatchEvent( joinedEvent );
+			sendParticipantsEvent( UsersEvent.JOINED, user.userID );
 		}
 		
 		/**
@@ -176,15 +177,7 @@ package cc.minos.bigbluebutton.plugins.users
 		 */
 		public function assignPresenter( userid:String, name:String, assignedBy:Number ):void
 		{
-			plugin.connection.call( SET_PRESENTER, new Responder( function( result:Boolean ):void
-				{
-					if ( result )
-					{
-						trace( "Successfully assigned presenter to: " + userid );
-					}
-				}, function( status:Object ):void
-				{
-				} ), userid, name, assignedBy );
+			plugin.connection.call( SET_PRESENTER, responder, userid, name, assignedBy );
 		}
 		
 		// callback
@@ -206,9 +199,7 @@ package cc.minos.bigbluebutton.plugins.users
 			var user:BBBUser = plugin.getUser( userID );
 			if ( user )
 			{
-				var switchEvent:UsersEvent = new UsersEvent( UsersEvent.SWITCHED_PRESENTER );
-				switchEvent.userID = userID;
-				plugin.dispatchEvent( switchEvent );
+				sendParticipantsEvent( UsersEvent.SWITCHED_PRESENTER, userID );
 			}
 		}
 		
@@ -218,9 +209,7 @@ package cc.minos.bigbluebutton.plugins.users
 		 */
 		public function kickUserCallback( userID:String ):void
 		{
-			var kickedEvent:UsersEvent = new UsersEvent( UsersEvent.KICKED );
-			kickedEvent.userID = userID;
-			plugin.dispatchEvent( kickedEvent );
+			sendParticipantsEvent( UsersEvent.KICKED, userID );
 		}
 		
 		/**
@@ -232,7 +221,14 @@ package cc.minos.bigbluebutton.plugins.users
 		public function participantStatusChange( userID:String, status:String, value:Object ):void
 		{
 			trace( "狀態更新 [" + userID + "," + status + "," + value + "]" );
-			plugin.newUserStatus( userID, status , value );
+			plugin.newUserStatus( userID, status, value );
+		}
+		
+		private function sendParticipantsEvent( type:String, userID:String ):void
+		{
+			var event:UsersEvent = new UsersEvent( type );
+			event.userID = userID;
+			plugin.dispatchEvent( event );
 		}
 	}
 

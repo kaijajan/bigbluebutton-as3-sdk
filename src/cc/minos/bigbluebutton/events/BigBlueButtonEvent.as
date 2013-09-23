@@ -1,4 +1,3 @@
-
 package cc.minos.bigbluebutton.events
 {
 	import flash.events.Event;
@@ -9,7 +8,9 @@ package cc.minos.bigbluebutton.events
 	 */
 	public class BigBlueButtonEvent extends Event
 	{
-		public static const USER_LOGGED_IN:String = "successfullyLoggedIn";
+		public static const USER_LOGGED_IN:String = "userLoggedIn";
+		public static const USER_LOGGED_OUT:String = "userLoggedOut";
+		
 		public static const UNKNOWN_REASON:String = "unknownReason";
 		public static const CONNECTION_FAILED:String = "connectionFailed";
 		public static const CONNECTION_CLOSED:String = "connectionClosed";
@@ -17,7 +18,9 @@ package cc.minos.bigbluebutton.events
 		public static const APP_SHUTDOWN:String = "appShutdown";
 		public static const CONNECTION_REJECTED:String = "connectionRejected";
 		public static const ASYNC_ERROR:String = "asyncError";
-		public static const USER_LOGGED_OUT:String = "userHasLoggedOut";
+		
+		public static const NEW_PRIVATE_CHAT:String = "newPrivateChat";
+		public static const NEW_PUBLIC_CHAT:String = "newPublicChat";
 		
 		public var parames:Object = {};
 		

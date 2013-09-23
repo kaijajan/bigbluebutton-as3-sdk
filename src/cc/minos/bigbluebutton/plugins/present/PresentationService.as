@@ -1,10 +1,12 @@
 package cc.minos.bigbluebutton.plugins.present
 {
+	import cc.minos.console.Console;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.events.IOErrorEvent;
 	import flash.net.URLLoader;
 	import flash.net.URLRequest;
+	import flash.system.Security;
 	
 	/**
 	 * ...
@@ -31,18 +33,18 @@ package cc.minos.bigbluebutton.plugins.present
 			urlLoader.addEventListener( Event.COMPLETE, handleComplete );
 			urlLoader.addEventListener( IOErrorEvent.IO_ERROR, handleIOErrorEvent );
 			urlLoader.load( new URLRequest( url ) );
+			
 		}
 		
 		private function handleComplete( e:Event ):void
 		{
-			//trace( "Loading complete" );
 			parse( new XML( e.target.data ) );
 			clean();
 		}
 		
 		private function handleIOErrorEvent( e:IOErrorEvent ):void
 		{
-			trace( e.toString() );
+			Console.log( e.toString() );
 			clean();
 		}
 		
@@ -57,10 +59,10 @@ package cc.minos.bigbluebutton.plugins.present
 		{
 			var list:XMLList = xml.presentation.slides.slide;
 			var item:XML;
-			trace( "Slides: " + xml );
+			//Console.log( "Slides: " + xml );
 			
 			var presentationName:String = xml.presentation[ 0 ].@name;
-			trace( "PresentationService::parse()...  presentationName=" + presentationName );
+			Console.log( "presentationName=" + presentationName );
 			
 			// Make sure we start with a clean set.
 			slides.length = 0;
@@ -101,7 +103,7 @@ package cc.minos.bigbluebutton.plugins.present
 			
 			for each ( item in list )
 			{
-				trace( "Available Modules: " + item.toXMLString() + " at " + item.text() );
+				Console.log( "Available Modules: " + item.toXMLString() + " at " + item.text() );
 			}
 		}
 		
@@ -113,7 +115,7 @@ package cc.minos.bigbluebutton.plugins.present
 		 */
 		public function fault( event:Object ):void
 		{
-			trace( "Got fault [" + event.fault.toString() + "]" );
+			Console.log( "Got fault [" + event.fault.toString() + "]" );
 		}
 	
 	}

@@ -63,7 +63,7 @@ package cc.minos.bigbluebutton.plugins
 			portTest.connect();
 		}
 		
-		public function get protocol():String 
+		public function get protocol():String
 		{
 			return bbb.conferenceParameters.protocol;
 		}

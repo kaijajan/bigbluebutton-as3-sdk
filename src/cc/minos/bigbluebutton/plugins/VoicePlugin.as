@@ -15,7 +15,6 @@ package cc.minos.bigbluebutton.plugins
 		private var connectionManager:ConnectionManager;
 		private var streamManager:StreamManager;
 		
-		private var me:BBBUser;
 		private var onCall:Boolean = false;
 		private var rejoining:Boolean = false;
 		private var userHangup:Boolean = false;
@@ -62,9 +61,8 @@ package cc.minos.bigbluebutton.plugins
 			//left ? rejoin
 		}
 		
-		override public function start():void 
+		override public function start():void
 		{
-			me = bbb.plugins[ 'users' ].getMe();
 			if ( me == null )
 			{
 				return;
@@ -76,16 +74,14 @@ package cc.minos.bigbluebutton.plugins
 			connectionManager.connect( uid, me.externUserID, uname, bbb.conferenceParameters.room, uri );
 		}
 		
-		/*public function rejoin():void
-		   {
-		   if ( !rejoining && !userHangup )
-		   {
-		   // We got disconnected and it's not because the user requested it. Let's rejoin the conference.
-		   trace( "Rejoining the conference" );
-		   rejoining = true;
-		   join();
-		   }
-		 }*/
+		public function rejoin():void
+		{
+			if ( !rejoining && !userHangup )
+			{
+				rejoining = true;
+				start();
+			}
+		}
 		
 		private function setupMic():void
 		{
@@ -95,9 +91,8 @@ package cc.minos.bigbluebutton.plugins
 				streamManager.initMicrophone();
 		}
 		
-		override public function stop():void 
+		override public function stop():void
 		{
-			//userHangup = true;
 			if ( onCall )
 			{
 				streamManager.stopStreams();
@@ -109,6 +104,11 @@ package cc.minos.bigbluebutton.plugins
 		public function noMicrophone():Boolean
 		{
 			return (( Microphone.getMicrophone() == null ) || ( Microphone.names.length == 0 ) || (( Microphone.names.length == 1 ) && ( Microphone.names[ 0 ] == "Unknown Microphone" ) ) );
+		}
+		
+		private function get me():BBBUser
+		{
+			return bbb.plugins[ 'users' ].getMe();
 		}
 	}
 }

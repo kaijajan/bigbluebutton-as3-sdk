@@ -211,7 +211,7 @@ package cc.minos.bigbluebutton.plugins.test
 				p_bw = rest[ 0 ];
 			// your application should do something here 
 			// when the bandwidth check is complete 
-			trace( "bandwidth = " + p_bw + " Kbps." );
+			//trace( "bandwidth = " + p_bw + " Kbps." );
 		}
 		
 		public function addConnectionSuccessListener( listener:Function ):void

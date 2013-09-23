@@ -7,6 +7,8 @@ package cc.minos.bigbluebutton.plugins.present.events
 		public static const PRESENTATION_LOADED:String = "Presentation Loaded";
 		public static const PRESENTATION_NOT_LOADED:String = "Presentation Not Loaded";
 		
+		public static const PRESENTATION_ADDED_EVENT:String = "presentationAdded";
+		
 		// Tell the server to remove the presentation.
 		public static const REMOVE_PRESENTATION_EVENT:String = "Remove Presentation Event";
 		

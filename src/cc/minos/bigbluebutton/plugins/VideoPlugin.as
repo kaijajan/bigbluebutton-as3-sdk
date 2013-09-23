@@ -4,6 +4,7 @@ package cc.minos.bigbluebutton.plugins
 	import cc.minos.bigbluebutton.model.BBBUser;
 	import cc.minos.bigbluebutton.plugins.users.UsersEvent;
 	import cc.minos.bigbluebutton.plugins.video.*;
+	import cc.minos.console.Console;
 	import flash.events.ActivityEvent;
 	import flash.events.StatusEvent;
 	import flash.media.Camera;
@@ -15,13 +16,11 @@ package cc.minos.bigbluebutton.plugins
 	 */
 	public class VideoPlugin extends Plugin
 	{
-		private var options:VideoOptions;
+		public var options:VideoOptions;
 		private var proxy:VideoProxy;
 		
 		private var _camera:Camera;
 		private var streamName:String;
-		private var camWidth:Number = 320;
-		private var camHeight:Number = 240;
 		
 		public function VideoPlugin( options:VideoOptions = null )
 		{
@@ -36,10 +35,8 @@ package cc.minos.bigbluebutton.plugins
 		
 		override public function init():void
 		{
-			proxy = new VideoProxy( this, options );
+			proxy = new VideoProxy( this );
 			
-			camWidth = options.videoWidth;
-			camHeight = options.videoHeight;
 			if ( bbb.hasPlugin( "users" ) )
 				bbb.getPlugin( "users" ).addEventListener( UsersEvent.SWITCHED_PRESENTER, onSwitchedPresenter );
 		}
@@ -64,7 +61,7 @@ package cc.minos.bigbluebutton.plugins
 			{
 				stopPublish();
 			}
-			trace( name + " switched presenter" );
+			Console.log( e.userID + " 獲得演講者權限" );
 		}
 		
 		override public function start():void
@@ -85,7 +82,6 @@ package cc.minos.bigbluebutton.plugins
 			if ( !me.presenter )
 				return;
 			
-			//close video window
 			if ( stupCamera() )
 			{
 				proxy.startPublishing( _camera, streamName );
@@ -113,18 +109,18 @@ package cc.minos.bigbluebutton.plugins
 				_camera.addEventListener( StatusEvent.STATUS, onStatusEvent );
 				
 				_camera.setKeyFrameInterval( options.camKeyFrameInterval );
-				_camera.setMode( camWidth, camHeight, options.camModeFps );
+				_camera.setMode( options.videoWidth, options.videoHeight, options.camModeFps );
 				_camera.setQuality( options.camQualityBandwidth, options.videoQuality );
 				
 				var d:Date = new Date();
 				var curTime:Number = d.getTime();
 				var uid:String = me.userID;
-				var res:String = camWidth + "x" + camHeight;
+				var res:String = options.videoWidth + "x" + options.videoHeight;
 				this.streamName = res.concat( "-" + uid ) + "-" + curTime;
-				trace( 'setup camera success, it can publish video stream' );
+				Console.log( '設置攝像頭成功' );
 				return true;
 			}
-			trace( "you must have a camera." );
+			Console.log( "沒有檢測到攝像頭" );
 			return false;
 		}
 		
@@ -132,7 +128,7 @@ package cc.minos.bigbluebutton.plugins
 		{
 			if ( e.activating )
 			{
-				trace( "camera activating: " + e.activating );
+				//trace( "camera activating: " + e.activating );
 			}
 		}
 		

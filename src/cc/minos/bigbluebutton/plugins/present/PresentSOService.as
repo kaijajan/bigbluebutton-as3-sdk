@@ -1,10 +1,13 @@
 package cc.minos.bigbluebutton.plugins.present
 {
+	import cc.minos.bigbluebutton.events.MadePresenterEvent;
 	import cc.minos.bigbluebutton.plugins.present.events.*;
 	import cc.minos.bigbluebutton.plugins.PresentPlugin;
+	import cc.minos.console.Console;
 	import flash.events.AsyncErrorEvent;
 	import flash.events.NetStatusEvent;
 	import flash.events.SyncEvent;
+	import flash.net.NetConnection;
 	import flash.net.Responder;
 	import flash.net.SharedObject;
 	
@@ -26,6 +29,13 @@ package cc.minos.bigbluebutton.plugins.present
 		private static const CONVERSION_COMPLETED_KEY:String = "CONVERSION_COMPLETED";
 		
 		private static const SO_NAME:String = "presentationSO";
+		private static const SEND_CURSOR_UPDATE:String = "presentation.sendCursorUpdate";
+		private static const RESIZE_AND_MOVE_SLIDE:String = "presentation.resizeAndMoveSlide";
+		private static const REMOVE_PRESENTATION:String = "presentation.removePresentation";
+		private static const GET_PRESENTATION_INFO:String = "presentation.getPresentationInfo";
+		private static const GOTO_SLIDE:String = "presentation.gotoSlide";
+		private static const SHARE_PRESENTATION:String = "presentation.sharePresentation";
+		
 		private static const PRESENTER:String = "presenter";
 		private static const SHARING:String = "sharing";
 		private static const UPDATE_MESSAGE:String = "updateMessage";
@@ -33,6 +43,7 @@ package cc.minos.bigbluebutton.plugins.present
 		
 		private var _presentationSO:SharedObject;
 		private var plugin:PresentPlugin;
+		private var connection:NetConnection;
 		private var currentSlide:Number = -1;
 		
 		public function PresentSOService( plugin:PresentPlugin )
@@ -42,12 +53,13 @@ package cc.minos.bigbluebutton.plugins.present
 		
 		public function connect():void
 		{
+			connection = plugin.connection;
 			_presentationSO = SharedObject.getRemote( SO_NAME, plugin.uri, false );
 			_presentationSO.client = this;
 			_presentationSO.addEventListener( SyncEvent.SYNC, syncHandler );
 			_presentationSO.addEventListener( NetStatusEvent.NET_STATUS, netStatusHandler );
 			_presentationSO.addEventListener( AsyncErrorEvent.ASYNC_ERROR, asyncErrorHandler );
-			_presentationSO.connect( plugin.connection );
+			_presentationSO.connect( connection );
 		}
 		
 		public function disconnect():void
@@ -68,6 +80,13 @@ package cc.minos.bigbluebutton.plugins.present
 			move( xOffset, yOffset, widthRatio, heightRatio );
 		}
 		
+		/**
+		 *
+		 * @param	xOffset
+		 * @param	yOffset
+		 * @param	widthRatio
+		 * @param	heightRatio
+		 */
 		public function zoomCallback( xOffset:Number, yOffset:Number, widthRatio:Number, heightRatio:Number ):void
 		{
 			var e:ZoomEvent = new ZoomEvent( ZoomEvent.ZOOM );
@@ -85,7 +104,7 @@ package cc.minos.bigbluebutton.plugins.present
 		 */
 		public function sendCursorUpdate( xPercent:Number, yPercent:Number ):void
 		{
-			plugin.connection.call( "presentation.sendCursorUpdate", new Responder( function( result:Boolean ):void
+			connection.call( SEND_CURSOR_UPDATE, new Responder( function( result:Boolean ):void
 				{
 					if ( result )
 					{
@@ -94,15 +113,14 @@ package cc.minos.bigbluebutton.plugins.present
 				}, function( status:Object ):void
 				{
 				} ), xPercent, yPercent );
-		
 		}
 		
 		public function updateCursorCallback( xPercent:Number, yPercent:Number ):void
 		{
-			var e:CursorEvent = new CursorEvent( CursorEvent.UPDATE_CURSOR );
-			e.xPercent = xPercent;
-			e.yPercent = yPercent;
-			plugin.dispatchEvent( e );
+			//var e:CursorEvent = new CursorEvent( CursorEvent.UPDATE_CURSOR );
+			//e.xPercent = xPercent;
+			//e.yPercent = yPercent;
+			//plugin.dispatchEvent( e );
 		}
 		
 		/**
@@ -130,7 +148,7 @@ package cc.minos.bigbluebutton.plugins.present
 		 */
 		public function move( xOffset:Number, yOffset:Number, widthRatio:Number, heightRatio:Number ):void
 		{
-			plugin.connection.call( "presentation.resizeAndMoveSlide", new Responder( function( result:Boolean ):void
+			connection.call( RESIZE_AND_MOVE_SLIDE, new Responder( function( result:Boolean ):void
 				{
 					if ( result )
 					{
@@ -166,26 +184,26 @@ package cc.minos.bigbluebutton.plugins.present
 		 */
 		private function queryPresenterForSlideInfo():void
 		{
-			//trace( "Query for slide info" );
+			trace( "Query for slide info" );
 			_presentationSO.send( "whatIsTheSlideInfo", plugin.userID );
 		}
 		
 		public function whatIsTheSlideInfo( userid:Number ):void
 		{
-			//trace( "Rx Query for slide info" );
+			trace( "Rx Query for slide info" );
 			if ( plugin.presenter )
 			{
-				//trace( "User Query for slide info" );
+				trace( "User Query for slide info" );
 				_presentationSO.send( "whatIsTheSlideInfoReply", userid, presenterViewedRegionX, presenterViewedRegionY, presenterViewedRegionW, presenterViewedRegionH );
 			}
 		}
 		
 		public function whatIsTheSlideInfoReply( userId:Number, xOffset:Number, yOffset:Number, widthRatio:Number, heightRatio:Number ):void
 		{
-			//trace( "Rx whatIsTheSlideInfoReply" );
+			trace( "Rx whatIsTheSlideInfoReply" );
 			if ( plugin.userID == userId.toString() )
 			{
-				//trace( "Got reply for Query for slide info: ", userId, xOffset, yOffset, widthRatio, heightRatio );
+				trace( "Got reply for Query for slide info: ", userId, xOffset, yOffset, widthRatio, heightRatio );
 				var e:MoveEvent = new MoveEvent( MoveEvent.CUR_SLIDE_SETTING );
 				e.xOffset = xOffset;
 				e.yOffset = yOffset;
@@ -235,7 +253,7 @@ package cc.minos.bigbluebutton.plugins.present
 		
 		public function removePresentation( name:String ):void
 		{
-			plugin.connection.call( "presentation.removePresentation", new Responder( function( result:Boolean ):void
+			connection.call( REMOVE_PRESENTATION, new Responder( function( result:Boolean ):void
 				{
 					if ( result )
 					{
@@ -264,23 +282,23 @@ package cc.minos.bigbluebutton.plugins.present
 		
 		public function getPresentationInfo():void
 		{
-			plugin.connection.call( "presentation.getPresentationInfo", new Responder( function( result:Object ):void
+			plugin.connection.call( GET_PRESENTATION_INFO, new Responder( function( result:Object ):void
 				{
-					trace( "Successfully querried for presentation information." );
+					Console.log( "Successfully querried for presentation information." );
 					if ( result.presenter.hasPresenter )
 					{
-						//plugin.dispatchEvent( new MadePresenterEvent( MadePresenterEvent.SWITCH_TO_VIEWER_MODE ) );
+						plugin.dispatchEvent( new MadePresenterEvent( MadePresenterEvent.SWITCH_TO_VIEWER_MODE ) );
 					}
 					
 					if ( result.presentation.xOffset )
 					{
-						trace( "Sending presenters slide settings" );
+						Console.log( "Sending presenters slide settings" );
 						var e:MoveEvent = new MoveEvent( MoveEvent.CUR_SLIDE_SETTING );
 						e.xOffset = Number( result.presentation.xOffset );
 						e.yOffset = Number( result.presentation.yOffset );
 						e.slideToCanvasWidthRatio = Number( result.presentation.widthRatio );
 						e.slideToCanvasHeightRatio = Number( result.presentation.heightRatio );
-						trace( "****presenter settings [" + e.xOffset + "," + e.yOffset + "," + e.slideToCanvasWidthRatio + "," + e.slideToCanvasHeightRatio + "]" );
+						Console.log( "****presenter settings [" + e.xOffset + "," + e.yOffset + "," + e.slideToCanvasWidthRatio + "," + e.slideToCanvasHeightRatio + "]" );
 						plugin.dispatchEvent( e );
 					}
 					if ( result.presentations )
@@ -288,8 +306,11 @@ package cc.minos.bigbluebutton.plugins.present
 						for ( var p:Object in result.presentations )
 						{
 							var u:Object = result.presentations[ p ]
-							trace( "Presentation name " + u as String );
-							plugin.updatePresentationNames( u as String );
+							Console.log( "Presentation name " + u as String );
+							//var 
+							var added:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_ADDED_EVENT );
+							added.presentationName = u as String;
+							plugin.dispatchEvent( added );
 						}
 					}
 					
@@ -299,7 +320,7 @@ package cc.minos.bigbluebutton.plugins.present
 					if ( result.presentation.sharing )
 					{
 						currentSlide = Number( result.presentation.slide );
-						trace( "The presenter has shared slides and showing slide " + currentSlide );
+						Console.log( "The presenter has shared slides and showing slide " + currentSlide );
 						var shareEvent:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_READY );
 						shareEvent.presentationName = String( result.presentation.currentPresentation );
 						plugin.dispatchEvent( shareEvent );
@@ -319,31 +340,17 @@ package cc.minos.bigbluebutton.plugins.present
 		 */
 		public function triggerSwitchPresenter():void
 		{
-		/*var meeting:Conference = UserManager.getInstance().getConference();
-		   if ( meeting.amIPresenter() )
-		   {
-		   LogUtil.debug( "trigger Switch to Presenter mode " );
-		   var e:MadePresenterEvent = new MadePresenterEvent( MadePresenterEvent.SWITCH_TO_PRESENTER_MODE );
-		   e.userid = meeting.getMyUserId();
-		   e.presenterName = meeting.getMyName();
-		   e.assignerBy = meeting.getMyUserId();
-		   dispatcher.dispatchEvent( e );
-		   }
-		   else
-		   {
-		
-		   var p:BBBUser = meeting.getPresenter();
-		   if ( p != null )
-		   {
-		   LogUtil.debug( "trigger Switch to Viewer mode " );
-		   var viewerEvent:MadePresenterEvent = new MadePresenterEvent( MadePresenterEvent.SWITCH_TO_VIEWER_MODE );
-		   viewerEvent.userid = p.userid;
-		   viewerEvent.presenterName = p.name;
-		   viewerEvent.assignerBy = p.userid;
-		
-		   dispatcher.dispatchEvent( viewerEvent );
-		   }
-		 }*/
+			var event:MadePresenterEvent;
+			if ( plugin.presenter )
+			{
+				event = new MadePresenterEvent( MadePresenterEvent.SWITCH_TO_PRESENTER_MODE );
+			}
+			else
+			{
+				event = new MadePresenterEvent( MadePresenterEvent.SWITCH_TO_VIEWER_MODE );
+			}
+			event.userID = plugin.userID;
+			plugin.dispatchEvent( event );
 		}
 		
 		/**
@@ -353,17 +360,16 @@ package cc.minos.bigbluebutton.plugins.present
 		 */
 		public function gotoSlide( num:int ):void
 		{
-			plugin.connection.call( "presentation.gotoSlide", // Remote function name
-				new Responder( function( result:Boolean ):void
+			connection.call( GOTO_SLIDE, // Remote function name
+				new Responder( function( result:Object ):void
 				{
-					trace( result );
 					if ( result )
 					{
 						trace( "Successfully moved page to: " + num );
 					}
 				}, function( status:Object ):void
 				{
-					trace( status );
+				//trace( status );
 				} ), num );
 		}
 		
@@ -392,8 +398,8 @@ package cc.minos.bigbluebutton.plugins.present
 		
 		public function sharePresentation( share:Boolean, presentationName:String ):void
 		{
-			trace( "PresentationSOService::sharePresentation()... presentationName=" + presentationName );
-			plugin.connection.call( "presentation.sharePresentation", // Remote function name
+			Console.log( "sharePresentation presentationName=" + presentationName );
+			connection.call( SHARE_PRESENTATION, // Remote function name
 				new Responder( function( result:Boolean ):void
 				{
 					if ( result )
@@ -410,7 +416,7 @@ package cc.minos.bigbluebutton.plugins.present
 		
 		public function sharePresentationCallback( presentationName:String, share:Boolean ):void
 		{
-			trace( "sharePresentationCallback " + presentationName + "," + share );
+			Console.log( "sharePresentationCallback " + presentationName + "," + share );
 			if ( share )
 			{
 				var e:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_READY );
@@ -419,15 +425,13 @@ package cc.minos.bigbluebutton.plugins.present
 			}
 			else
 			{
-				clearPresentation();
-				//plugin.dispatchEvent( new UploadEvent( UploadEvent.CLEAR_PRESENTATION ) );
-				//removePresentation( presentationName );
+				plugin.dispatchEvent( new UploadEvent( UploadEvent.CLEAR_PRESENTATION ) );
 			}
 		}
 		
 		public function removePresentationCallback( presentationName:String ):void
 		{
-			trace( "removePresentationCallback " + presentationName );
+			Console.log( "removePresentationCallback " + presentationName );
 			var removeEvent:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_REMOVED_EVENT );
 			removeEvent.presentationName = presentationName;
 			plugin.dispatchEvent( removeEvent );
@@ -435,7 +439,7 @@ package cc.minos.bigbluebutton.plugins.present
 		
 		public function pageCountExceededUpdateMessageCallback( conference:String, room:String, code:String, presentationName:String, messageKey:String, numberOfPages:Number, maxNumberOfPages:Number ):void
 		{
-			trace( "pageCountExceededUpdateMessageCallback:Received update message " + messageKey );
+			Console.log( "Received update message " + messageKey );
 			var uploadEvent:UploadEvent = new UploadEvent( UploadEvent.PAGE_COUNT_EXCEEDED );
 			uploadEvent.maximumSupportedNumberOfSlides = maxNumberOfPages;
 			plugin.dispatchEvent( uploadEvent );
@@ -443,7 +447,7 @@ package cc.minos.bigbluebutton.plugins.present
 		
 		public function generatedSlideUpdateMessageCallback( conference:String, room:String, code:String, presentationName:String, messageKey:String, numberOfPages:Number, pagesCompleted:Number ):void
 		{
-			trace( "CONVERTING = [" + pagesCompleted + " of " + numberOfPages + "]" );
+			Console.log( "CONVERTING = [" + pagesCompleted + " of " + numberOfPages + "]" );
 			var uploadEvent:UploadEvent = new UploadEvent( UploadEvent.CONVERT_UPDATE );
 			uploadEvent.totalSlides = numberOfPages;
 			uploadEvent.completedSlides = pagesCompleted;
@@ -452,7 +456,7 @@ package cc.minos.bigbluebutton.plugins.present
 		
 		public function conversionCompletedUpdateMessageCallback( conference:String, room:String, code:String, presentationName:String, messageKey:String, slidesInfo:String ):void
 		{
-			trace( "conversionCompletedUpdateMessageCallback:Received update message " + messageKey );
+			Console.log( "Received update message " + messageKey );
 			var readyEvent:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_READY );
 			readyEvent.presentationName = presentationName;
 			plugin.dispatchEvent( readyEvent );
@@ -460,7 +464,7 @@ package cc.minos.bigbluebutton.plugins.present
 		
 		public function conversionUpdateMessageCallback( conference:String, room:String, code:String, presentationName:String, messageKey:String ):void
 		{
-			trace( "conversionUpdateMessageCallback:Received update message " + messageKey );
+			Console.log( "Received update message " + messageKey );
 			var totalSlides:Number;
 			var completedSlides:Number;
 			var message:String;
@@ -492,10 +496,10 @@ package cc.minos.bigbluebutton.plugins.present
 					plugin.dispatchEvent( uploadEvent );
 					break;
 				case GENERATED_THUMBNAIL_KEY: 
-					trace( "conversionUpdateMessageCallback:GENERATED_THUMBNAIL_KEY " + messageKey );
+					trace( "GENERATED_THUMBNAIL_KEY " + messageKey );
 					break;
 				default: 
-					trace( "conversionUpdateMessageCallback:Unknown message " + messageKey );
+					trace( "Unknown message " + messageKey );
 					break;
 			}
 		}
@@ -532,7 +536,6 @@ package cc.minos.bigbluebutton.plugins.present
 					break;
 				case "NetConnection.Connect.Closed": 
 					trace( "Connection to PresentSO was closed." );
-					//notifyConnectionStatusListener( false, _soErrors );
 					break;
 				case "NetConnection.Connect.InvalidApp": 
 					trace( "PresentSO not found in server" );
