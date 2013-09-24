@@ -1,10 +1,9 @@
 package cc.minos.bigbluebutton.plugins.voice
 {
+	import cc.minos.bigbluebutton.plugins.VoicePlugin;
 	import cc.minos.utils.VersionUtil;
 	import flash.events.ActivityEvent;
 	import flash.events.AsyncErrorEvent;
-	import flash.events.EventDispatcher;
-	import flash.events.IEventDispatcher;
 	import flash.events.NetStatusEvent;
 	import flash.events.StatusEvent;
 	import flash.media.Microphone;
@@ -15,9 +14,30 @@ package cc.minos.bigbluebutton.plugins.voice
 	import flash.net.NetStream;
 	import flash.system.Capabilities;
 	
-	public class StreamManager extends EventDispatcher
+	/**
+	 *
+	 * @eventType cc.minos.bigbluebutton.plugins.voice.MicrophoneEvent.MICROPHONE_UNAVAIL_EVENT
+	 */
+	[Event( name="micUnavail",type="cc.minos.bigbluebutton.plugins.voice.MicrophoneEvent" )]
+	
+	/**
+	 *
+	 * @eventType cc.minos.bigbluebutton.plugins.voice.MicrophoneEvent.MIC_ACCESS_ALLOWED_EVENT
+	 */
+	[Event( name="micAccessAllowed",type="cc.minos.bigbluebutton.plugins.voice.MicrophoneEvent" )]
+	
+	/**
+	 *
+	 * @eventType cc.minos.bigbluebutton.plugins.voice.MicrophoneEvent.MIC_ACCESS_DENIED_EVENT
+	 */
+	[Event( name="micAccessDenied",type="cc.minos.bigbluebutton.plugins.voice.MicrophoneEvent" )]
+	
+	/**
+	 *
+	 */
+	public class StreamManager
 	{
-		public var connection:NetConnection = null;
+		private var connection:NetConnection = null;
 		private var incomingStream:NetStream = null
 		private var outgoingStream:NetStream = null;
 		private var publishName:String = null;
@@ -25,17 +45,27 @@ package cc.minos.bigbluebutton.plugins.voice
 		private var isCallConnected:Boolean = false;
 		private var muted:Boolean = false;
 		private var audioCodec:String = "SPEEX";
+		private var plugin:VoicePlugin;
 		
-		public function StreamManager()
+		public function StreamManager( plugin:VoicePlugin )
 		{
+			this.plugin = plugin;
 		}
 		
+		/**
+		 * 語音服務器連接成功後設置
+		 * @param	connection
+		 */
 		public function setConnection( connection:NetConnection ):void
 		{
 			this.connection = connection;
 		}
 		
-		public function initMicrophone( enabledEchoCancel:Boolean = true ):void
+		/**
+		 *
+		 * @param	enabledEchoCancel
+		 */
+		public function initMicrophone():void
 		{
 			mic = Microphone.getMicrophone( -1 );
 			if ( mic == null )
@@ -44,14 +74,18 @@ package cc.minos.bigbluebutton.plugins.voice
 			}
 			else
 			{
-				setupMicrophone( enabledEchoCancel );
+				setupMicrophone();
 				mic.addEventListener( StatusEvent.STATUS, micStatusHandler );
 			}
 		}
 		
-		private function setupMicrophone( enabledEchoCancel:Boolean = true ):void
+		/**
+		 *
+		 * @param	enabledEchoCancel
+		 */
+		private function setupMicrophone():void
 		{
-			if (( VersionUtil.getFlashPlayerVersion() >= 10.3 ) && enabledEchoCancel )
+			if (( VersionUtil.getFlashPlayerVersion() >= 10.3 ) && plugin.options.enabledEchoCancel )
 			{
 				trace( "Using acoustic echo cancellation." );
 				mic = Microphone( Microphone[ "getEnhancedMicrophone" ]() );
@@ -87,26 +121,39 @@ package cc.minos.bigbluebutton.plugins.voice
 			mic.gain = 60;
 		}
 		
+		/**
+		 *
+		 */
 		public function initWithNoMicrophone():void
 		{
-			dispatchEvent( new MicrophoneEvent( MicrophoneEvent.MICROPHONE_UNAVAIL_EVENT ) );
+			plugin.dispatchEvent( new MicrophoneEvent( MicrophoneEvent.MICROPHONE_UNAVAIL_EVENT ) );
 		}
 		
+		/**
+		 *
+		 * @param	event
+		 */
 		private function micStatusHandler( event:StatusEvent ):void
 		{
 			switch ( event.code )
 			{
 				case "Microphone.Muted": 
-					dispatchEvent( new MicrophoneEvent( MicrophoneEvent.MIC_ACCESS_DENIED_EVENT ) );
+					plugin.dispatchEvent( new MicrophoneEvent( MicrophoneEvent.MIC_ACCESS_DENIED_EVENT ) );
 					break;
 				case "Microphone.Unmuted": 
-					dispatchEvent( new MicrophoneEvent( MicrophoneEvent.MIC_ACCESS_ALLOWED_EVENT ) );
+					plugin.dispatchEvent( new MicrophoneEvent( MicrophoneEvent.MIC_ACCESS_ALLOWED_EVENT ) );
 					break;
 				default: 
 					trace( "unknown micStatusHandler event: " + event );
 			}
 		}
 		
+		/**
+		 *
+		 * @param	playStreamName
+		 * @param	publishStreamName
+		 * @param	codec
+		 */
 		public function callConnected( playStreamName:String, publishStreamName:String, codec:String ):void
 		{
 			isCallConnected = true;
@@ -123,11 +170,19 @@ package cc.minos.bigbluebutton.plugins.voice
 			publish( publishStreamName );
 		}
 		
+		/**
+		 *
+		 * @param	playStreamName
+		 */
 		private function play( playStreamName:String ):void
 		{
 			incomingStream.play( playStreamName );
 		}
 		
+		/**
+		 *
+		 * @param	publishStreamName
+		 */
 		private function publish( publishStreamName:String ):void
 		{
 			if ( mic != null )
@@ -136,6 +191,9 @@ package cc.minos.bigbluebutton.plugins.voice
 				trace( "SM publish: No Microphone to publish" );
 		}
 		
+		/**
+		 *
+		 */
 		private function setupIncomingStream():void
 		{
 			incomingStream = new NetStream( connection );
@@ -224,7 +282,7 @@ package cc.minos.bigbluebutton.plugins.voice
 					break;
 				default: 
 			}
-			dispatchEvent( event );
+			plugin.dispatchEvent( event );
 		}
 		
 		private function asyncErrorHandler( event:AsyncErrorEvent ):void
@@ -241,6 +299,6 @@ package cc.minos.bigbluebutton.plugins.voice
 		{
 			trace( "Recieve ON METADATA from SIP" );
 		}
-		
+	
 	}
 }

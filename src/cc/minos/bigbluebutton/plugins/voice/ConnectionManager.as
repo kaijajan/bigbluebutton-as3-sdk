@@ -1,30 +1,42 @@
 package cc.minos.bigbluebutton.plugins.voice
 {
+	import cc.minos.bigbluebutton.plugins.VoicePlugin;
 	import flash.events.AsyncErrorEvent;
 	import flash.events.Event;
-	import flash.events.EventDispatcher;
-	import flash.events.IEventDispatcher;
 	import flash.events.NetStatusEvent;
 	import flash.events.SecurityErrorEvent;
 	import flash.external.*;
 	import flash.net.NetConnection;
 	import flash.net.NetStream;
 	
-	public class ConnectionManager extends EventDispatcher
+	/**
+	 * 音頻連接管理器
+	 */
+	public class ConnectionManager
 	{
+		/** 網絡連接 */
 		private var netConnection:NetConnection = null;
+		/** 輸入流 */
 		private var incomingNetStream:NetStream = null;
+		/** 輸出流 */
 		private var outgoingNetStream:NetStream = null;
+		/** 用戶名 */
 		private var username:String;
+		/** 服務器地址 */
 		private var uri:String;
+		/** */
 		private var uid:String;
+		/** 房間id */
 		private var room:String;
-		
+		/** 是否已經連接到服務器 */
 		private var isConnected:Boolean = false;
+		/** */
 		private var registered:Boolean = false;
+		private var plugin:VoicePlugin;
 		
-		public function ConnectionManager():void
+		public function ConnectionManager( plugin:VoicePlugin ):void
 		{
+			this.plugin = plugin;
 		}
 		
 		public function get connection():NetConnection
@@ -32,6 +44,14 @@ package cc.minos.bigbluebutton.plugins.voice
 			return netConnection;
 		}
 		
+		/**
+		 * 開始連接語音服務器
+		 * @param	uid
+		 * @param	externUID
+		 * @param	username
+		 * @param	room
+		 * @param	uri
+		 */
 		public function connect( uid:String, externUID:String, username:String, room:String, uri:String ):void
 		{
 			if ( isConnected )
@@ -45,6 +65,11 @@ package cc.minos.bigbluebutton.plugins.voice
 			connectToServer( externUID, username );
 		}
 		
+		/**
+		 *
+		 * @param	externUID
+		 * @param	username
+		 */
 		private function connectToServer( externUID:String, username:String ):void
 		{
 			NetConnection.defaultObjectEncoding = flash.net.ObjectEncoding.AMF0;
@@ -55,11 +80,18 @@ package cc.minos.bigbluebutton.plugins.voice
 			netConnection.connect( uri, externUID, username );
 		}
 		
+		/**
+		 * 斷開服務器
+		 */
 		public function disconnect():void
 		{
 			netConnection.close();
 		}
 		
+		/**
+		 * 連接狀態處理
+		 * @param	evt
+		 */
 		private function netStatus( evt:NetStatusEvent ):void
 		{
 			if ( evt.info.code == "NetConnection.Connect.Success" )
@@ -68,7 +100,7 @@ package cc.minos.bigbluebutton.plugins.voice
 				trace( "Successfully connected to voice application." );
 				event.status = ConnectionStatusEvent.SUCCESS;
 				trace( "Dispatching " + event.status );
-				dispatchEvent( event );
+				plugin.dispatchEvent( event );
 				
 			}
 			else if ( evt.info.code == "NetConnection.Connect.NetworkChange" )
@@ -94,7 +126,6 @@ package cc.minos.bigbluebutton.plugins.voice
 		
 		public function call():void
 		{
-			//LogUtil.debug( "in call - Calling " + room );
 			doCall( room );
 		}
 		
@@ -106,16 +137,16 @@ package cc.minos.bigbluebutton.plugins.voice
 		public function failedToJoinVoiceConferenceCallback( msg:String ):*
 		{
 			trace( "failedToJoinVoiceConferenceCallback " + msg );
-			var event:CallDisconnectedEvent = new CallDisconnectedEvent();
-			dispatchEvent( event );
+			var disEvent:ConnectionEvent = new ConnectionEvent( ConnectionEvent.CALL_DISCONNECTED );
+			plugin.dispatchEvent( disEvent );
 			isConnected = false;
 		}
 		
 		public function disconnectedFromJoinVoiceConferenceCallback( msg:String ):*
 		{
 			trace( "disconnectedFromJoinVoiceConferenceCallback " + msg );
-			var event:CallDisconnectedEvent = new CallDisconnectedEvent();
-			dispatchEvent( event );
+			var disEvent:ConnectionEvent = new ConnectionEvent( ConnectionEvent.CALL_DISCONNECTED );
+			plugin.dispatchEvent( disEvent );
 			isConnected = false;
 		}
 		
@@ -123,11 +154,11 @@ package cc.minos.bigbluebutton.plugins.voice
 		{
 			trace( "successfullyJoinedVoiceConferenceCallback " + publishName + " : " + playName + " : " + codec );
 			isConnected = true;
-			var event:CallConnectedEvent = new CallConnectedEvent();
+			var event:ConnectionEvent = new ConnectionEvent( ConnectionEvent.CALL_CONNECTED );
 			event.publishStreamName = publishName;
 			event.playStreamName = playName;
 			event.codec = codec;
-			dispatchEvent( event );
+			plugin.dispatchEvent( event );
 		}
 		
 		//********************************************************************************************
@@ -135,6 +166,8 @@ package cc.minos.bigbluebutton.plugins.voice
 		//			SIP Actions
 		//
 		//********************************************************************************************		
+		
+		
 		public function doCall( dialStr:String ):void
 		{
 			trace( "in doCall - Calling " + dialStr );
@@ -162,7 +195,7 @@ package cc.minos.bigbluebutton.plugins.voice
 				p_bw = rest[ 0 ];
 			// your application should do something here 
 			// when the bandwidth check is complete 
-			trace( "bandwidth = " + p_bw + " Kbps." );
+			//trace( "bandwidth = " + p_bw + " Kbps." );
 		}
 	}
 }

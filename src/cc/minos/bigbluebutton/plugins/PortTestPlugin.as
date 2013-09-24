@@ -3,7 +3,8 @@ package cc.minos.bigbluebutton.plugins
 	import cc.minos.bigbluebutton.plugins.test.*;
 	
 	/**
-	 * ...
+	 * 端口測試應用（非必須）
+	 * 根據測試設定連接的協議
 	 * @author Minos
 	 */
 	public class PortTestPlugin extends Plugin
@@ -17,13 +18,21 @@ package cc.minos.bigbluebutton.plugins
 			this.name = '[PortTestPlugin]';
 		}
 		
+		/**
+		 * 測試返回結果處理
+		 * @param	status			:	狀態（成功|失敗）
+		 * @param	protocol		:	協議
+		 * @param	hostname		:	服務器地址
+		 * @param	port			:	端口
+		 * @param	application		:	應用地址
+		 */
 		private function connectionListener( status:String, protocol:String, hostname:String, port:String, application:String ):void
 		{
 			
 			if ( status == "SUCCESS" )
 			{
-				trace( "Successfully connected to: " + uri );
-				bbb.conferenceParameters.protocol = protocol;
+				trace( "服務器測試成功: " + uri );
+				this.protocol = protocol;
 				var successEvent:PortTestEvent = new PortTestEvent( PortTestEvent.PORT_TEST_SUCCESS );
 				successEvent.protocol = protocol;
 				successEvent.host = hostname;
@@ -33,7 +42,7 @@ package cc.minos.bigbluebutton.plugins
 			}
 			else
 			{
-				trace( "Failed to connect to " + uri );
+				trace( "連接失敗: " + uri );
 				if ( protocol == "RTMP" )
 				{
 					connect( "RTMPT" );
@@ -50,11 +59,20 @@ package cc.minos.bigbluebutton.plugins
 			}
 		}
 		
+		/**
+		 * 開始測試
+		 */
 		override public function start():void
 		{
-			connect( "RTMP", '1935' );
+			connect( protocol, '1935' );
 		}
 		
+		/**
+		 * 測試
+		 * @param	protocol		:	協議
+		 * @param	port			:	端口
+		 * @param	testTimeout		:	等待響應時間
+		 */
 		private function connect( protocol:String = "", port:String = "", testTimeout:Number = 10000 ):void
 		{
 			this.protocol = protocol;
@@ -63,11 +81,17 @@ package cc.minos.bigbluebutton.plugins
 			portTest.connect();
 		}
 		
+		/**
+		 * 獲取協議（主類配置參數）
+		 */
 		public function get protocol():String
 		{
 			return bbb.conferenceParameters.protocol;
 		}
 		
+		/**
+		 * 設置協議（主類配置參數）
+		 */
 		public function set protocol( value:String ):void
 		{
 			bbb.conferenceParameters.protocol = value;

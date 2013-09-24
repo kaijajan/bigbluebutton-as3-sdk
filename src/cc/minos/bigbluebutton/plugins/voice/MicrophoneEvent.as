@@ -8,8 +8,11 @@ package cc.minos.bigbluebutton.plugins.voice
 	 */
 	public class MicrophoneEvent extends Event
 	{
+		/** */
 		public static const MIC_ACCESS_DENIED_EVENT:String = "micAccessDenied";
+		/** */
 		public static const MIC_ACCESS_ALLOWED_EVENT:String = "micAccessAllowed";
+		/** */
 		public static const MICROPHONE_UNAVAIL_EVENT:String = 'micUnavail';
 		
 		public function MicrophoneEvent( type:String )

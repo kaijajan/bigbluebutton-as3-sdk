@@ -3,18 +3,19 @@ package cc.minos.bigbluebutton.plugins
 	import cc.minos.bigbluebutton.events.BigBlueButtonEvent;
 	import cc.minos.bigbluebutton.extensions.IMessageListener;
 	import cc.minos.bigbluebutton.plugins.chat.*;
-	import cc.minos.console.Console;
 	import flash.net.registerClassAlias;
 	
 	/**
-	 * ...
+	 * 房間群聊應用（非必須）
 	 * @author Minos
 	 */
 	public class ChatPlugin extends Plugin implements IMessageListener
 	{
-		
+		/** 發送公共信息 */
 		private const SEND_PUBLIC_MESSAGE:String = "chat.sendPublicMessage";
+		/** 發送私有信息 */
 		private const SEND_PRIVATE_MESSAGE:String = "chat.sendPrivateMessage";
+		/** 獲取公共聊天歷史*/
 		private const GET_MESSAGES:String = "chat.sendPublicChatHistory";
 		
 		public function ChatPlugin()
@@ -22,14 +23,17 @@ package cc.minos.bigbluebutton.plugins
 			super();
 			this.name = "[ChatPlugin]";
 			this.shortcut = "chat";
+			/** 和服務端java匹配，如果不註冊返回信息的時候無法獲取屬性 */
 			registerClassAlias( "org.bigbluebutton.conference.service.chat.ChatMessageVO", ChatMessageVO );
 		}
 		
+		/** 開啟聊天應用 */
 		override public function start():void
 		{
 			bbb.addMessageListener( this );
 		}
 		
+		/** 關閉聊天應用 */
 		override public function stop():void
 		{
 			bbb.removeMessageListener( this );
@@ -61,7 +65,7 @@ package cc.minos.bigbluebutton.plugins
 			bbb.sendMessage( GET_MESSAGES, null, null );
 		}
 		
-		/* INTERFACE cc.minos.bigbluebutton.extensions.IMessageListener */
+		/* INTERFACE cc.minos.bigbluebutton.extensions.IMessageListener (信息偵聽器接口) */
 		
 		public function onMessage( messageName:String, message:Object ):void
 		{
@@ -86,7 +90,7 @@ package cc.minos.bigbluebutton.plugins
 		 */
 		private function onChatRequestMessageHistoryReply( message:Object ):void
 		{
-			Console.log( "history message: " + message.count );
+			//Console.log( "history message: " + message.count );
 			var msgCount:Number = message.count as Number;
 			for ( var i:int = 0; i < msgCount; i++ )
 			{
@@ -100,7 +104,6 @@ package cc.minos.bigbluebutton.plugins
 		 */
 		private function onChatReceivePublicMessageCommand( message:Object ):void
 		{
-			Console.log( "public message: " + message.message );
 			var msg:ChatMessageVO = new ChatMessageVO();
 			msg.chatType = message.chatType;
 			msg.fromUserID = message.fromUserID;
@@ -128,7 +131,7 @@ package cc.minos.bigbluebutton.plugins
 		 */
 		private function onChatReceivePrivateMessageCommand( message:Object ):void
 		{
-			Console.log( "private message: " + message.message );
+			//Console.log( "private message: " + message.message );
 			var msg:ChatMessageVO = new ChatMessageVO();
 			msg.chatType = message.chatType;
 			msg.fromUserID = message.fromUserID;

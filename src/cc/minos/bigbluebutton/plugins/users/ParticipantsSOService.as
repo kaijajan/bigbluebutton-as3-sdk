@@ -12,16 +12,21 @@ package cc.minos.bigbluebutton.plugins.users
 	import flash.net.SharedObject;
 	
 	/**
-	 * ...
+	 * 在線用戶狀態
 	 * @author Minos
 	 */
-	public class ParticipantsSOService
+	public class ParticipantsSOService implements IParticipantsCallback
 	{
+		/** 用戶狀態 */
 		private static const SO_NAME:String = "participantsSO";
+		/** 獲取在線用戶數據 */
 		private static const GET_PARTICIPANTS:String = "participants.getParticipants";
+		/** 設置用戶狀態 */
 		private static const SET_PARTICIPANT_STATUS:String = "participants.setParticipantStatus";
+		/** 設置演講者 */
 		private static const SET_PRESENTER:String = "participants.assignPresenter";
 		
+		/** 返回處理 */
 		private var responder:Responder;
 		private var _participantsSO:SharedObject;
 		private var plugin:UsersPlugin;
@@ -36,6 +41,9 @@ package cc.minos.bigbluebutton.plugins.users
 				} )
 		}
 		
+		/**
+		 * 連接用戶狀態服務
+		 */
 		public function connect():void
 		{
 			_participantsSO = SharedObject.getRemote( SO_NAME, plugin.uri, false );
@@ -46,6 +54,9 @@ package cc.minos.bigbluebutton.plugins.users
 			queryForParticipants();
 		}
 		
+		/**
+		 * 斷開服務
+		 */
 		public function disconnect():void
 		{
 			if ( _participantsSO )
@@ -62,10 +73,12 @@ package cc.minos.bigbluebutton.plugins.users
 			trace( "participantsSO asyncError" );
 		}
 		
+		/**
+		 * 獲取在線用戶數據
+		 */
 		private function queryForParticipants():void
 		{
-			var nc:NetConnection = plugin.connection;
-			nc.call( GET_PARTICIPANTS, new Responder( function( result:Object ):void
+			plugin.connection.call( GET_PARTICIPANTS, new Responder( function( result:Object ):void
 				{
 					trace( "在線人數: " + result.count );
 					if ( result.count > 0 )
@@ -82,6 +95,10 @@ package cc.minos.bigbluebutton.plugins.users
 				} ) );
 		}
 		
+		/**
+		 * 用戶離開
+		 * @param	userID		:	用戶ID
+		 */
 		public function participantLeft( userID:String ):void
 		{
 			var user:BBBUser = plugin.getUser( userID );
@@ -93,10 +110,12 @@ package cc.minos.bigbluebutton.plugins.users
 			}
 		}
 		
+		/**
+		 * 用戶加入
+		 * @param	joinedUser		:	用戶信息
+		 */
 		public function participantJoined( joinedUser:Object ):void
 		{
-			//Console.logObject( joinedUser );
-			
 			var user:BBBUser = new BBBUser();
 			user.userID = joinedUser.userid;
 			user.name = joinedUser.name;
@@ -107,6 +126,7 @@ package cc.minos.bigbluebutton.plugins.users
 			trace( "User Joined [" + user.userID + "," + user.name + "," + user.role + "]" );
 			plugin.addUser( user );
 			
+			/** 更新 */
 			participantStatusChange( user.userID, "hasStream", joinedUser.status.hasStream );
 			participantStatusChange( user.userID, "presenter", joinedUser.status.presenter );
 			participantStatusChange( user.userID, "raiseHand", joinedUser.status.raiseHand );
@@ -115,7 +135,7 @@ package cc.minos.bigbluebutton.plugins.users
 		}
 		
 		/**
-		 *
+		 * 當房間只有一個管理員的時候設為演講者
 		 */
 		private function becomePresenterIfLoneModerator():void
 		{
@@ -124,7 +144,6 @@ package cc.minos.bigbluebutton.plugins.users
 				var user:BBBUser = plugin.getTheOnlyModerator();
 				if ( user )
 				{
-					trace( "setting presenter because only one moderator" );
 					assignPresenter( user.userID, user.name, 1 );
 				}
 			}
@@ -132,8 +151,8 @@ package cc.minos.bigbluebutton.plugins.users
 		
 		/**
 		 * 舉手
-		 * @param	userID
-		 * @param	raise
+		 * @param	userID		:	用戶ID
+		 * @param	raise		:	是否舉手(true|false)
 		 */
 		public function raiseHand( userID:String, raise:Boolean ):void
 		{
@@ -142,8 +161,8 @@ package cc.minos.bigbluebutton.plugins.users
 		
 		/**
 		 * 添加流媒體
-		 * @param	userID
-		 * @param	streamName
+		 * @param	userID		:	用戶ID
+		 * @param	streamName	:	視頻流名稱
 		 */
 		public function addStream( userID:String, streamName:String ):void
 		{
@@ -152,8 +171,8 @@ package cc.minos.bigbluebutton.plugins.users
 		
 		/**
 		 * 取消流媒體
-		 * @param	userID
-		 * @param	streamName
+		 * @param	userID		:	用戶ID
+		 * @param	streamName	:	視頻流名稱
 		 */
 		public function removeStream( userID:String, streamName:String ):void
 		{
@@ -162,11 +181,11 @@ package cc.minos.bigbluebutton.plugins.users
 		
 		/**
 		 * 踢人
-		 * @param	userid
+		 * @param	userID		:	用戶ID
 		 */
-		public function kickUser( userid:String ):void
+		public function kickUser( userID:String ):void
 		{
-			_participantsSO.send( "kickUserCallback", userid );
+			_participantsSO.send( "kickUserCallback", userID );
 		}
 		
 		/**
@@ -180,8 +199,11 @@ package cc.minos.bigbluebutton.plugins.users
 			plugin.connection.call( SET_PRESENTER, responder, userid, name, assignedBy );
 		}
 		
-		// callback
+		/** cc.minos.bigbluebutton.plugins.users.IParticipantsCallback (服務器返回接口) */
 		
+		/**
+		 *
+		 */
 		public function logout():void
 		{
 			var event:BigBlueButtonEvent = new BigBlueButtonEvent( BigBlueButtonEvent.USER_LOGGED_OUT );
@@ -213,7 +235,7 @@ package cc.minos.bigbluebutton.plugins.users
 		}
 		
 		/**
-		 *
+		 * 更新用戶狀態
 		 * @param	userID
 		 * @param	status
 		 * @param	value
@@ -221,9 +243,40 @@ package cc.minos.bigbluebutton.plugins.users
 		public function participantStatusChange( userID:String, status:String, value:Object ):void
 		{
 			trace( "狀態更新 [" + userID + "," + status + "," + value + "]" );
-			plugin.newUserStatus( userID, status, value );
+			var aUser:BBBUser = plugin.getUser( userID );
+			if ( aUser != null )
+			{
+				switch ( status )
+				{
+					case "presenter": 
+						aUser.presenter = value as Boolean;
+						sendParticipantsEvent( UsersEvent.PRESENTER_NAME_CHANGE, aUser.userID );
+						break;
+					case "hasStream": 
+						var streamInfo:Array = String( value ).split( /,/ );
+						aUser.hasStream = ( String( streamInfo[ 0 ] ).toUpperCase() == "TRUE" );
+						var streamNameInfo:Array = String( streamInfo[ 1 ] ).split( /=/ );
+						aUser.streamName = streamNameInfo[ 1 ];
+						if ( aUser.hasStream )
+						{
+							sendParticipantsEvent( UsersEvent.USER_VIDEO_STREAM_STARTED, aUser.userID );
+						}
+						break;
+					case "raiseHand": 
+						aUser.raiseHand = value as Boolean;
+						break;
+				}
+				aUser.buildStatus();
+				plugin.refresh();
+			}
+		
 		}
 		
+		/**
+		 *
+		 * @param	type
+		 * @param	userID
+		 */
 		private function sendParticipantsEvent( type:String, userID:String ):void
 		{
 			var event:UsersEvent = new UsersEvent( type );

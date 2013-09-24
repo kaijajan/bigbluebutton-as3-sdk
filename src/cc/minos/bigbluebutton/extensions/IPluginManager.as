@@ -9,7 +9,7 @@ package cc.minos.bigbluebutton.extensions
 	public interface IPluginManager
 	{
 		function addPlugin( pi:Plugin ):void;
-		function delPlugin( shortcut:String ):void;
+		function removePlugin( shortcut:String ):void;
 		function getPlugin( shortcut:String ):Plugin;
 		function hasPlugin( shortcut:String ):Boolean;
 	}

@@ -4,7 +4,9 @@ package cc.minos.bigbluebutton.plugins.chat
 	
 	public class ChatMessageEvent extends Event
 	{
+		/** 公共信息事件 */
 		public static const PUBLIC_CHAT_MESSAGE:String = 'publicChatMessage';
+		/** 私有信息事件 */
 		public static const PRIVATE_CHAT_MESSAGE:String = 'privateChatMessage';
 		
 		public var message:ChatMessageVO;

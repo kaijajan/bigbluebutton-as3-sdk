@@ -16,18 +16,26 @@ package cc.minos.bigbluebutton.plugins.video
 	import flash.net.NetStream;
 	import flash.system.Capabilities;
 	
+	/**
+	 * 視頻流代理
+	 * 視頻發布控制
+	 */
 	public class VideoProxy
 	{
+		/** 視頻連接 */
 		private var nc:NetConnection;
+		/** 視頻流 */
 		private var ns:NetStream;
-		private var _url:String;
+		/** */
 		private var options:VideoOptions;
+		/** */
 		private var plugin:VideoPlugin;
 		
 		public function VideoProxy( plugin:VideoPlugin )
 		{
 			this.plugin = plugin;
 			this.options = plugin.options;
+			
 			nc = new NetConnection();
 			nc.client = this;
 			nc.addEventListener( AsyncErrorEvent.ASYNC_ERROR, onAsyncError );
@@ -36,6 +44,10 @@ package cc.minos.bigbluebutton.plugins.video
 			nc.addEventListener( SecurityErrorEvent.SECURITY_ERROR, onSecurityError );
 		}
 		
+		/**
+		 * 連接視頻服務器
+		 * @param	uri
+		 */
 		public function connect( uri:String ):void
 		{
 			nc.connect( uri );
@@ -53,6 +65,10 @@ package cc.minos.bigbluebutton.plugins.video
 		{
 		}
 		
+		/**
+		 *
+		 * @param	e
+		 */
 		private function onNetStatus( e:NetStatusEvent ):void
 		{
 			Console.log( e.info.code );
@@ -72,6 +88,11 @@ package cc.minos.bigbluebutton.plugins.video
 			return this.nc;
 		}
 		
+		/**
+		 * 開始發布視頻流
+		 * @param	camera		:	攝像頭
+		 * @param	stream		:	視頻流名稱
+		 */
 		public function startPublishing( camera:Camera, stream:String ):void
 		{
 			ns.addEventListener( NetStatusEvent.NET_STATUS, onNetStatus );
@@ -79,6 +100,7 @@ package cc.minos.bigbluebutton.plugins.video
 			ns.addEventListener( AsyncErrorEvent.ASYNC_ERROR, onAsyncError );
 			ns.client = this;
 			ns.attachCamera( camera );
+			//視頻發布格式 h264播放器必須在11以上
 			if (( VersionUtil.getFlashPlayerVersion() >= 11 ) && options.enableH264 )
 			{
 				Console.log( "使用視頻編碼: H264" );
@@ -93,6 +115,9 @@ package cc.minos.bigbluebutton.plugins.video
 			ns.publish( stream );
 		}
 		
+		/**
+		 * 停止發布視頻流
+		 */
 		public function stopBroadcasting():void
 		{
 			Console.log( "停止視頻發布" );

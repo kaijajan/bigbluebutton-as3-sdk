@@ -11,8 +11,8 @@ package cc.minos.bigbluebutton.plugins.video
 	{
 		public static const VIDEO_APPLICATION_CONNECTED:String = "videoApplicationConnected";
 		
-		public var connection:NetConnection;
-		public var streamName:String;
+		//public var connection:NetConnection;
+		//public var streamName:String;
 		
 		public function VideoEvent( type:String )
 		{

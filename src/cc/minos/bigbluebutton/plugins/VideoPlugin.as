@@ -1,4 +1,3 @@
-
 package cc.minos.bigbluebutton.plugins
 {
 	import cc.minos.bigbluebutton.model.BBBUser;
@@ -11,7 +10,7 @@ package cc.minos.bigbluebutton.plugins
 	import flash.net.NetConnection;
 	
 	/**
-	 * ...
+	 * 視頻應用
 	 * @author Minos
 	 */
 	public class VideoPlugin extends Plugin
@@ -36,16 +35,21 @@ package cc.minos.bigbluebutton.plugins
 		override public function init():void
 		{
 			proxy = new VideoProxy( this );
-			
 			if ( bbb.hasPlugin( "users" ) )
 				bbb.getPlugin( "users" ).addEventListener( UsersEvent.SWITCHED_PRESENTER, onSwitchedPresenter );
 		}
 		
+		/**
+		 *
+		 */
 		override public function get connection():NetConnection
 		{
 			return proxy.connection;
 		}
 		
+		/**
+		 *
+		 */
 		public function get camera():Camera
 		{
 			return _camera;
@@ -64,38 +68,51 @@ package cc.minos.bigbluebutton.plugins
 			Console.log( e.userID + " 獲得演講者權限" );
 		}
 		
+		/**
+		 * 開啟視頻應用
+		 */
 		override public function start():void
 		{
 			proxy.connect( uri );
 		}
 		
+		/**
+		 * 
+		 */
 		private function get me():BBBUser
 		{
 			return bbb.plugins[ 'users' ].getMe();
 		}
 		
 		/**
-		 * presenter share only
+		 * 開啟視頻流，限定演講者權限
 		 */
 		public function startPublish():void
 		{
 			if ( !me.presenter )
 				return;
 			
-			if ( stupCamera() )
+			if ( setupCamera() )
 			{
 				proxy.startPublishing( _camera, streamName );
 				bbb.plugins[ 'users' ].addStream( me.userID, streamName );
 			}
 		}
 		
+		/**
+		 * 停止視頻流
+		 */
 		public function stopPublish():void
 		{
 			proxy.stopBroadcasting();
 			bbb.plugins[ 'users' ].removeStream( me.userID, streamName );
 		}
 		
-		private function stupCamera():Boolean
+		/**
+		 * 設置攝像頭
+		 * @return 返回設置是否成功
+		 */
+		private function setupCamera():Boolean
 		{
 			_camera = Camera.getCamera();
 			if ( _camera )
@@ -128,7 +145,6 @@ package cc.minos.bigbluebutton.plugins
 		{
 			if ( e.activating )
 			{
-				//trace( "camera activating: " + e.activating );
 			}
 		}
 		
