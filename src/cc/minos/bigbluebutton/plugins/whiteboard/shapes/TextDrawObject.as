@@ -77,7 +77,7 @@ package cc.minos.bigbluebutton.plugins.whiteboard.shapes
 		
 		override public function draw( a:Annotation, parentWidth:Number, parentHeight:Number ):void
 		{
-			LogUtil.debug( "Drawing TEXT" );
+			//LogUtil.debug( "Drawing TEXT" );
 			
 			this.x = denormalize( a.annotation.x, parentWidth );
 			this.y = denormalize( a.annotation.y, parentHeight );
@@ -108,7 +108,7 @@ package cc.minos.bigbluebutton.plugins.whiteboard.shapes
 			this.width = denormalize( a.annotation.textBoxWidth, parentWidth );
 			this.height = denormalize( a.annotation.textBoxHeight, parentHeight );
 			
-			LogUtil.debug( "2 Old parent dim [" + _origParentWidth + "," + _origParentHeight + "][" + width + "," + height + "] newFontSize=" + newFontSize );
+			//LogUtil.debug( "2 Old parent dim [" + _origParentWidth + "," + _origParentHeight + "][" + width + "," + height + "] newFontSize=" + newFontSize );
 		}
 		
 		public function redrawText( a:Annotation, origParentWidth:Number, origParentHeight:Number, parentWidth:Number, parentHeight:Number ):void
@@ -136,7 +136,7 @@ package cc.minos.bigbluebutton.plugins.whiteboard.shapes
 			this.width = denormalize( a.annotation.textBoxWidth, parentWidth );
 			this.height = denormalize( a.annotation.textBoxHeight, parentHeight );
 			
-			LogUtil.debug( "Redraw dim [" + _origParentWidth + "," + _origParentHeight + "][" + width + "," + height + "] newFontSize=" + newFontSize );
+			//LogUtil.debug( "Redraw dim [" + _origParentWidth + "," + _origParentHeight + "][" + width + "," + height + "] newFontSize=" + newFontSize );
 		
 			//           LogUtil.debug("Redraw 2 Old parent dim [" + this.width + "," + this.height + "] newFontSize=" + newFontSize);
 		}

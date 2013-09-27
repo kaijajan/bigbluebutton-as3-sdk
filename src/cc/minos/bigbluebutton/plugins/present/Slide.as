@@ -5,6 +5,9 @@ package cc.minos.bigbluebutton.plugins.present
 	import flash.net.URLLoaderDataFormat;
 	import flash.net.URLRequest;
 	
+	/**
+	 * 文檔頁面
+	 */
 	public class Slide
 	{
 		private var _loader:URLLoader;

@@ -17,40 +17,75 @@ package cc.minos.bigbluebutton.plugins.present
 	 */
 	public class PresentSOService
 	{
+		/** 轉換成功 */
 		private static const OFFICE_DOC_CONVERSION_SUCCESS_KEY:String = "OFFICE_DOC_CONVERSION_SUCCESS";
+		/** 轉換失敗 */
 		private static const OFFICE_DOC_CONVERSION_FAILED_KEY:String = "OFFICE_DOC_CONVERSION_FAILED";
+		/** 支持轉換 */
 		private static const SUPPORTED_DOCUMENT_KEY:String = "SUPPORTED_DOCUMENT";
+		/** 不支持轉換 */
 		private static const UNSUPPORTED_DOCUMENT_KEY:String = "UNSUPPORTED_DOCUMENT";
+		/** 頁面統計失敗 */
 		private static const PAGE_COUNT_FAILED_KEY:String = "PAGE_COUNT_FAILED";
+		/** */
 		private static const PAGE_COUNT_EXCEEDED_KEY:String = "PAGE_COUNT_EXCEEDED";
+		/** 轉換頁面 */
 		private static const GENERATED_SLIDE_KEY:String = "GENERATED_SLIDE";
+		/** 正在生成縮略圖 */
 		private static const GENERATING_THUMBNAIL_KEY:String = "GENERATING_THUMBNAIL";
+		/** 成縮略圖完成 */
 		private static const GENERATED_THUMBNAIL_KEY:String = "GENERATED_THUMBNAIL";
+		/** 轉換完成 */
 		private static const CONVERSION_COMPLETED_KEY:String = "CONVERSION_COMPLETED";
 		
+		/** 共享對象 */
 		private static const SO_NAME:String = "presentationSO";
+		/** 發送鼠標坐標 */
 		private static const SEND_CURSOR_UPDATE:String = "presentation.sendCursorUpdate";
+		/** 重置或移動頁面 */
 		private static const RESIZE_AND_MOVE_SLIDE:String = "presentation.resizeAndMoveSlide";
+		/** 移除文檔 */
 		private static const REMOVE_PRESENTATION:String = "presentation.removePresentation";
+		/** 獲取文檔信息 */
 		private static const GET_PRESENTATION_INFO:String = "presentation.getPresentationInfo";
+		/** 跳轉 */
 		private static const GOTO_SLIDE:String = "presentation.gotoSlide";
+		/** 共享文檔 */
 		private static const SHARE_PRESENTATION:String = "presentation.sharePresentation";
 		
+		/** 演講 */
 		private static const PRESENTER:String = "presenter";
+		/** */
 		private static const SHARING:String = "sharing";
+		/** */
 		private static const UPDATE_MESSAGE:String = "updateMessage";
+		/** 當前頁面 */
 		private static const CURRENT_PAGE:String = "currentPage";
 		
+		/** 共享信息對象*/
 		private var _presentationSO:SharedObject;
+		/** 應用 */
 		private var plugin:PresentPlugin;
+		/** 網絡連接*/
 		private var connection:NetConnection;
+		/** 當前頁面 */
 		private var currentSlide:Number = -1;
+		/** 返回處理 */
+		private var responder:Responder;
 		
 		public function PresentSOService( plugin:PresentPlugin )
 		{
 			this.plugin = plugin;
+			responder = new Responder( function( result:Boolean ):void
+				{
+				}, function( status:Object ):void
+				{
+				} );
 		}
 		
+		/**
+		 * 連接共享信息對象
+		 */
 		public function connect():void
 		{
 			connection = plugin.connection;
@@ -62,6 +97,9 @@ package cc.minos.bigbluebutton.plugins.present
 			_presentationSO.connect( connection );
 		}
 		
+		/**
+		 * 斷開共享信息對象 
+		 */
 		public function disconnect():void
 		{
 			if ( _presentationSO != null )
@@ -81,7 +119,7 @@ package cc.minos.bigbluebutton.plugins.present
 		}
 		
 		/**
-		 *
+		 * 縮放返回
 		 * @param	xOffset
 		 * @param	yOffset
 		 * @param	widthRatio
@@ -104,17 +142,14 @@ package cc.minos.bigbluebutton.plugins.present
 		 */
 		public function sendCursorUpdate( xPercent:Number, yPercent:Number ):void
 		{
-			connection.call( SEND_CURSOR_UPDATE, new Responder( function( result:Boolean ):void
-				{
-					if ( result )
-					{
-						trace( "Successfully sent sendCursorUpdate" );
-					}
-				}, function( status:Object ):void
-				{
-				} ), xPercent, yPercent );
+			connection.call( SEND_CURSOR_UPDATE, responder, xPercent, yPercent );
 		}
 		
+		/**
+		 * 鼠標移動返回（0.81取消，用信息偵聽器）
+		 * @param	xPercent
+		 * @param	yPercent
+		 */
 		public function updateCursorCallback( xPercent:Number, yPercent:Number ):void
 		{
 			//var e:CursorEvent = new CursorEvent( CursorEvent.UPDATE_CURSOR );
@@ -124,7 +159,7 @@ package cc.minos.bigbluebutton.plugins.present
 		}
 		
 		/**
-		 *
+		 * 重置頁面大小
 		 * @param	newSizeInPercent
 		 */
 		public function resizeSlide( newSizeInPercent:Number ):void
@@ -132,6 +167,10 @@ package cc.minos.bigbluebutton.plugins.present
 			_presentationSO.send( "resizeSlideCallback", newSizeInPercent );
 		}
 		
+		/**
+		 * 重置頁面大小返回
+		 * @param	newSizeInPercent
+		 */
 		public function resizeSlideCallback( newSizeInPercent:Number ):void
 		{
 			var e:ZoomEvent = new ZoomEvent( ZoomEvent.RESIZE );
@@ -148,15 +187,7 @@ package cc.minos.bigbluebutton.plugins.present
 		 */
 		public function move( xOffset:Number, yOffset:Number, widthRatio:Number, heightRatio:Number ):void
 		{
-			connection.call( RESIZE_AND_MOVE_SLIDE, new Responder( function( result:Boolean ):void
-				{
-					if ( result )
-					{
-						trace( "Successfully sent resizeAndMoveSlide" );
-					}
-				}, function( status:Object ):void
-				{
-				} ), xOffset, yOffset, widthRatio, heightRatio );
+			connection.call( RESIZE_AND_MOVE_SLIDE, responder, xOffset, yOffset, widthRatio, heightRatio );
 			
 			presenterViewedRegionX = xOffset;
 			presenterViewedRegionY = yOffset;
@@ -164,6 +195,13 @@ package cc.minos.bigbluebutton.plugins.present
 			presenterViewedRegionH = heightRatio;
 		}
 		
+		/**
+		 * 移動返回
+		 * @param	xOffset
+		 * @param	yOffset
+		 * @param	widthRatio
+		 * @param	heightRatio
+		 */
 		public function moveCallback( xOffset:Number, yOffset:Number, widthRatio:Number, heightRatio:Number ):void
 		{
 			var e:MoveEvent = new MoveEvent( MoveEvent.MOVE );
@@ -174,36 +212,45 @@ package cc.minos.bigbluebutton.plugins.present
 			plugin.dispatchEvent( e );
 		}
 		
+		/** 頁面可視化信息 */
 		private var presenterViewedRegionX:Number = 0;
 		private var presenterViewedRegionY:Number = 0;
 		private var presenterViewedRegionW:Number = 100;
 		private var presenterViewedRegionH:Number = 100;
 		
 		/**
-		 *
+		 * 
 		 */
 		private function queryPresenterForSlideInfo():void
 		{
-			trace( "Query for slide info" );
+			//trace( "Query for slide info" );
 			_presentationSO.send( "whatIsTheSlideInfo", plugin.userID );
 		}
 		
 		public function whatIsTheSlideInfo( userid:Number ):void
 		{
-			trace( "Rx Query for slide info" );
+			//trace( "Rx Query for slide info" );
 			if ( plugin.presenter )
 			{
-				trace( "User Query for slide info" );
+				//trace( "User Query for slide info" );
 				_presentationSO.send( "whatIsTheSlideInfoReply", userid, presenterViewedRegionX, presenterViewedRegionY, presenterViewedRegionW, presenterViewedRegionH );
 			}
 		}
 		
+		/**
+		 * 
+		 * @param	userId
+		 * @param	xOffset
+		 * @param	yOffset
+		 * @param	widthRatio
+		 * @param	heightRatio
+		 */
 		public function whatIsTheSlideInfoReply( userId:Number, xOffset:Number, yOffset:Number, widthRatio:Number, heightRatio:Number ):void
 		{
-			trace( "Rx whatIsTheSlideInfoReply" );
+			//trace( "Rx whatIsTheSlideInfoReply" );
 			if ( plugin.userID == userId.toString() )
 			{
-				trace( "Got reply for Query for slide info: ", userId, xOffset, yOffset, widthRatio, heightRatio );
+				//trace( "Got reply for Query for slide info: ", userId, xOffset, yOffset, widthRatio, heightRatio );
 				var e:MoveEvent = new MoveEvent( MoveEvent.CUR_SLIDE_SETTING );
 				e.xOffset = xOffset;
 				e.yOffset = yOffset;
@@ -215,8 +262,7 @@ package cc.minos.bigbluebutton.plugins.present
 		}
 		
 		/**
-		 * Sends an event out for the clients to maximize the presentation module
-		 *
+		 * 最大化
 		 */
 		public function maximize():void
 		{
@@ -224,72 +270,81 @@ package cc.minos.bigbluebutton.plugins.present
 		}
 		
 		/**
-		 * A callback method from the server to maximize the presentation
-		 *
+		 * 最大化返回
 		 */
 		public function maximizeCallback():void
 		{
 			plugin.dispatchEvent( new ZoomEvent( ZoomEvent.MAXIMIZE ) );
 		}
 		
+		/**
+		 * 恢復
+		 */
 		public function restore():void
 		{
 			_presentationSO.send( "restoreCallback" );
 		}
 		
+		/**
+		 * 恢復返回
+		 */
 		public function restoreCallback():void
 		{
 			plugin.dispatchEvent( new ZoomEvent( ZoomEvent.RESTORE ) );
 		}
 		
 		/**
-		 * Send an event to the server to clear the presentation
-		 *
+		 * 移除文檔頁面
 		 */
 		public function clearPresentation():void
 		{
 			_presentationSO.send( "clearCallback" );
 		}
 		
+		/**
+		 * 刪除文檔
+		 * @param	name
+		 */
 		public function removePresentation( name:String ):void
 		{
-			connection.call( REMOVE_PRESENTATION, new Responder( function( result:Boolean ):void
-				{
-					if ( result )
-					{
-						trace( "Successfully assigned presenter to: " + plugin.userID );
-					}
-				}, function( status:Object ):void
-				{
-				} ), name );
+			connection.call( REMOVE_PRESENTATION, responder, name );
 		}
 		
 		/**
-		 * A call-back method for the clear method. This method is called when the clear method has
-		 * successfuly called the server.
-		 *
+		 * 移除文檔返回
 		 */
 		public function clearCallback():void
 		{
+			//取消共享
 			_presentationSO.setProperty( SHARING, false );
 			plugin.dispatchEvent( new UploadEvent( UploadEvent.CLEAR_PRESENTATION ) );
 		}
 		
+		/**
+		 * 
+		 * @param	presenterName
+		 */
 		public function setPresenterName( presenterName:String ):void
 		{
 			_presentationSO.setProperty( PRESENTER, presenterName );
 		}
 		
+		/**
+		 * 獲取文檔信息
+		 */
 		public function getPresentationInfo():void
 		{
 			plugin.connection.call( GET_PRESENTATION_INFO, new Responder( function( result:Object ):void
 				{
-					Console.log( "Successfully querried for presentation information." );
+					//Console.log( "Successfully querried for presentation information." );
+					
+					//
 					if ( result.presenter.hasPresenter )
 					{
 						plugin.dispatchEvent( new MadePresenterEvent( MadePresenterEvent.SWITCH_TO_VIEWER_MODE ) );
 					}
 					
+					//如果有坐標信息
 					if ( result.presentation.xOffset )
 					{
 						Console.log( "Sending presenters slide settings" );
@@ -301,12 +356,14 @@ package cc.minos.bigbluebutton.plugins.present
 						Console.log( "****presenter settings [" + e.xOffset + "," + e.yOffset + "," + e.slideToCanvasWidthRatio + "," + e.slideToCanvasHeightRatio + "]" );
 						plugin.dispatchEvent( e );
 					}
+					
+					//當前服務器上的文檔列表
 					if ( result.presentations )
 					{
 						for ( var p:Object in result.presentations )
 						{
 							var u:Object = result.presentations[ p ]
-							Console.log( "Presentation name " + u as String );
+							//Console.log( "Presentation name " + u as String );
 							//var 
 							var added:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_ADDED_EVENT );
 							added.presentationName = u as String;
@@ -317,10 +374,11 @@ package cc.minos.bigbluebutton.plugins.present
 					// Force switching the presenter.
 					triggerSwitchPresenter();
 					
+					//有無文檔正在演示
 					if ( result.presentation.sharing )
 					{
 						currentSlide = Number( result.presentation.slide );
-						Console.log( "The presenter has shared slides and showing slide " + currentSlide );
+						//Console.log( "The presenter has shared slides and showing slide " + currentSlide );
 						var shareEvent:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_READY );
 						shareEvent.presentationName = String( result.presentation.currentPresentation );
 						plugin.dispatchEvent( shareEvent );
@@ -330,13 +388,8 @@ package cc.minos.bigbluebutton.plugins.present
 				} ) );
 		}
 		
-		/***
-		 * NOTE:
-		 * This is a workaround to trigger the UI to switch to presenter or viewer.
-		 * The reason is that when the user joins, the MadePresenterEvent in UserServiceSO
-		 * doesn't get received by the modules as the modules hasn't started yet.
-		 * Need to redo the proper sequence of events but will take a lot of changes.
-		 * (ralam dec 8, 2011).
+		/**
+		 * 轉換權限
 		 */
 		public function triggerSwitchPresenter():void
 		{
@@ -354,30 +407,18 @@ package cc.minos.bigbluebutton.plugins.present
 		}
 		
 		/**
-		 * Send an event out to the server to go to a new page in the SlidesDeck
+		 * 跳轉頁面
 		 * @param page
-		 *
 		 */
 		public function gotoSlide( num:int ):void
 		{
-			connection.call( GOTO_SLIDE, // Remote function name
-				new Responder( function( result:Object ):void
-				{
-					if ( result )
-					{
-						trace( "Successfully moved page to: " + num );
-					}
-				}, function( status:Object ):void
-				{
-				//trace( status );
-				} ), num );
+			connection.call( GOTO_SLIDE, 
+				responder, num );
 		}
 		
 		/**
-		 * A callback method. It is called after the gotoPage method has successfully executed on the server
-		 * The method sets the clients view to the page number received
+		 * 跳轉頁面返回
 		 * @param page
-		 *
 		 */
 		public function gotoSlideCallback( page:Number ):void
 		{
@@ -386,6 +427,9 @@ package cc.minos.bigbluebutton.plugins.present
 			plugin.dispatchEvent( e );
 		}
 		
+		/**
+		 * 獲取當前頁面
+		 */
 		public function getCurrentSlideNumber():void
 		{
 			if ( currentSlide >= 0 )
@@ -396,24 +440,22 @@ package cc.minos.bigbluebutton.plugins.present
 			}
 		}
 		
+		/**
+		 * 設置文檔是否共享演示
+		 * @param	share
+		 * @param	presentationName
+		 */
 		public function sharePresentation( share:Boolean, presentationName:String ):void
 		{
 			Console.log( "sharePresentation presentationName=" + presentationName );
-			connection.call( SHARE_PRESENTATION, // Remote function name
-				new Responder( function( result:Boolean ):void
-				{
-					if ( result )
-					{
-						trace( "Successfully shared presentation" );
-					}
-				}, 
-				// status - On error occurred
-				function( status:Object ):void
-				{
-				} ), //new Responder
-				presentationName, share ); //_netConnection.call
+			connection.call( SHARE_PRESENTATION, responder, presentationName, share );
 		}
 		
+		/**
+		 * 設置文檔是否共享演示返回
+		 * @param	presentationName
+		 * @param	share
+		 */
 		public function sharePresentationCallback( presentationName:String, share:Boolean ):void
 		{
 			Console.log( "sharePresentationCallback " + presentationName + "," + share );
@@ -429,6 +471,10 @@ package cc.minos.bigbluebutton.plugins.present
 			}
 		}
 		
+		/**
+		 * 移除文檔返回
+		 * @param	presentationName
+		 */
 		public function removePresentationCallback( presentationName:String ):void
 		{
 			Console.log( "removePresentationCallback " + presentationName );
@@ -437,6 +483,16 @@ package cc.minos.bigbluebutton.plugins.present
 			plugin.dispatchEvent( removeEvent );
 		}
 		
+		/**
+		 * 
+		 * @param	conference
+		 * @param	room
+		 * @param	code
+		 * @param	presentationName
+		 * @param	messageKey
+		 * @param	numberOfPages
+		 * @param	maxNumberOfPages
+		 */
 		public function pageCountExceededUpdateMessageCallback( conference:String, room:String, code:String, presentationName:String, messageKey:String, numberOfPages:Number, maxNumberOfPages:Number ):void
 		{
 			Console.log( "Received update message " + messageKey );
@@ -445,6 +501,16 @@ package cc.minos.bigbluebutton.plugins.present
 			plugin.dispatchEvent( uploadEvent );
 		}
 		
+		/**
+		 * 
+		 * @param	conference
+		 * @param	room
+		 * @param	code
+		 * @param	presentationName
+		 * @param	messageKey
+		 * @param	numberOfPages
+		 * @param	pagesCompleted
+		 */
 		public function generatedSlideUpdateMessageCallback( conference:String, room:String, code:String, presentationName:String, messageKey:String, numberOfPages:Number, pagesCompleted:Number ):void
 		{
 			Console.log( "CONVERTING = [" + pagesCompleted + " of " + numberOfPages + "]" );
@@ -454,6 +520,15 @@ package cc.minos.bigbluebutton.plugins.present
 			plugin.dispatchEvent( uploadEvent );
 		}
 		
+		/**
+		 * 
+		 * @param	conference
+		 * @param	room
+		 * @param	code
+		 * @param	presentationName
+		 * @param	messageKey
+		 * @param	slidesInfo
+		 */
 		public function conversionCompletedUpdateMessageCallback( conference:String, room:String, code:String, presentationName:String, messageKey:String, slidesInfo:String ):void
 		{
 			Console.log( "Received update message " + messageKey );
@@ -462,6 +537,14 @@ package cc.minos.bigbluebutton.plugins.present
 			plugin.dispatchEvent( readyEvent );
 		}
 		
+		/**
+		 * 
+		 * @param	conference
+		 * @param	room
+		 * @param	code
+		 * @param	presentationName
+		 * @param	messageKey
+		 */
 		public function conversionUpdateMessageCallback( conference:String, room:String, code:String, presentationName:String, messageKey:String ):void
 		{
 			Console.log( "Received update message " + messageKey );
@@ -504,18 +587,10 @@ package cc.minos.bigbluebutton.plugins.present
 			}
 		}
 		
-		private function notifyConnectionStatusListener( connected:Boolean, errors:Array = null ):void
-		{
-		/*if ( _connectionListener != null )
-		   {
-		   _connectionListener( connected, errors );
-		 }*/
-		}
-		
 		private function syncHandler( event:SyncEvent ):void
 		{
 			//		var statusCode:String = event.info.code;
-			trace( "!!!!! Presentation sync handler - " + event.changeList.length );
+			//trace( "!!!!! Presentation sync handler - " + event.changeList.length );
 			//notifyConnectionStatusListener( true );
 			getPresentationInfo();
 			queryPresenterForSlideInfo();
@@ -524,7 +599,7 @@ package cc.minos.bigbluebutton.plugins.present
 		private function netStatusHandler( event:NetStatusEvent ):void
 		{
 			var statusCode:String = event.info.code;
-			trace( "!!!!! Presentation status handler - " + statusCode );
+			//trace( "!!!!! Presentation status handler - " + statusCode );
 			switch ( statusCode )
 			{
 				case "NetConnection.Connect.Success": 

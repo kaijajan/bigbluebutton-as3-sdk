@@ -26,6 +26,8 @@ package cc.minos.bigbluebutton
 		/** 服務器版本 */
 		public static const API:Number = 0.81;
 		
+		public static const VERSION:Number = 0.2;
+		
 		/** 應用目錄 */
 		public var plugins:Dictionary = new Dictionary();
 		
@@ -35,7 +37,7 @@ package cc.minos.bigbluebutton
 		/** 網絡連接 */
 		private var _netConnection:NetConnection;
 		
-		/** 是否已經嘗試RTMPT */
+		/** 通道 */
 		private var tried_tunneling:Boolean = false;
 		
 		/** 用戶退出 */
@@ -334,6 +336,28 @@ package cc.minos.bigbluebutton
 		}
 		
 		/* cc.minos.bigbluebutton.extensions.IPluginManager （應用管理接口）*/
+		
+		/**
+		 * 
+		 */
+		public function startAllPlugins():void
+		{
+			for ( var t:String in plugins )
+			{
+				( plugins[t] as Plugin).start();
+			}
+		}
+		
+		/**
+		 * 
+		 */
+		public function stopAllPlugins():void
+		{
+			for ( var t:String in plugins )
+			{
+				( plugins[t] as Plugin).stop();
+			}
+		}
 		
 		/**
 		 * 添加應用
