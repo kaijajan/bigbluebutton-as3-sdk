@@ -1,2 +1,2 @@
-minos.as.bbb
+bigbluebutton-api-as
 ==========
