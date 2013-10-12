@@ -26,7 +26,15 @@ package cc.minos.bigbluebutton.events
 		{
 			super( type, false, false );
 		}
-	
+		
+		override public function clone():Event
+		{
+			var event:MadePresenterEvent = new MadePresenterEvent( type );
+			event.presenterName = presenterName;
+			event.assignerBy = assignerBy;
+			event.userID = userID;
+			return event;
+		}
 	}
 
 }

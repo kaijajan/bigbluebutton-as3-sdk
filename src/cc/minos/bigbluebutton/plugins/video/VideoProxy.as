@@ -1,6 +1,5 @@
 package cc.minos.bigbluebutton.plugins.video
 {
-	import cc.minos.bigbluebutton.plugins.VideoPlugin;
 	import cc.minos.console.Console;
 	import cc.minos.utils.VersionUtil;
 	import flash.events.AsyncErrorEvent;
@@ -121,7 +120,6 @@ package cc.minos.bigbluebutton.plugins.video
 		public function stopBroadcasting():void
 		{
 			Console.log( "停止視頻發布" );
-			
 			if ( ns != null )
 			{
 				ns.attachCamera( null );

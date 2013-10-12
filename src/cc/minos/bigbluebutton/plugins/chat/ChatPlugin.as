@@ -1,8 +1,8 @@
-package cc.minos.bigbluebutton.plugins
+package cc.minos.bigbluebutton.plugins.chat
 {
 	import cc.minos.bigbluebutton.events.BigBlueButtonEvent;
-	import cc.minos.bigbluebutton.extensions.IMessageListener;
-	import cc.minos.bigbluebutton.plugins.chat.*;
+	import cc.minos.bigbluebutton.interfaces.IMessageListener;
+	import cc.minos.bigbluebutton.plugins.Plugin;
 	import flash.net.registerClassAlias;
 	
 	/**
@@ -45,7 +45,7 @@ package cc.minos.bigbluebutton.plugins
 		 */
 		public function sendPublicMessage( message:ChatMessageVO ):void
 		{
-			bbb.sendMessage( SEND_PUBLIC_MESSAGE, null, null, message.toObj );
+			bbb.send([ SEND_PUBLIC_MESSAGE, responder, message.toObj() ] );
 		}
 		
 		/**
@@ -54,7 +54,7 @@ package cc.minos.bigbluebutton.plugins
 		 */
 		public function sendPrivateMessage( message:ChatMessageVO ):void
 		{
-			bbb.sendMessage( SEND_PRIVATE_MESSAGE, null, null, message.toObj );
+			bbb.send([ SEND_PRIVATE_MESSAGE, responder, message.toObj() ] );
 		}
 		
 		/**
@@ -62,7 +62,7 @@ package cc.minos.bigbluebutton.plugins
 		 */
 		public function getPublicChatMessages():void
 		{
-			bbb.sendMessage( GET_MESSAGES, null, null );
+			bbb.send( [GET_MESSAGES, responder] );
 		}
 		
 		/* INTERFACE cc.minos.bigbluebutton.extensions.IMessageListener (信息偵聽器接口) */

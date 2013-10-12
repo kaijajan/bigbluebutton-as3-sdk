@@ -6,6 +6,9 @@ package cc.minos.bigbluebutton.plugins.chat
 	 */
 	public class ChatMessageVO
 	{
+		public static const PUBLIC_CHAT:String = "PUBLIC_CHAT";
+		public static const PRIVATE_CHAT:String = "PRIVATE_CHAT";
+		
 		/** 信息類型 */
 		public var chatType:String;
 		/** 發送者用戶ID */

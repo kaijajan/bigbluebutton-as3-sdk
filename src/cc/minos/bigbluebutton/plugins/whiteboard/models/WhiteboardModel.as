@@ -104,7 +104,7 @@ package cc.minos.bigbluebutton.plugins.whiteboard.models
 				pres = new Presentation( presentationID, numberOfPages );
 				_presentations.push( pres );
 			}
-			//           LogUtil.debug("*** Current presentation is [ " + presentationID + " ] ****");
+			//LogUtil.debug("*** Current presentation is [ " + presentationID + " ] ****");
 			_currentPresentation = pres;
 		}
 		

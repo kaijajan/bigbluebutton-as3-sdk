@@ -1,6 +1,6 @@
-package cc.minos.bigbluebutton.plugins
+package cc.minos.bigbluebutton.plugins.test
 {
-	import cc.minos.bigbluebutton.plugins.test.*;
+	import cc.minos.bigbluebutton.plugins.Plugin;
 	
 	/**
 	 * 端口測試應用（非必須）

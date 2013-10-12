@@ -1,6 +1,5 @@
 package cc.minos.bigbluebutton.plugins.voice
 {
-	import cc.minos.bigbluebutton.plugins.VoicePlugin;
 	import flash.events.AsyncErrorEvent;
 	import flash.events.Event;
 	import flash.events.NetStatusEvent;

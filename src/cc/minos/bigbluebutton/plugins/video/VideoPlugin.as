@@ -1,8 +1,9 @@
-package cc.minos.bigbluebutton.plugins
+package cc.minos.bigbluebutton.plugins.video
 {
+	import cc.minos.bigbluebutton.events.MadePresenterEvent;
 	import cc.minos.bigbluebutton.model.BBBUser;
+	import cc.minos.bigbluebutton.plugins.Plugin;
 	import cc.minos.bigbluebutton.plugins.users.UsersEvent;
-	import cc.minos.bigbluebutton.plugins.video.*;
 	import cc.minos.console.Console;
 	import flash.events.ActivityEvent;
 	import flash.events.StatusEvent;
@@ -32,11 +33,10 @@ package cc.minos.bigbluebutton.plugins
 			this.application = 'video';
 		}
 		
-		override public function init():void
+		override protected function init():void
 		{
 			proxy = new VideoProxy( this );
-			if ( bbb.hasPlugin( "users" ) )
-				bbb.getPlugin( "users" ).addEventListener( UsersEvent.SWITCHED_PRESENTER, onSwitchedPresenter );
+			bbb.addEventListener( MadePresenterEvent.PRESENTER_NAME_CHANGE, onSwitchedPresenter );
 		}
 		
 		/**
@@ -59,9 +59,9 @@ package cc.minos.bigbluebutton.plugins
 		 *
 		 * @param	e
 		 */
-		private function onSwitchedPresenter( e:UsersEvent ):void
+		private function onSwitchedPresenter( e:MadePresenterEvent ):void
 		{
-			if ( e.userID != me.userID )
+			if ( e.userID != userID )
 			{
 				stopPublish();
 			}
@@ -77,7 +77,7 @@ package cc.minos.bigbluebutton.plugins
 		}
 		
 		/**
-		 * 
+		 *
 		 */
 		private function get me():BBBUser
 		{
@@ -89,13 +89,20 @@ package cc.minos.bigbluebutton.plugins
 		 */
 		public function startPublish():void
 		{
-			if ( !me.presenter )
+			if ( !presenter )
+			{
+				dispatchEvent( new VideoEvent( VideoEvent.PRESENTER_SHARE_ONLY ) );
 				return;
+			}
 			
 			if ( setupCamera() )
 			{
 				proxy.startPublishing( _camera, streamName );
-				bbb.plugins[ 'users' ].addStream( me.userID, streamName );
+				bbb.plugins[ 'users' ].addStream( userID, streamName );
+			}
+			else
+			{
+				dispatchEvent( new VideoEvent( VideoEvent.CAMERA_NOT_FOUND ) );
 			}
 		}
 		
@@ -105,7 +112,7 @@ package cc.minos.bigbluebutton.plugins
 		public function stopPublish():void
 		{
 			proxy.stopBroadcasting();
-			bbb.plugins[ 'users' ].removeStream( me.userID, streamName );
+			bbb.plugins[ 'users' ].removeStream( userID, streamName );
 		}
 		
 		/**

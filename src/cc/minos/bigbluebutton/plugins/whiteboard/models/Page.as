@@ -31,7 +31,7 @@ package cc.minos.bigbluebutton.plugins.whiteboard.models
 		
 		public function addAnnotation( annotation:Annotation ):void
 		{
-			_annotations.addItem( annotation );
+			_annotations.push( annotation );
 		}
 		
 		public function updateAnnotation( annotation:Annotation ):void
@@ -45,12 +45,13 @@ package cc.minos.bigbluebutton.plugins.whiteboard.models
 		
 		public function undo():void
 		{
-			_annotations.removeItemAt( _annotations.length - 1 );
+			//_annotations.removeItemAt( _annotations.length - 1 );
+			_annotations.splice( _annotations.length - 1 , 1);
 		}
 		
 		public function clear():void
 		{
-			_annotations.removeAll();
+			_annotations.length = 0;
 		}
 		
 		public function get number():int
@@ -63,7 +64,7 @@ package cc.minos.bigbluebutton.plugins.whiteboard.models
 			var a:Array = new Array();
 			for ( var i:int = 0; i < _annotations.length; i++ )
 			{
-				a.push( _annotations.getItemAt( i ) as Annotation );
+				a.push( _annotations[ i ] as Annotation );
 			}
 			return a;
 		}
@@ -72,9 +73,9 @@ package cc.minos.bigbluebutton.plugins.whiteboard.models
 		{
 			for ( var i:int = 0; i < _annotations.length; i++ )
 			{
-				if (( _annotations.getItemAt( i ) as Annotation ).id == id )
+				if (( _annotations[ i ] as Annotation ).id == id )
 				{
-					return _annotations.getItemAt( i ) as Annotation;
+					return _annotations[ i ] as Annotation;
 				}
 			}
 			

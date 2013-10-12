@@ -1,7 +1,7 @@
 package cc.minos.bigbluebutton.plugins.whiteboard
 {
 	import cc.minos.bigbluebutton.plugins.whiteboard.models.Annotation;
-	import cc.minos.bigbluebutton.plugins.WhiteBoardPlugin;
+	import cc.minos.console.Console;
 	import flash.net.NetConnection;
 	import flash.net.Responder;
 	
@@ -67,6 +67,7 @@ package cc.minos.bigbluebutton.plugins.whiteboard
 		
 		public function sendAnnotation( annotation:Annotation ):void
 		{
+			//trace( "sendAnnotation: " + annotation.id );
 			plugin.connection.call( SEND_ANNOTATION, responder, annotation.annotation );
 		}
 		
@@ -77,7 +78,7 @@ package cc.minos.bigbluebutton.plugins.whiteboard
 		
 		public function setActivePresentation( presentationName:String, numberOfPages:int ):void
 		{
-			plugin.connection.call( SET_ACTIVE_PRESENTATION, responder, { presentationName: presentationName, numberOfPages: numberOfPages } );
+			plugin.connection.call( SET_ACTIVE_PRESENTATION, responder, { presentationID: presentationName, numberOfSlides: numberOfPages } );
 		}
 	
 	}

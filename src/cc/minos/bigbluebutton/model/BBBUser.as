@@ -21,7 +21,7 @@ package cc.minos.bigbluebutton.model
 		public var me:Boolean = false;
 		
 		/** 正在說話 */
-		public var talking:Boolean = false;
+		private var _talking:Boolean = false;
 		
 		/** 是否有視頻流 */
 		private var _hasStream:Boolean = false;
@@ -164,6 +164,17 @@ package cc.minos.bigbluebutton.model
 		public function set voiceMuted( value:Boolean ):void
 		{
 			_voiceMuted = value;
+			buildStatus();
+		}
+		
+		public function get talking():Boolean 
+		{
+			return _talking;
+		}
+		
+		public function set talking(value:Boolean):void 
+		{
+			_talking = value;
 			buildStatus();
 		}
 	}

@@ -1,10 +1,12 @@
-package cc.minos.bigbluebutton.plugins
+package cc.minos.bigbluebutton.plugins.users
 {
+	import cc.minos.bigbluebutton.events.BigBlueButtonEvent;
 	import cc.minos.bigbluebutton.model.BBBUser;
-	import cc.minos.bigbluebutton.plugins.users.*;
+	import cc.minos.bigbluebutton.plugins.Plugin;
 	import cc.minos.bigbluebutton.Role;
 	import flash.events.TimerEvent;
 	import flash.net.NetConnection;
+	import flash.net.Responder;
 	import flash.utils.Timer;
 	
 	/**
@@ -12,8 +14,26 @@ package cc.minos.bigbluebutton.plugins
 	 * 用戶加入退出房間，語音，視頻狀態處理
 	 * @author Minos
 	 */
-	public class UsersPlugin extends Plugin implements IParticipants, IListeners, IUsersManager
+	public class UsersPlugin extends Plugin implements IUsersManager
 	{
+		/** 獲取在線用戶數據 */
+		private static const GET_PARTICIPANTS:String = "participants.getParticipants";
+		/** 設置用戶狀態 */
+		private static const SET_PARTICIPANT_STATUS:String = "participants.setParticipantStatus";
+		/** 設置演講者 */
+		private static const SET_PRESENTER:String = "participants.assignPresenter";
+		/** 獲取語音房間的用戶 */
+		private const GET_MEETMEUSERS:String = "voice.getMeetMeUsers";
+		/** 獲取房間的狀態 */
+		private const GET_ROOMMUTED_STATE:String = "voice.isRoomMuted";
+		/** 設置用戶麥克風是否禁用 */
+		private const SET_LOCK_USER:String = "voice.lockMuteUser";
+		/** 設置是否靜音用戶麥克風 */
+		private const SET_MUTE_USER:String = "voice.muteUnmuteUser";
+		/** 靜音全部用戶 */
+		private const SET_MUTE_ALL_USER:String = "voice.muteAllUsers";
+		/** 關閉用戶語音 */
+		private const SET_KILL_USER:String = "voice.kickUSer";
 		
 		/** 自定義設置 */
 		private var options:UsersOptions;
@@ -41,7 +61,7 @@ package cc.minos.bigbluebutton.plugins
 		/**
 		 * 初始化用戶應用
 		 */
-		override public function init():void
+		override protected function init():void
 		{
 			refreshTimer = new Timer( 200 );
 			me = new BBBUser();
@@ -59,6 +79,10 @@ package cc.minos.bigbluebutton.plugins
 			participantsSOService.connect();
 			listenersSOService.connect();
 			refreshTimer.addEventListener( TimerEvent.TIMER, onRefreshTimer );
+			
+			getParticipants();
+			getMeetMeUsers();
+			getRoomMuteState();
 		}
 		
 		/**
@@ -82,7 +106,45 @@ package cc.minos.bigbluebutton.plugins
 			return _uri;
 		}
 		
-		/** cc.minos.bigbluebutton.plugins.users.IParticipants (用戶狀態接口) */
+		/*********************************************** (用戶狀態接口) ***********************************************************/
+		
+		/**
+		 *
+		 */
+		private function getParticipants():void
+		{
+			bbb.send([ GET_PARTICIPANTS, new Responder( onGetParticipantsResult, onGetParticipantsStatus ) ] );
+		}
+		
+		private function onGetParticipantsResult( result:Object ):void
+		{
+			trace( "在線人數: " + result.count );
+			if ( result.count > 0 )
+			{
+				for ( var p:Object in result.participants )
+				{
+					participantsSOService.participantJoined( result.participants[ p ] );
+				}
+			}
+			becomePresenterIfLoneModerator();
+		}
+		
+		private function becomePresenterIfLoneModerator():void
+		{
+			if ( hasOnlyOneModerator() )
+			{
+				var user:BBBUser = getTheOnlyModerator();
+				if ( user )
+				{
+					assignPresenter( user.userID, user.name, 1 );
+				}
+			}
+		}
+		
+		private function onGetParticipantsStatus( status:Object ):void
+		{
+			dispatchRawEvent( new BigBlueButtonEvent( BigBlueButtonEvent.UNKNOWN_REASON ) );
+		}
 		
 		/**
 		 * 添加視頻流
@@ -91,7 +153,7 @@ package cc.minos.bigbluebutton.plugins
 		 */
 		public function addStream( userID:String, streamName:String ):void
 		{
-			participantsSOService.addStream( userID, streamName );
+			bbb.send([ SET_PARTICIPANT_STATUS, responder, userID, "hasStream", "true,stream=" + streamName ] );
 		}
 		
 		/**
@@ -101,7 +163,7 @@ package cc.minos.bigbluebutton.plugins
 		 */
 		public function removeStream( userID:String, streamName:String ):void
 		{
-			participantsSOService.removeStream( userID, streamName );
+			bbb.send([ SET_PARTICIPANT_STATUS, responder, userID, "hasStream", "false,stream=" + streamName ] );
 		}
 		
 		/**
@@ -112,7 +174,7 @@ package cc.minos.bigbluebutton.plugins
 		 */
 		public function assignPresenter( userID:String, name:String, assignedBy:Number ):void
 		{
-			participantsSOService.assignPresenter( userID, name, assignedBy );
+			bbb.send([ SET_PRESENTER, responder, userID, name, assignedBy ] );
 		}
 		
 		/**
@@ -122,7 +184,7 @@ package cc.minos.bigbluebutton.plugins
 		 */
 		public function raiseHand( userID:String, raise:Boolean ):void
 		{
-			participantsSOService.raiseHand( userID, raise );
+			bbb.send([ SET_PARTICIPANT_STATUS, responder, userID, "raiseHand", raise ] );
 		}
 		
 		/**
@@ -131,11 +193,42 @@ package cc.minos.bigbluebutton.plugins
 		 */
 		public function kickUser( userID:String ):void
 		{
-			if( options.allowKickUser )
+			if ( options.allowKickUser )
 				participantsSOService.kickUser( userID );
 		}
 		
-		/* INTERFACE cc.minos.bigbluebutton.plugins.users.IListeners (用戶語音狀態接口) */
+		/******************************************** (用戶語音狀態接口) ********************************************************/
+		
+		/**
+		 * 獲取當前加入語音列表的用戶
+		 */
+		private function getMeetMeUsers():void
+		{
+			bbb.send([ GET_MEETMEUSERS, new Responder( onGetMeetMeUsersResult ) ] );
+		}
+		
+		private function onGetMeetMeUsersResult( result:Object ):void
+		{
+			if ( result.count > 0 )
+			{
+				for ( var p:Object in result.participants )
+				{
+					var u:Object = result.participants[ p ];
+					listenersSOService.userJoin( u.participant, u.name, u.name, u.muted, u.talking, u.locked );
+				}
+			}
+		}
+		
+		/**
+		 *
+		 */
+		public function getRoomMuteState():void
+		{
+			bbb.send([ GET_ROOMMUTED_STATE, new Responder( function( result:Object ):void
+				{
+					listenersSOService.muteStateCallback( result as Boolean );
+				} ) ] );
+		}
 		
 		/**
 		 * 踢出語音用戶
@@ -143,7 +236,7 @@ package cc.minos.bigbluebutton.plugins
 		 */
 		public function ejectUser( userID:Number ):void
 		{
-			listenersSOService.ejectUser( userID );
+			bbb.send([ SET_KILL_USER, responder, userID ] );
 		}
 		
 		/**
@@ -152,6 +245,7 @@ package cc.minos.bigbluebutton.plugins
 		 */
 		public function muteAllUsers( mute:Boolean ):void
 		{
+			bbb.send([ SET_MUTE_ALL_USER, responder, mute ] );
 			listenersSOService.muteAllUsers( mute );
 		}
 		
@@ -162,7 +256,7 @@ package cc.minos.bigbluebutton.plugins
 		 */
 		public function muteUnmuteUser( userID:Number, mute:Boolean ):void
 		{
-			listenersSOService.muteUnmuteUser( userID, mute );
+			bbb.send([ SET_MUTE_USER, responder, userID, mute ] );
 		}
 		
 		/**
@@ -172,7 +266,7 @@ package cc.minos.bigbluebutton.plugins
 		 */
 		public function lockMuteUser( userID:Number, lock:Boolean ):void
 		{
-			listenersSOService.lockMuteUser( userID, lock );
+			bbb.send([ SET_LOCK_USER, responder, userID, lock ] );
 		}
 		
 		/** cc.minos.bigbluebutton.plugins.users.IUsersManager (用戶管理接口) */

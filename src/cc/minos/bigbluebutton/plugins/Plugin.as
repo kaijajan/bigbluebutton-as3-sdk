@@ -4,6 +4,7 @@ package cc.minos.bigbluebutton.plugins
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.net.NetConnection;
+	import flash.net.Responder;
 	
 	/**
 	 * 應用基類
@@ -20,8 +21,15 @@ package cc.minos.bigbluebutton.plugins
 		/** 應用地址（默認為bigbluebutton） */
 		public var application:String = "bigbluebutton";
 		
+		protected var responder:Responder;
+		
 		public function Plugin()
 		{
+			responder = new Responder( function( result:Boolean ):void
+				{
+				}, function( status:Object ):void
+				{
+				} )
 		}
 		
 		/**
@@ -31,10 +39,11 @@ package cc.minos.bigbluebutton.plugins
 		public function setup( bbb:BigBlueButton ):void
 		{
 			this.bbb = bbb;
+			init();
 		}
 		
 		/** 初始化應用 */
-		public function init():void
+		protected function init():void
 		{
 			//TODO
 		}
@@ -65,6 +74,26 @@ package cc.minos.bigbluebutton.plugins
 		public function get connection():NetConnection
 		{
 			return bbb.conferenceParameters.connection;
+		}
+		
+		public function get userID():String
+		{
+			return bbb.conferenceParameters.userID;
+		}
+		
+		public function get username():String
+		{
+			return bbb.conferenceParameters.username;
+		}
+		
+		/**
+		 * 是否演講者
+		 */
+		public function get presenter():Boolean
+		{
+			if ( bbb.hasPlugin( "users" ) )
+				return bbb.plugins[ 'users' ].getMe().presenter;
+			return false;
 		}
 		
 		/**

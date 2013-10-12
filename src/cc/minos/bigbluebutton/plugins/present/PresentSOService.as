@@ -2,7 +2,6 @@ package cc.minos.bigbluebutton.plugins.present
 {
 	import cc.minos.bigbluebutton.events.MadePresenterEvent;
 	import cc.minos.bigbluebutton.plugins.present.events.*;
-	import cc.minos.bigbluebutton.plugins.PresentPlugin;
 	import cc.minos.console.Console;
 	import flash.events.AsyncErrorEvent;
 	import flash.events.NetStatusEvent;
@@ -589,9 +588,6 @@ package cc.minos.bigbluebutton.plugins.present
 		
 		private function syncHandler( event:SyncEvent ):void
 		{
-			//		var statusCode:String = event.info.code;
-			//trace( "!!!!! Presentation sync handler - " + event.changeList.length );
-			//notifyConnectionStatusListener( true );
 			getPresentationInfo();
 			queryPresenterForSlideInfo();
 		}

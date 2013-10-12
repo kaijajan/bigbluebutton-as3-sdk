@@ -1,7 +1,6 @@
 package cc.minos.bigbluebutton.plugins.users
 {
 	import cc.minos.bigbluebutton.model.BBBUser;
-	import cc.minos.bigbluebutton.plugins.UsersPlugin;
 	import flash.events.AsyncErrorEvent;
 	import flash.events.NetStatusEvent;
 	import flash.net.NetConnection;
@@ -16,72 +15,29 @@ package cc.minos.bigbluebutton.plugins.users
 	{
 		/** 用戶語音狀態 */
 		private const SO_NAME:String = "meetMeUsersSO";
-		/** 獲取語音房間的用戶 */
-		private const GET_MEETMEUSERS:String = "voice.getMeetMeUsers";
-		/** 獲取房間的狀態 */
-		private const GET_ROOMMUTED_STATE:String = "voice.isRoomMuted";
-		/** 設置用戶麥克風是否禁用 */
-		private const SET_LOCK_USER:String = "voice.lockMuteUser";
-		/** 設置是否靜音用戶麥克風 */
-		private const SET_MUTE_USER:String = "voice.muteUnmuteUser";
-		/** 靜音全部用戶 */
-		private const SET_MUTE_ALL_USER:String = "voice.muteAllUsers";
-		/** 關閉用戶語音 */
-		private const SET_KILL_USER:String = "voice.kickUSer";
 		
 		private var plugin:UsersPlugin;
 		private var _listenersSO:SharedObject;
-		private var responder:Responder;
-		private var connection:NetConnection;
 		
 		public function ListenersSOService( plugin:UsersPlugin )
 		{
 			this.plugin = plugin;
-			responder = new Responder( function( result:Object ):void
-				{
-				}, function( status:Object ):void
-				{
-				} );
 		}
 		
 		public function connect():void
 		{
-			connection = plugin.connection;
 			_listenersSO = SharedObject.getRemote( SO_NAME, plugin.uri, false );
 			_listenersSO.addEventListener( NetStatusEvent.NET_STATUS, netStatusHandler );
 			_listenersSO.addEventListener( AsyncErrorEvent.ASYNC_ERROR, asyncErrorHandler );
 			_listenersSO.client = this;
-			_listenersSO.connect( connection );
+			_listenersSO.connect( plugin.connection );
 			
-			getCurrentUsers();
-			getRoomMuteState();
 		}
 		
 		public function disconnect():void
 		{
 			if ( _listenersSO )
 				_listenersSO.close();
-		}
-		
-		/**
-		 * 獲取當前加入語音列表的用戶
-		 */
-		private function getCurrentUsers():void
-		{
-			connection.call( GET_MEETMEUSERS, new Responder( function( result:Object ):void
-				{
-					if ( result.count > 0 )
-					{
-						for ( var p:Object in result.participants )
-						{
-							var u:Object = result.participants[ p ]
-							userJoin( u.participant, u.name, u.name, u.muted, u.talking, u.locked );
-						}
-					}
-				}, function( status:Object ):void
-				{
-					trace( SO_NAME + " getCurrentUsers error" );
-				} ) );
 		}
 		
 		/**
@@ -204,32 +160,11 @@ package cc.minos.bigbluebutton.plugins.users
 		}
 		
 		/**
-		 * 設置語音用戶麥克風鎖定狀態
-		 * @param	userid
-		 * @param	lock
-		 */
-		public function lockMuteUser( userid:Number, lock:Boolean ):void
-		{
-			connection.call( SET_LOCK_USER, responder, userid, lock );
-		}
-		
-		/**
-		 * 設置語音用戶麥克風靜音狀態
-		 * @param	userid
-		 * @param	mute
-		 */
-		public function muteUnmuteUser( userid:Number, mute:Boolean ):void
-		{
-			connection.call( SET_MUTE_USER, responder, userid, mute );
-		}
-		
-		/**
 		 * 設置所有用戶靜音狀態
 		 * @param	mute
 		 */
 		public function muteAllUsers( mute:Boolean ):void
 		{
-			connection.call( SET_MUTE_ALL_USER, responder, mute );
 			_listenersSO.send( "muteStateCallback", mute );
 		}
 		
@@ -245,27 +180,8 @@ package cc.minos.bigbluebutton.plugins.users
 		}
 		
 		/**
-		 * 踢出語音用戶
-		 * @param	userId
-		 */
-		public function ejectUser( userId:Number ):void
-		{
-			connection.call( SET_KILL_USER, responder, userId );
-		}
-		
-		/**
 		 * 獲取狀態
 		 */
-		private function getRoomMuteState():void
-		{
-			connection.call( GET_ROOMMUTED_STATE, new Responder( function( result:Object ):void
-				{
-					muteStateCallback( result as Boolean );
-				}, function( status:Object ):void
-				{
-					trace( SO_NAME + " getRoomMuteState error" );
-				} ) );
-		}
 		
 		private function netStatusHandler( e:NetStatusEvent ):void
 		{

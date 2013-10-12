@@ -28,7 +28,7 @@ package cc.minos.bigbluebutton.plugins.whiteboard.models
 	{
 		public var graphicType:String = WhiteboardConstants.TYPE_SHAPE;
 		public var toolType:String = DrawObject.PENCIL;
-		public var drawColor:uint = 0x000000;
+		public var drawColor:uint = 0xff0000;
 		public var fillColor:uint = 0x000000;
 		public var thickness:uint = 1;
 		public var _fontStyle:String = "_sans";
@@ -36,5 +36,9 @@ package cc.minos.bigbluebutton.plugins.whiteboard.models
 		public var _textText:String = "Hello BBB!";
 		public var fillOn:Boolean = false;
 		public var transparencyOn:Boolean = false;
+		
+		public function WhiteboardTool()
+		{
+		}
 	}
 }

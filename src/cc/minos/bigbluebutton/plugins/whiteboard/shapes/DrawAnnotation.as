@@ -26,6 +26,10 @@ package cc.minos.bigbluebutton.plugins.whiteboard.shapes
 		protected var _id:String;
 		protected var _status:String;
 		
+		public function DrawAnnotation()
+		{
+		}
+		
 		public function set id( id:String ):void
 		{
 			_id = id;

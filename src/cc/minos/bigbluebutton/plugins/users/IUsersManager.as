@@ -18,7 +18,6 @@ package cc.minos.bigbluebutton.plugins.users
 		function removeUser( userID:String ):void;
 		function getVoiceUser( voiceUserID:Number ):BBBUser;
 		function getMe():BBBUser;
-		//function removeAllParticipants():void;
 		function getUserIDs():Array;
 		function refresh():void;
 	}

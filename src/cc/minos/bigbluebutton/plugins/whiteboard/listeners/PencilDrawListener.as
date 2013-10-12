@@ -1,11 +1,14 @@
 package cc.minos.bigbluebutton.plugins.whiteboard.listeners
 {
+	import cc.minos.bigbluebutton.plugins.whiteboard.models.Annotation;
+	import cc.minos.bigbluebutton.plugins.whiteboard.models.WhiteboardModel;
 	import cc.minos.bigbluebutton.plugins.whiteboard.models.WhiteboardTool;
 	import cc.minos.bigbluebutton.plugins.whiteboard.shapes.DrawAnnotation;
 	import cc.minos.bigbluebutton.plugins.whiteboard.shapes.DrawObject;
 	import cc.minos.bigbluebutton.plugins.whiteboard.shapes.ShapeFactory;
 	import cc.minos.bigbluebutton.plugins.whiteboard.shapes.WhiteboardConstants;
-	import cc.minos.talk3.view.whiteboard.WhiteboardCanvas;
+	import cc.minos.talk3.views.whiteboard.WhiteboardCanvas;
+	import cc.minos.talk3.views.whiteboard.WhiteboardDrawEvent;
 	
 	public class PencilDrawListener implements IDrawListener
 	{
@@ -19,13 +22,14 @@ package cc.minos.bigbluebutton.plugins.whiteboard.listeners
 		//private var _idGenerator:AnnotationIDGenerator;
 		private var _curID:String;
 		
-		//private var _wbModel:WhiteboardModel;
+		private var _wbModel:WhiteboardModel;
 		
-		public function PencilDrawListener( wbCanvas:WhiteboardCanvas, sendShapeFrequency:int, shapeFactory:ShapeFactory )
+		public function PencilDrawListener( wbCanvas:WhiteboardCanvas, sendShapeFrequency:int, shapeFactory:ShapeFactory , wbModel:WhiteboardModel )
 		{
 			_wbCanvas = wbCanvas;
 			_sendFrequency = sendShapeFrequency;
 			_shapeFactory = shapeFactory;
+			_wbModel = wbModel;
 		}
 		
 		private var objCount:Number = 0;
@@ -166,11 +170,11 @@ package cc.minos.bigbluebutton.plugins.whiteboard.listeners
 				_segment.push( xy[ 0 ], xy[ 1 ] );
 			}
 			
-			//var an:Annotation = dobj.createAnnotation( _wbModel, _ctrlKeyDown );
-			//if ( an != null )
-			//{
-			_wbCanvas.sendGraphicToServer( dobj, _ctrlKeyDown );
-			//}
+			var an:Annotation = dobj.createAnnotation( _wbModel, _ctrlKeyDown );
+			if ( an != null )
+			{
+				_wbCanvas.sendGraphicToServer( an , WhiteboardDrawEvent.SEND_SHAPE );
+			}
 		
 		}
 	}

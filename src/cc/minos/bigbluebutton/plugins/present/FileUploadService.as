@@ -1,7 +1,6 @@
 package cc.minos.bigbluebutton.plugins.present
 {
 	import cc.minos.bigbluebutton.plugins.present.events.UploadEvent;
-	import cc.minos.bigbluebutton.plugins.PresentPlugin;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.events.HTTPStatusEvent;

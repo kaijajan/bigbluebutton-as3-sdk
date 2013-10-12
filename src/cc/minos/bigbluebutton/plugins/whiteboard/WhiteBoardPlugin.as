@@ -1,8 +1,10 @@
-package cc.minos.bigbluebutton.plugins
+package cc.minos.bigbluebutton.plugins.whiteboard
 {
-	import cc.minos.bigbluebutton.extensions.IMessageListener;
+	import cc.minos.bigbluebutton.interfaces.IMessageListener;
+	import cc.minos.bigbluebutton.plugins.Plugin;
 	import cc.minos.bigbluebutton.plugins.present.events.NavigationEvent;
-	import cc.minos.bigbluebutton.plugins.whiteboard.*;
+	import cc.minos.bigbluebutton.plugins.present.events.PresentationEvent;
+	import cc.minos.bigbluebutton.plugins.present.PresentPlugin;
 	import cc.minos.bigbluebutton.plugins.whiteboard.models.*;
 	import cc.minos.bigbluebutton.plugins.whiteboard.shapes.DrawAnnotation;
 	import cc.minos.console.Console;
@@ -14,7 +16,7 @@ package cc.minos.bigbluebutton.plugins
 	public class WhiteBoardPlugin extends Plugin implements IMessageListener
 	{
 		private var service:WhiteBoardService;
-		private var whiteboardModel:WhiteboardModel;
+		public var whiteboardModel:WhiteboardModel;
 		private var presentPlugin:PresentPlugin;
 		
 		public function WhiteBoardPlugin()
@@ -24,13 +26,12 @@ package cc.minos.bigbluebutton.plugins
 			this.shortcut = "board";
 		}
 		
-		override public function init():void
+		override protected function init():void
 		{
 			super.init();
 			
 			service = new WhiteBoardService( this );
 			whiteboardModel = new WhiteboardModel( this );
-		
 		}
 		
 		/**
@@ -45,22 +46,37 @@ package cc.minos.bigbluebutton.plugins
 				return;
 			}
 			
+			presentPlugin.addEventListener( PresentationEvent.PRESENTATION_LOADED, onPresentation );
 			presentPlugin.addEventListener( NavigationEvent.GOTO_PAGE, onGotoPage );
+			bbb.addMessageListener( this );
 		}
 		
-		/**
-		 * 是否演講者
-		 */
-		public function get presenter():Boolean
+		override public function stop():void
 		{
-			return bbb.plugins[ 'users' ].getMe().presenter;
+			super.stop();
+			if ( presentPlugin != null )
+			{
+				presentPlugin.removeEventListener( PresentationEvent.PRESENTATION_LOADED, onPresentation );
+				presentPlugin.removeEventListener( NavigationEvent.GOTO_PAGE, onGotoPage );
+			}
+			bbb.removeMessageListener( this );
 		}
 		
 		private var count:uint = 0;
+		
 		public function generateID():String
 		{
 			var curTime:Number = new Date().getTime();
 			return bbb.conferenceParameters.userID + "-" + count++ + "-" + curTime;
+		}
+		
+		/**
+		 * 
+		 * @param	e
+		 */
+		private function onPresentation( e:PresentationEvent ):void
+		{
+			setActivePresentation( e.presentationName, e.slides.length );
 		}
 		
 		/**
@@ -121,11 +137,9 @@ package cc.minos.bigbluebutton.plugins
 			service.clearBoard();
 		}
 		
-		public function sendAnnotation( dan:DrawAnnotation, ctrlKeyDown:Boolean ):void
+		public function sendAnnotation( annotation:Annotation ):void
 		{
-			var annotation:Annotation = dan.createAnnotation( whiteboardModel, ctrlKeyDown );
-			if ( annotation != null )
-				service.sendAnnotation( annotation );
+			service.sendAnnotation( annotation );
 		}
 		
 		public function checkIsWhiteboardOn():void
@@ -182,39 +196,31 @@ package cc.minos.bigbluebutton.plugins
 		
 		private function handleChangePresentationCommand( message:Object ):void
 		{
-			// LogUtil.debug("Handle Whiteboard Change Presentation Command [ " + message.presentationID + ", " + message.numberOfPages + "]");
 			whiteboardModel.changePresentation( message.presentationID, message.numberOfPages );
 		}
 		
 		private function handleChangePageCommand( message:Object ):void
 		{
-			// LogUtil.debug("Handle Whiteboard Change Page Command [ " + message.pageNum + ", " + message.numAnnotations + "]");
 			whiteboardModel.changePage( message.pageNum, message.numAnnotations );
 		}
 		
 		private function handleClearCommand( message:Object ):void
 		{
-			// LogUtil.debug("Handle Whiteboard Clear Command ");
 			whiteboardModel.clear();
 		}
 		
 		private function handleUndoCommand( message:Object ):void
 		{
-			// LogUtil.debug("Handle Whiteboard Undo Command ");
 			whiteboardModel.undo();
-			//            dispatcher.dispatchEvent(new WhiteboardUpdate(WhiteboardUpdate.SHAPE_UNDONE));
 		}
 		
 		private function handleEnableWhiteboardCommand( message:Object ):void
 		{
-			//if (result as Boolean) modifyEnabledCallback(true);
-			// LogUtil.debug("Handle Whiteboard Enabled Command " + message.enabled);
 			whiteboardModel.enable( message.enabled );
 		}
 		
 		private function handleNewAnnotationCommand( message:Object ):void
 		{
-			// LogUtil.debug("Handle new annotation[" + message.type + ", " + message.id + ", " + message.status + "]");
 			if ( message.type == undefined || message.type == null || message.type == "" )
 				return;
 			if ( message.id == undefined || message.id == null || message.id == "" )
@@ -235,14 +241,14 @@ package cc.minos.bigbluebutton.plugins
 		
 		private function handleRequestAnnotationHistoryReply( message:Object ):void
 		{
-			//LogUtil.debug("handleRequestAnnotationHistoryReply: Annotation history for [" + message.presentationID + "," + message.pageNumber + "]");
+			trace( "handleRequestAnnotationHistoryReply: Annotation history for [" + message.presentationID + "," + message.pageNumber + "]" );
 			if ( message.count == 0 )
 			{
-				//LogUtil.debug( "handleRequestAnnotationHistoryReply: No annotations." );
+				trace( "handleRequestAnnotationHistoryReply: No annotations." );
 			}
 			else
 			{
-				//LogUtil.debug( "handleRequestAnnotationHistoryReply: Number of annotations in history = " + message.count );
+				trace( "handleRequestAnnotationHistoryReply: Number of annotations in history = " + message.count );
 				var annotations:Array = message.annotations as Array;
 				var tempAnnotations:Array = new Array();
 				
@@ -257,7 +263,7 @@ package cc.minos.bigbluebutton.plugins
 					if ( an.status == undefined || an.status == null || an.status == "" )
 						return;
 					
-					//LogUtil.debug("handleRequestAnnotationHistoryReply: annotation id=" + an.id);
+					trace( "handleRequestAnnotationHistoryReply: annotation id=" + an.id );
 					
 					var annotation:Annotation = new Annotation( an.id, an.type, an );
 					annotation.status = an.status;

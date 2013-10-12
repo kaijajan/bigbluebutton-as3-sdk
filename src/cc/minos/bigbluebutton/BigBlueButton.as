@@ -1,7 +1,7 @@
 package cc.minos.bigbluebutton
 {
 	import cc.minos.bigbluebutton.events.*;
-	import cc.minos.bigbluebutton.extensions.*;
+	import cc.minos.bigbluebutton.interfaces.*;
 	import cc.minos.bigbluebutton.model.*;
 	import cc.minos.bigbluebutton.plugins.*;
 	import flash.events.AsyncErrorEvent;
@@ -26,7 +26,7 @@ package cc.minos.bigbluebutton
 		/** 服務器版本 */
 		public static const API:Number = 0.81;
 		
-		public static const VERSION:Number = 0.2;
+		public static const VERSION:Number = 0.3;
 		
 		/** 應用目錄 */
 		public var plugins:Dictionary = new Dictionary();
@@ -166,8 +166,8 @@ package cc.minos.bigbluebutton
 					}
 					break;
 				case "NetConnection.Connect.Closed": 
-					//          if (logoutOnUserCommand) {
-					sendConnectionFailedEvent( BigBlueButtonEvent.CONNECTION_CLOSED );
+					//if (logoutOnUserCommand) {
+						sendConnectionFailedEvent( BigBlueButtonEvent.CONNECTION_CLOSED );
 					//          } else {
 					//            autoReconnectTimer.addEventListener("timer", autoReconnectTimerHandler);
 					//            autoReconnectTimer.start();		
@@ -235,13 +235,13 @@ package cc.minos.bigbluebutton
 		{
 			if ( this.logoutOnUserCommand )
 			{
-				var e:BigBlueButtonEvent = new BigBlueButtonEvent( BigBlueButtonEvent.USER_LOGGED_OUT );
-				dispatchEvent( e );
+				var outEvent:BigBlueButtonEvent = new BigBlueButtonEvent( BigBlueButtonEvent.USER_LOGGED_OUT );
+				dispatchEvent( outEvent );
 				return;
 			}
 			
-			var e:BigBlueButtonEvent = new BigBlueButtonEvent( reason );
-			dispatchEvent( e );
+			var failedEvent:BigBlueButtonEvent = new BigBlueButtonEvent( reason );
+			dispatchEvent( failedEvent );
 		}
 		
 		public function setUserId( id:Number, role:String ):String
@@ -312,52 +312,15 @@ package cc.minos.bigbluebutton
 		}
 		
 		/**
-		 *
-		 * @param	service			:	應用
-		 * @param	onSuccess		:	成功回調函數
-		 * @param	onFailed		:	失敗回調函數
-		 * @param	message			:	信息
+		 * 發送信息
+		 * @param	args 參數數組[command, responder , ...rest ]
 		 */
-		public function sendMessage( service:String, onSuccess:Function = null, onFailed:Function = null, message:Object = null ):void
+		public function send( args:Array ):void
 		{
-			var responder:Responder = new Responder( function( result:Object ):void
-				{
-					if ( onSuccess != null )
-						onSuccess( result );
-				}, function( status:Object ):void
-				{
-					if ( onFailed != null )
-						onFailed( status );
-				} );
-			if ( message != null )
-				_netConnection.call( service, responder, message );
-			else
-				_netConnection.call( service, responder );
+			_netConnection.call.apply( null, args );
 		}
 		
 		/* cc.minos.bigbluebutton.extensions.IPluginManager （應用管理接口）*/
-		
-		/**
-		 * 
-		 */
-		public function startAllPlugins():void
-		{
-			for ( var t:String in plugins )
-			{
-				( plugins[t] as Plugin).start();
-			}
-		}
-		
-		/**
-		 * 
-		 */
-		public function stopAllPlugins():void
-		{
-			for ( var t:String in plugins )
-			{
-				( plugins[t] as Plugin).stop();
-			}
-		}
 		
 		/**
 		 * 添加應用
@@ -367,7 +330,6 @@ package cc.minos.bigbluebutton
 		{
 			plugins[ pi.shortcut ] = pi;
 			pi.setup( this );
-			pi.init();
 		}
 		
 		/**

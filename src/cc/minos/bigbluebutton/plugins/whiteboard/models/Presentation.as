@@ -50,7 +50,7 @@ package cc.minos.bigbluebutton.plugins.whiteboard.models
 			for ( var i:int = 1; i <= numPages; i++ )
 			{
 //                LogUtil.debug("**** Creating page [" + i + "]");
-				_pages.addItem( new Page( i ) );
+				_pages.push( new Page( i ) );
 			}
 		}
 		
@@ -61,7 +61,7 @@ package cc.minos.bigbluebutton.plugins.whiteboard.models
 			var idx:int = -1;
 			for ( var i:int = 0; i < _numPages && !found; i++ )
 			{
-				var p:Page = _pages.getItemAt( i ) as Page;
+				var p:Page = _pages[ i ] as Page;
 				if ( p.number == num )
 				{
 					idx = i;
@@ -70,7 +70,7 @@ package cc.minos.bigbluebutton.plugins.whiteboard.models
 			}
 			if ( found )
 			{
-				_currentPage = _pages.getItemAt( idx ) as Page;
+				_currentPage = _pages[ idx ] as Page;
 //                LogUtil.debug("**** Current page to [" + _currentPage.number + "]");                
 			}
 			else

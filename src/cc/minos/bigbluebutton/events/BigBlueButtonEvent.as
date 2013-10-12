@@ -42,6 +42,13 @@ package cc.minos.bigbluebutton.events
 		{
 			super( type, false, false );
 		}
+		
+		override public function clone():Event
+		{
+			var event:BigBlueButtonEvent = new BigBlueButtonEvent( type );
+			event.parames = parames;
+			return event;
+		}
 	
 	}
 }

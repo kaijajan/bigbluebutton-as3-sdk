@@ -1,7 +1,7 @@
-package cc.minos.bigbluebutton.plugins
+package cc.minos.bigbluebutton.plugins.voice
 {
 	import cc.minos.bigbluebutton.events.BigBlueButtonEvent;
-	import cc.minos.bigbluebutton.plugins.voice.*;
+	import cc.minos.bigbluebutton.plugins.Plugin;
 	import flash.events.StatusEvent;
 	import flash.media.Microphone;
 	import flash.net.NetStream;
@@ -42,7 +42,7 @@ package cc.minos.bigbluebutton.plugins
 		/**
 		 *
 		 */
-		override public function init():void
+		override protected function init():void
 		{
 			connectionManager = new ConnectionManager( this );
 			streamManager = new StreamManager( this );

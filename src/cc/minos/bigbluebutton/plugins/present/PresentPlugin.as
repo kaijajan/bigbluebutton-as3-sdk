@@ -1,9 +1,8 @@
-package cc.minos.bigbluebutton.plugins
+package cc.minos.bigbluebutton.plugins.present
 {
-	import cc.minos.bigbluebutton.extensions.IMessageListener;
-	import cc.minos.bigbluebutton.plugins.present.*;
-	import cc.minos.bigbluebutton.plugins.present.events.CursorEvent;
-	import cc.minos.bigbluebutton.plugins.present.events.PresentationEvent;
+	import cc.minos.bigbluebutton.interfaces.IMessageListener;
+	import cc.minos.bigbluebutton.plugins.Plugin;
+	import cc.minos.bigbluebutton.plugins.present.events.*;
 	import cc.minos.console.Console;
 	import cc.minos.utils.ArrayUtil;
 	import flash.events.TimerEvent;
@@ -46,9 +45,9 @@ package cc.minos.bigbluebutton.plugins
 		}
 		
 		/**
-		 * 
+		 *
 		 */
-		override public function init():void
+		override protected function init():void
 		{
 			host = "http://" + bbb.conferenceParameters.host;
 			conference = bbb.conferenceParameters.conference;
@@ -66,7 +65,7 @@ package cc.minos.bigbluebutton.plugins
 		}
 		
 		/**
-		 * 
+		 *
 		 * @param	e
 		 */
 		private function onPresentation( e:PresentationEvent ):void
@@ -99,8 +98,11 @@ package cc.minos.bigbluebutton.plugins
 					return;
 				
 				Console.log( 'presentation has been loaded  presentationName=' + presentationName );
-				if ( !ArrayUtil.containsValue( presentationNames, presentationName ) )
-					presentationNames.push( presentationName );
+				
+				var added:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_ADDED_EVENT );
+				added.presentationName = presentationName;
+				dispatchEvent( added );
+					
 				_currentPresentation = presentationName;
 				
 				var loadedEvent:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_LOADED );
@@ -110,7 +112,7 @@ package cc.minos.bigbluebutton.plugins
 				
 				if ( presenter )
 				{
-					//如果是演示者需要通知其他人
+					//设置文档共享信息为true，通知其他用户
 					sharePresentation( true, presentationName );
 				}
 				else
@@ -124,22 +126,6 @@ package cc.minos.bigbluebutton.plugins
 			{
 				trace( 'failed to load presentation' );
 			}
-		}
-		
-		/**
-		 * 用戶id
-		 */
-		public function get userID():String
-		{
-			return bbb.plugins[ 'users' ].getMe().userID;
-		}
-		
-		/**
-		 * 是否演講者
-		 */
-		public function get presenter():Boolean
-		{
-			return bbb.plugins[ 'users' ].getMe().presenter;
 		}
 		
 		/**
@@ -312,7 +298,7 @@ package cc.minos.bigbluebutton.plugins
 		/* INTERFACE cc.minos.bigbluebutton.extensions.IMessageListener (信息偵聽器) */
 		
 		/**
-		 * 
+		 *
 		 * @param	messageName
 		 * @param	message
 		 */
