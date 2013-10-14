@@ -153,13 +153,13 @@ package cc.minos.bigbluebutton
 				case "NetConnection.Connect.Failed": 
 					if ( tried_tunneling )
 					{
-						trace( "Connection to viewers application failed...even when tunneling" );
+						trace( "连接失败" );
 						sendConnectionFailedEvent( BigBlueButtonEvent.CONNECTION_FAILED );
 					}
 					else
 					{
 						disconnect( false );
-						trace( "Connection to viewers application failed...try tunneling" );
+						trace( "连接失败，尝试使用通道" );
 						var rtmptRetryTimer:Timer = new Timer( 1000, 1 );
 						rtmptRetryTimer.addEventListener( "timer", rtmptRetryTimerHandler );
 						rtmptRetryTimer.start();
@@ -174,22 +174,20 @@ package cc.minos.bigbluebutton
 //          }
 					break;
 				case "NetConnection.Connect.InvalidApp": 
-					trace( "viewers application not found on server" );
+					trace( "错误应用" );
 					sendConnectionFailedEvent( BigBlueButtonEvent.INVALID_APP );
 					break;
 				case "NetConnection.Connect.AppShutDown": 
-					trace( "viewers application has been shutdown" );
+					trace( "应用已经关闭" );
 					sendConnectionFailedEvent( BigBlueButtonEvent.APP_SHUTDOWN );
 					break;
 				case "NetConnection.Connect.Rejected": 
-					trace( "Connection to the server rejected. Uri: " + _netConnection.uri + ". Check if the red5 specified in the uri exists and is running" );
+					trace( "连接被拒绝" );
 					sendConnectionFailedEvent( BigBlueButtonEvent.CONNECTION_REJECTED );
 					break;
 				case "NetConnection.Connect.NetworkChange": 
-					trace( "Detected network change. User might be on a wireless and temporarily dropped connection. Doing nothing. Just making a note." );
 					break;
 				default: 
-					trace( "Default status to the viewers application" );
 					sendConnectionFailedEvent( BigBlueButtonEvent.UNKNOWN_REASON );
 					break;
 			}

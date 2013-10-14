@@ -131,7 +131,6 @@ package cc.minos.bigbluebutton.plugins.chat
 		 */
 		private function onChatReceivePrivateMessageCommand( message:Object ):void
 		{
-			//Console.log( "private message: " + message.message );
 			var msg:ChatMessageVO = new ChatMessageVO();
 			msg.chatType = message.chatType;
 			msg.fromUserID = message.fromUserID;

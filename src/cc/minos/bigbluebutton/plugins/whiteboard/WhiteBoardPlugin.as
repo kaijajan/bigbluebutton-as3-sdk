@@ -8,6 +8,7 @@ package cc.minos.bigbluebutton.plugins.whiteboard
 	import cc.minos.bigbluebutton.plugins.whiteboard.models.*;
 	import cc.minos.bigbluebutton.plugins.whiteboard.shapes.DrawAnnotation;
 	import cc.minos.console.Console;
+	import flash.net.Responder;
 	
 	/**
 	 * 白板應用
@@ -15,9 +16,18 @@ package cc.minos.bigbluebutton.plugins.whiteboard
 	 */
 	public class WhiteBoardPlugin extends Plugin implements IMessageListener
 	{
-		private var service:WhiteBoardService;
+		private static const SET_ACTIVE_PAGE:String = "whiteboard.setActivePage";
+		private static const TOGGLE_GRID:String = "whiteboard.toggleGrid";
+		private static const UNDO:String = "whiteboard.undo";
+		private static const CLEAR:String = "whiteboard.clear";
+		private static const REQUEST_ANNOTATION_HISTORY:String = "whiteboard.requestAnnotationHistory";
+		private static const SEND_ANNOTATION:String = "whiteboard.sendAnnotation";
+		private static const IS_WHITEBOARD_ENABLED:String = "whiteboard.isWhiteboardEnabled";
+		private static const SET_ACTIVE_PRESENTATION:String = "whiteboard.setActivePresentation";
+		
 		public var whiteboardModel:WhiteboardModel;
 		private var presentPlugin:PresentPlugin;
+		private var responder:Responder;
 		
 		public function WhiteBoardPlugin()
 		{
@@ -30,7 +40,13 @@ package cc.minos.bigbluebutton.plugins.whiteboard
 		{
 			super.init();
 			
-			service = new WhiteBoardService( this );
+			responder = new Responder( //
+				function( result:String ):void
+				{
+				}, function( status:String ):void
+				{
+				} );
+				
 			whiteboardModel = new WhiteboardModel( this );
 		}
 		
@@ -96,13 +112,13 @@ package cc.minos.bigbluebutton.plugins.whiteboard
 			var cp:Object = whiteboardModel.getCurrentPresentationAndPage();
 			if ( cp != null )
 			{
-				service.requestAnnotationHistory( cp.presentationID, cp.currentPageNumber );
+				bbb.send( [REQUEST_ANNOTATION_HISTORY , responder , { presentationID: cp.presentationID, pageNumber: cp.currentPageNumber }] );
 			}
 		}
 		
 		public function modifyEnabled( enabled:Boolean ):void
 		{
-			service.modifyEnabled( enabled );
+			bbb.send( [ TOGGLE_GRID, responder, { enabled: enabled } ] );
 		}
 		
 		/**
@@ -114,7 +130,7 @@ package cc.minos.bigbluebutton.plugins.whiteboard
 			pageNum += 1;
 			if ( presenter )
 			{
-				service.changePage( pageNum );
+				bbb.send( [ SET_ACTIVE_PAGE, responder, { pageNum: pageNum } ] );
 			}
 			else
 			{
@@ -124,34 +140,34 @@ package cc.minos.bigbluebutton.plugins.whiteboard
 		
 		public function toggleGrid():void
 		{
-			service.toggleGrid();
+			bbb.send( [ TOGGLE_GRID, responder ] );
 		}
 		
 		public function undoGraphic():void
 		{
-			service.undoGraphic();
+			bbb.send( [ UNDO, responder ]);
 		}
 		
 		public function clearBoard():void
 		{
-			service.clearBoard();
+			bbb.send( [ CLEAR, responder ] );
 		}
 		
 		public function sendAnnotation( annotation:Annotation ):void
 		{
-			service.sendAnnotation( annotation );
+			bbb.send( [ SEND_ANNOTATION, responder, annotation.annotation ] );
 		}
 		
 		public function checkIsWhiteboardOn():void
 		{
-			service.checkIsWhiteboardOn();
+			bbb.send( [ IS_WHITEBOARD_ENABLED, responder ] );
 		}
 		
 		public function setActivePresentation( presentationName:String, numberOfPages:int ):void
 		{
 			if ( presenter )
 			{
-				service.setActivePresentation( presentationName, numberOfPages );
+				bbb.send( [ SET_ACTIVE_PRESENTATION, responder, { presentationID: presentationName, numberOfSlides: numberOfPages } ] );
 			}
 			else
 			{

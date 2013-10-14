@@ -1,6 +1,7 @@
 package cc.minos.bigbluebutton.plugins
 {
 	import cc.minos.bigbluebutton.BigBlueButton;
+	import cc.minos.bigbluebutton.model.BBBUser;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.net.NetConnection;
@@ -84,6 +85,11 @@ package cc.minos.bigbluebutton.plugins
 		public function get username():String
 		{
 			return bbb.conferenceParameters.username;
+		}
+		
+		public function get me():BBBUser
+		{
+			return bbb.plugins[ 'users' ].getMe();
 		}
 		
 		/**

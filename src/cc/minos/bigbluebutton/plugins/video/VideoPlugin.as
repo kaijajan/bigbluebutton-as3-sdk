@@ -73,15 +73,17 @@ package cc.minos.bigbluebutton.plugins.video
 		 */
 		override public function start():void
 		{
-			proxy.connect( uri );
+			if ( connection != null && !connection.connected ) {
+				proxy.connect( uri );
+			}
 		}
 		
 		/**
-		 *
+		 * 
 		 */
-		private function get me():BBBUser
+		override public function stop():void 
 		{
-			return bbb.plugins[ 'users' ].getMe();
+			proxy.disconnect();
 		}
 		
 		/**
