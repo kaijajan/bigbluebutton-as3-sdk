@@ -62,6 +62,7 @@ package cc.minos.bigbluebutton.plugins.present
 			
 			this.addEventListener( PresentationEvent.PRESENTATION_ADDED_EVENT, onPresentation );
 			this.addEventListener( PresentationEvent.PRESENTATION_REMOVED_EVENT, onPresentation );
+			this.addEventListener( PresentationEvent.PRESENTATION_READY, onPresentation );
 		}
 		
 		/**
@@ -70,7 +71,7 @@ package cc.minos.bigbluebutton.plugins.present
 		 */
 		private function onPresentation( e:PresentationEvent ):void
 		{
-			if ( e.type == PresentationEvent.PRESENTATION_ADDED_EVENT )
+			if ( e.type == PresentationEvent.PRESENTATION_ADDED_EVENT || e.type == PresentationEvent.PRESENTATION_READY )
 			{
 				if ( !ArrayUtil.containsValue( presentationNames, e.presentationName ) )
 					presentationNames.push( e.presentationName );
@@ -83,6 +84,10 @@ package cc.minos.bigbluebutton.plugins.present
 						presentationNames.splice( i, 1 );
 				}
 			}
+			
+			//Console.log( "newest presentationNames: " );
+			//Console.log( presentationNames );
+			
 		}
 		
 		/**
@@ -99,9 +104,9 @@ package cc.minos.bigbluebutton.plugins.present
 				
 				Console.log( 'presentation has been loaded  presentationName=' + presentationName );
 				
-				var added:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_ADDED_EVENT );
-				added.presentationName = presentationName;
-				dispatchEvent( added );
+				//var added:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_ADDED_EVENT );
+				//added.presentationName = presentationName;
+				//dispatchEvent( added );
 					
 				_currentPresentation = presentationName;
 				
@@ -211,14 +216,16 @@ package cc.minos.bigbluebutton.plugins.present
 		 */
 		public function loadPresentation( presentationName:String ):void
 		{
+			if ( presentationName == _currentPresentation )
+				return;
+			
 			var fullUri:String = host + "/bigbluebutton/presentation/" + conference + "/" + room + "/" + presentationName + "/slides";
 			fullUri = encodeURI( fullUri );
 			var slideUri:String = host + "/bigbluebutton/presentation/" + conference + "/" + room + "/" + presentationName;
 			slideUri = encodeURI( slideUri );
 			
-			//trace( "PresentationApplication::loadPresentation()... " + fullUri );
+			Console.log( fullUri );
 			service.load( fullUri, slides, slideUri );
-			//trace( 'number of slides=' + slides.length );
 		}
 		
 		/**
@@ -240,6 +247,8 @@ package cc.minos.bigbluebutton.plugins.present
 		 */
 		public function removePresentation( presentationName:String ):void
 		{
+			if ( _currentPresentation == presentationName )
+				_currentPresentation = "";
 			soService.removePresentation( presentationName );
 		}
 		

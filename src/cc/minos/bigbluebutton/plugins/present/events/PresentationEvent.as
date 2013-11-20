@@ -25,6 +25,13 @@ package cc.minos.bigbluebutton.plugins.present.events
 		{
 			super( type, false, false );
 		}
-	
+		
+		override public function clone():Event 
+		{
+			var evt:PresentationEvent = new PresentationEvent( type );
+			evt.presentationName = presentationName;
+			evt.slides = slides;
+			return evt;
+		}
 	}
 }

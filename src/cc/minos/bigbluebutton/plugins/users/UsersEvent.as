@@ -13,6 +13,8 @@ package cc.minos.bigbluebutton.plugins.users
 		public static const LEFT:String = "pariticipantLeft";
 		public static const KICKED:String = "pariticipantKicked";
 		
+		public static const RAISE_HAND:String = "userRaiseHand";
+		
 		public static const USER_VOICE_JOINED:String = 'userVoiceJoined';
 		public static const USER_VOICE_MUTED:String = "userVoiceMuted";
 		public static const USER_VOICE_LOCKED:String = "userVoiceLocked";

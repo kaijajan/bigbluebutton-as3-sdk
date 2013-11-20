@@ -1,5 +1,7 @@
 package cc.minos.bigbluebutton.plugins.whiteboard.listeners
 {
+	import cc.minos.bigbluebutton.plugins.whiteboard.events.WhiteboardDrawEvent;
+	import cc.minos.bigbluebutton.plugins.whiteboard.IWhiteboard;
 	import cc.minos.bigbluebutton.plugins.whiteboard.models.Annotation;
 	import cc.minos.bigbluebutton.plugins.whiteboard.models.WhiteboardModel;
 	import cc.minos.bigbluebutton.plugins.whiteboard.models.WhiteboardTool;
@@ -7,15 +9,13 @@ package cc.minos.bigbluebutton.plugins.whiteboard.listeners
 	import cc.minos.bigbluebutton.plugins.whiteboard.shapes.DrawObject;
 	import cc.minos.bigbluebutton.plugins.whiteboard.shapes.ShapeFactory;
 	import cc.minos.bigbluebutton.plugins.whiteboard.shapes.WhiteboardConstants;
-	import cc.minos.talk3.views.whiteboard.WhiteboardCanvas;
-	import cc.minos.talk3.views.whiteboard.WhiteboardDrawEvent;
 	
 	public class PencilDrawListener implements IDrawListener
 	{
 		private var _drawStatus:String = DrawObject.DRAW_START;
 		private var _isDrawing:Boolean;
 		private var _segment:Array = new Array();
-		private var _wbCanvas:WhiteboardCanvas;
+		private var _wbCanvas:IWhiteboard
 		private var _sendFrequency:int;
 		private var _shapeFactory:ShapeFactory;
 		private var _ctrlKeyDown:Boolean = false;
@@ -24,7 +24,7 @@ package cc.minos.bigbluebutton.plugins.whiteboard.listeners
 		
 		private var _wbModel:WhiteboardModel;
 		
-		public function PencilDrawListener( wbCanvas:WhiteboardCanvas, sendShapeFrequency:int, shapeFactory:ShapeFactory , wbModel:WhiteboardModel )
+		public function PencilDrawListener( wbCanvas:IWhiteboard, sendShapeFrequency:int, shapeFactory:ShapeFactory , wbModel:WhiteboardModel )
 		{
 			_wbCanvas = wbCanvas;
 			_sendFrequency = sendShapeFrequency;

@@ -117,6 +117,11 @@ package cc.minos.bigbluebutton.plugins.video
 			bbb.plugins[ 'users' ].removeStream( userID, streamName );
 		}
 		
+		private function get me():BBBUser
+		{
+			return bbb.plugins[ 'users' ].getMe();
+		}
+		
 		/**
 		 * 設置攝像頭
 		 * @return 返回設置是否成功

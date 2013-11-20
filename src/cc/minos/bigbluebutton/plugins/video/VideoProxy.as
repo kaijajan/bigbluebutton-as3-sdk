@@ -3,6 +3,7 @@ package cc.minos.bigbluebutton.plugins.video
 	import cc.minos.console.Console;
 	import cc.minos.utils.VersionUtil;
 	import flash.events.AsyncErrorEvent;
+	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.events.IOErrorEvent;
 	import flash.events.NetStatusEvent;
@@ -11,6 +12,8 @@ package cc.minos.bigbluebutton.plugins.video
 	import flash.media.H264Level;
 	import flash.media.H264Profile;
 	import flash.media.H264VideoStreamSettings;
+	import flash.media.Video;
+	import flash.net.FileReference;
 	import flash.net.NetConnection;
 	import flash.net.NetStream;
 	import flash.system.Capabilities;
@@ -75,7 +78,12 @@ package cc.minos.bigbluebutton.plugins.video
 			{
 				case "NetConnection.Connect.Success": 
 					ns = new NetStream( nc );
-					plugin.dispatchEvent( new VideoEvent( VideoEvent.VIDEO_APPLICATION_CONNECTED ) );
+					var connectedEvent:VideoEvent = new VideoEvent( VideoEvent.VIDEO_APPLICATION_CONNECTED );
+					connectedEvent.connection = nc;
+					plugin.dispatchEvent( connectedEvent );
+					break;
+				case "NetConnection.Connect.Closed": 
+					plugin.dispatchEvent( new VideoEvent( VideoEvent.VIDEO_APPLICATION_CLOSED ) );
 					break;
 				default: 
 					break;
@@ -98,7 +106,9 @@ package cc.minos.bigbluebutton.plugins.video
 			ns.addEventListener( IOErrorEvent.IO_ERROR, onIOError );
 			ns.addEventListener( AsyncErrorEvent.ASYNC_ERROR, onAsyncError );
 			ns.client = this;
-			ns.attachCamera( camera );
+			//ns.attachCamera( camera );
+			//ns.play("mp4:assets/video/mov_bbb.mp4");
+			ns.play(null);
 			//視頻發布格式 h264播放器必須在11以上
 			if (( VersionUtil.getFlashPlayerVersion() >= 11 ) && options.enableH264 )
 			{
@@ -112,6 +122,23 @@ package cc.minos.bigbluebutton.plugins.video
 			}
 			
 			ns.publish( stream );
+			
+			var file:FileReference = new FileReference()
+			file.addEventListener(Event.COMPLETE, onFileComplete );
+			file.addEventListener(Event.SELECT, onFileSelect );
+			file.browse();
+			
+			function onFileSelect( e:Event ):void
+			{
+				file.load();
+			}
+			
+			function onFileComplete( e:Event ):void
+			{
+				//trace( file.data );
+				ns.appendBytes( file.data );
+				//ns.
+			}
 		}
 		
 		/**

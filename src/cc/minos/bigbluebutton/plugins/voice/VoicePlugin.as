@@ -70,6 +70,11 @@ package cc.minos.bigbluebutton.plugins.voice
 			streamManager.callConnected( e.playStreamName, e.publishStreamName, e.codec );
 			onCall = true;
 			rejoining = false;
+			
+			if ( options.muteAll && presenter )
+			{
+				bbb.plugins['users'].muteAllUsers( true );
+			}
 		}
 		
 		/**
@@ -161,10 +166,15 @@ package cc.minos.bigbluebutton.plugins.voice
 		 */
 		private function setupMic():void
 		{
-			if ( noMicrophone() )
+			if ( noMicrophone() ) {
+				trace("noMicrophone");
 				streamManager.initWithNoMicrophone();
-			else
+			}
+			else 
+			{
+				trace("setupMic");
 				streamManager.initMicrophone();
+			}
 		}
 		
 		/**

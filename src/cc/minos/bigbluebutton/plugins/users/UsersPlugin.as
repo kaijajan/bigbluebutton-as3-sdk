@@ -187,6 +187,11 @@ package cc.minos.bigbluebutton.plugins.users
 			bbb.send([ SET_PARTICIPANT_STATUS, responder, userID, "raiseHand", raise ] );
 		}
 		
+		public function raiseMyHand( raise:Boolean ):void
+		{
+			bbb.send( [ SET_PARTICIPANT_STATUS, responder, me.userID, "raiseHand", raise ] );
+		}
+		
 		/**
 		 * 踢人
 		 * @param	userID		:	用戶ID
@@ -516,10 +521,14 @@ package cc.minos.bigbluebutton.plugins.users
 		 */
 		private function sortFunction( a:Object, b:Object, array:Array = null ):int
 		{
-			/*if ( a.presenter )
-			   return -1;
-			   else if ( b.presenter )
-			 return 1;*/
+			if ( a.presenter )
+			{
+				return -1;
+			}
+			else if ( b.presenter )
+			{
+				return 1;
+			}
 			if ( a.role == Role.MODERATOR && b.role == Role.MODERATOR )
 			{
 				// do nothing go to the end and check names

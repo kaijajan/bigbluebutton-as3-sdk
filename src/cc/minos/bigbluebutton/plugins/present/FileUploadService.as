@@ -1,6 +1,7 @@
 package cc.minos.bigbluebutton.plugins.present
 {
 	import cc.minos.bigbluebutton.plugins.present.events.UploadEvent;
+	import cc.minos.extensions.Base64;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.events.HTTPStatusEvent;
@@ -28,13 +29,18 @@ package cc.minos.bigbluebutton.plugins.present
 			this.plugin = plugin;
 			sendVars.conference = conference;
 			sendVars.room = room;
+			//sendVars.
 			request.url = url;
 			request.data = sendVars;
+			//request.contentType
 		}
 		
 		public function upload( presentationName:String, file:FileReference ):void
 		{
+			
+			//base
 			sendVars.presentation_name = presentationName;
+			
 			fileToUpload = file;
 			fileToUpload.addEventListener( ProgressEvent.PROGRESS, onUploadProgress );
 			fileToUpload.addEventListener( Event.COMPLETE, onUploadComplete );

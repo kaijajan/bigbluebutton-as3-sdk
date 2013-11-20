@@ -27,7 +27,7 @@ package cc.minos.bigbluebutton.plugins.whiteboard
 		
 		public var whiteboardModel:WhiteboardModel;
 		private var presentPlugin:PresentPlugin;
-		private var responder:Responder;
+		//private var responder:Responder;
 		
 		public function WhiteBoardPlugin()
 		{
@@ -40,12 +40,12 @@ package cc.minos.bigbluebutton.plugins.whiteboard
 		{
 			super.init();
 			
-			responder = new Responder( //
-				function( result:String ):void
-				{
-				}, function( status:String ):void
-				{
-				} );
+			//responder = new Responder( //
+				//function( result:String ):void
+				//{
+				//}, function( status:String ):void
+				//{
+				//} );
 				
 			whiteboardModel = new WhiteboardModel( this );
 		}

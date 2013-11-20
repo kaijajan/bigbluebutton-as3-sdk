@@ -174,7 +174,7 @@ package cc.minos.bigbluebutton.plugins.users
 				{
 					case "presenter": 
 						aUser.presenter = value as Boolean;
-						//sendParticipantsEvent( UsersEvent.PRESENTER_NAME_CHANGE, aUser.userID );
+						//sendParticipantsEvent( UsersEvent., aUser.userID );
 						break;
 					case "hasStream": 
 						var streamInfo:Array = String( value ).split( /,/ );
@@ -184,10 +184,16 @@ package cc.minos.bigbluebutton.plugins.users
 						if ( aUser.hasStream )
 						{
 							sendParticipantsEvent( UsersEvent.USER_VIDEO_STREAM_STARTED, aUser.userID );
+						}else {
+							if ( aUser.streamName != null ) {
+								aUser.streamName = null;
+								sendParticipantsEvent( UsersEvent.USER_VIDEO_STREAM_STOPED, aUser.userID );
+							}
 						}
 						break;
 					case "raiseHand": 
 						aUser.raiseHand = value as Boolean;
+						sendParticipantsEvent( UsersEvent.RAISE_HAND, aUser.userID );
 						break;
 				}
 				aUser.buildStatus();

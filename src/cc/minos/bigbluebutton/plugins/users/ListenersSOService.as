@@ -81,6 +81,7 @@ package cc.minos.bigbluebutton.plugins.users
 		public function userMute( userID:Number, mute:Boolean ):void
 		{
 			var user:BBBUser = plugin.getVoiceUser( userID );
+			
 			if ( user != null )
 			{
 				user.voiceMuted = mute;

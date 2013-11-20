@@ -87,11 +87,6 @@ package cc.minos.bigbluebutton.plugins
 			return bbb.conferenceParameters.username;
 		}
 		
-		public function get me():BBBUser
-		{
-			return bbb.plugins[ 'users' ].getMe();
-		}
-		
 		/**
 		 * 是否演講者
 		 */

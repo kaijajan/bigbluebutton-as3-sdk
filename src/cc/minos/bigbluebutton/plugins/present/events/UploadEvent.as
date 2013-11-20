@@ -38,6 +38,19 @@ package cc.minos.bigbluebutton.plugins.present.events
 		{
 			super( type, true, false );
 		}
+		
+		override public function clone():Event 
+		{
+			var evt:UploadEvent = new UploadEvent( type );
+			evt.presentationName = presentationName;
+			evt.data = data;
+			evt.completedSlides = completedSlides;
+			evt.totalSlides = totalSlides;
+			evt.fileToUpload = fileToUpload;
+			evt.percentageComplete = percentageComplete;
+			evt.maximumSupportedNumberOfSlides = maximumSupportedNumberOfSlides;
+			return evt;
+		}
 	
 	}
 }

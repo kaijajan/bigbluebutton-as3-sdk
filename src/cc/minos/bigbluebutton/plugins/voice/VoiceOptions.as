@@ -13,6 +13,8 @@ package cc.minos.bigbluebutton.plugins.voice
 		public var skipCheck:Boolean = true;
 		/** 自動加入 */
 		public var autoJoin:Boolean = false;
+		/** */
+		public var muteAll:Boolean = false;
 		
 		public function VoiceOptions()
 		{

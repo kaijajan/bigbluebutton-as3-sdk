@@ -28,7 +28,14 @@ package cc.minos.bigbluebutton.plugins.present.events
 		
 		public function NavigationEvent(type:String)
 		{
-			super(type, true, false);
+			super(type, false, false);
+		}
+		
+		override public function clone():Event 
+		{
+			var evt:NavigationEvent = new NavigationEvent( type );
+			evt.pageNumber = pageNumber;
+			return evt;
 		}
 
 	}

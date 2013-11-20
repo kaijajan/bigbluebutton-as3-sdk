@@ -31,6 +31,14 @@ package cc.minos.bigbluebutton.plugins.present.events
 		{
 			super(type, true, false);
 		}
+		
+		override public function clone():Event 
+		{
+			var evt:CursorEvent = new CursorEvent( type );
+			evt.xPercent = xPercent;
+			evt.yPercent = yPercent
+			return evt;
+		}
 
 	}
 }

@@ -35,6 +35,16 @@ package cc.minos.bigbluebutton.plugins.present.events
 		{
 			super(type, true, false);
 		}
+		
+		override public function clone():Event 
+		{
+			var evt:MoveEvent = new MoveEvent( type );
+			evt.xOffset = xOffset;
+			evt.yOffset = yOffset;
+			evt.slideToCanvasHeightRatio = slideToCanvasHeightRatio;
+			evt.slideToCanvasWidthRatio = slideToCanvasWidthRatio;
+			return evt;
+		}
 
 	}
 }
