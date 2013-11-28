@@ -1,4 +1,4 @@
-package cc.minos.bigbluebutton.plugins.voice
+package cc.minos.bigbluebutton.plugins.voice.events
 {
 	import flash.events.Event;
 	

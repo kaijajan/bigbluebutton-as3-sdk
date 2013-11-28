@@ -50,9 +50,12 @@ package cc.minos.bigbluebutton.plugins.present
 		
 		private function clean():void
 		{
-			urlLoader.removeEventListener( Event.COMPLETE, handleComplete );
-			urlLoader.removeEventListener( IOErrorEvent.IO_ERROR, handleIOErrorEvent );
-			urlLoader = null;
+			if ( urlLoader != null )
+			{
+				urlLoader.removeEventListener( Event.COMPLETE, handleComplete );
+				urlLoader.removeEventListener( IOErrorEvent.IO_ERROR, handleIOErrorEvent );
+				urlLoader = null;
+			}
 		}
 		
 		public function parse( xml:XML ):void

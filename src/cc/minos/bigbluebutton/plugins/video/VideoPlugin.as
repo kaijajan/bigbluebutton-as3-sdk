@@ -4,6 +4,7 @@ package cc.minos.bigbluebutton.plugins.video
 	import cc.minos.bigbluebutton.model.BBBUser;
 	import cc.minos.bigbluebutton.plugins.Plugin;
 	import cc.minos.bigbluebutton.plugins.users.UsersEvent;
+	import cc.minos.bigbluebutton.plugins.users.UsersPlugin;
 	import cc.minos.console.Console;
 	import flash.events.ActivityEvent;
 	import flash.events.StatusEvent;
@@ -100,7 +101,7 @@ package cc.minos.bigbluebutton.plugins.video
 			if ( setupCamera() )
 			{
 				proxy.startPublishing( _camera, streamName );
-				bbb.plugins[ 'users' ].addStream( userID, streamName );
+				UsersPlugin( bbb.getPlugin("users") ).addStream( userID, streamName );
 			}
 			else
 			{
@@ -114,12 +115,12 @@ package cc.minos.bigbluebutton.plugins.video
 		public function stopPublish():void
 		{
 			proxy.stopBroadcasting();
-			bbb.plugins[ 'users' ].removeStream( userID, streamName );
+			UsersPlugin( bbb.getPlugin("users") ).removeStream( userID, streamName );
 		}
 		
 		private function get me():BBBUser
 		{
-			return bbb.plugins[ 'users' ].getMe();
+			return UsersPlugin( bbb.getPlugin("users") ).getMe();
 		}
 		
 		/**

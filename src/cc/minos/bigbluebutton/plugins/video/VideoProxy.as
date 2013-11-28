@@ -106,8 +106,6 @@ package cc.minos.bigbluebutton.plugins.video
 			ns.addEventListener( IOErrorEvent.IO_ERROR, onIOError );
 			ns.addEventListener( AsyncErrorEvent.ASYNC_ERROR, onAsyncError );
 			ns.client = this;
-			//ns.attachCamera( camera );
-			//ns.play("mp4:assets/video/mov_bbb.mp4");
 			ns.play(null);
 			//視頻發布格式 h264播放器必須在11以上
 			if (( VersionUtil.getFlashPlayerVersion() >= 11 ) && options.enableH264 )
@@ -123,7 +121,7 @@ package cc.minos.bigbluebutton.plugins.video
 			
 			ns.publish( stream );
 			
-			var file:FileReference = new FileReference()
+			/*var file:FileReference = new FileReference()
 			file.addEventListener(Event.COMPLETE, onFileComplete );
 			file.addEventListener(Event.SELECT, onFileSelect );
 			file.browse();
@@ -138,7 +136,7 @@ package cc.minos.bigbluebutton.plugins.video
 				//trace( file.data );
 				ns.appendBytes( file.data );
 				//ns.
-			}
+			}*/
 		}
 		
 		/**

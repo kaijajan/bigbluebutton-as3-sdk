@@ -1,6 +1,7 @@
 package cc.minos.bigbluebutton.plugins.users
 {
 	import cc.minos.bigbluebutton.model.BBBUser;
+	import flash.events.Event;
 	
 	/**
 	 * 用戶管理接口
@@ -20,6 +21,9 @@ package cc.minos.bigbluebutton.plugins.users
 		function getMe():BBBUser;
 		function getUserIDs():Array;
 		function refresh():void;
+		
+		function dispatchEvent( e:Event ):Boolean;
+		function dispatchRawEvent( e:Event ):Boolean;
 	}
 
 }

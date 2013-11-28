@@ -10,6 +10,9 @@ package cc.minos.bigbluebutton.plugins.users
 		/** 允許踢人 */
 		public var allowKickUser:Boolean = true;
 		
+		/**  */
+		public var autoPresenter:Boolean = false;
+		
 		public function UsersOptions()
 		{
 		}

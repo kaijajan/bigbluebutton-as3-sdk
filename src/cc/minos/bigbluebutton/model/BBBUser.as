@@ -1,6 +1,8 @@
 package cc.minos.bigbluebutton.model
 {
+	import cc.minos.bigbluebutton.plugins.users.UsersEvent;
 	import cc.minos.bigbluebutton.Role;
+	import cc.minos.event.EventProxy;
 	
 	/**
 	 * ...
@@ -43,8 +45,6 @@ package cc.minos.bigbluebutton.model
 		
 		/** 房間 */
 		public var room:String = "";
-		public var authToken:String = "";
-		public var selected:Boolean = false;
 		
 		/** */
 		public var voiceUserid:Number = 0;
@@ -96,6 +96,7 @@ package cc.minos.bigbluebutton.model
 		 */
 		public function buildStatus():Array
 		{
+			
 			status = [];
 			if ( hasStream )
 				status.push( "hasstream" );
@@ -167,12 +168,12 @@ package cc.minos.bigbluebutton.model
 			buildStatus();
 		}
 		
-		public function get talking():Boolean 
+		public function get talking():Boolean
 		{
 			return _talking;
 		}
 		
-		public function set talking(value:Boolean):void 
+		public function set talking( value:Boolean ):void
 		{
 			_talking = value;
 			buildStatus();

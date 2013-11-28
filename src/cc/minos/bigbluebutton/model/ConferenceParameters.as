@@ -1,19 +1,18 @@
 package cc.minos.bigbluebutton.model
 {
 	import cc.minos.bigbluebutton.Role;
+	import cc.minos.utils.RandomUtil;
 	import flash.net.NetConnection;
 	
 	public class ConferenceParameters
 	{
-		/** 會議 */
-		public var conference:String;
-		/** 會議id */
-		public var meetingID:String;
 		/** 房間 */
+		public var conference:String;
 		public var room:String;
 		
-		/** 會議名稱 */
-		public var meetingName:String;
+		/** 會議id */
+		public var meetingID:String;
+		//public var meetingName:String;
 		public var externMeetingID:String;
 		
 		/** 用戶名 */
@@ -21,7 +20,6 @@ package cc.minos.bigbluebutton.model
 		
 		/** 語音通道 */
 		public var webvoiceconf:String;
-		/** 語音通道 */
 		public var voicebridge:String;
 		
 		/** 歡迎語 */
@@ -59,5 +57,18 @@ package cc.minos.bigbluebutton.model
 		public function ConferenceParameters()
 		{
 		}
+		
+		public function load( obj:Object ):void
+		{
+			host = obj.host;
+			username = obj.username;
+			voicebridge = webvoiceconf = obj.voicebridge;
+			meetingID = conference = room = RandomUtil.randomString( 24 );
+			//externMeetingID = obj.metingName;
+			externUserID = internalUserID = RandomUtil.randomString( 12 );
+			role = obj.role;
+			
+		}
+	
 	}
 }

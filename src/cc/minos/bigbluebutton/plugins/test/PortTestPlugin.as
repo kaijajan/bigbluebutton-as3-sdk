@@ -1,6 +1,7 @@
 package cc.minos.bigbluebutton.plugins.test
 {
 	import cc.minos.bigbluebutton.plugins.Plugin;
+	import cc.minos.console.Console;
 	
 	/**
 	 * 端口測試應用（非必須）
@@ -31,7 +32,7 @@ package cc.minos.bigbluebutton.plugins.test
 			
 			if ( status == "SUCCESS" )
 			{
-				trace( "服務器測試成功: " + uri );
+				Console.log( "服務器測試成功: " + uri );
 				this.protocol = protocol;
 				var successEvent:PortTestEvent = new PortTestEvent( PortTestEvent.PORT_TEST_SUCCESS );
 				successEvent.protocol = protocol;
@@ -42,7 +43,7 @@ package cc.minos.bigbluebutton.plugins.test
 			}
 			else
 			{
-				trace( "連接失敗: " + uri );
+				Console.log( "連接失敗: " + uri );
 				if ( protocol == "RTMP" )
 				{
 					connect( "RTMPT" );

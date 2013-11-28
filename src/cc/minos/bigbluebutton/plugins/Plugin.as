@@ -1,7 +1,8 @@
 package cc.minos.bigbluebutton.plugins
 {
-	import cc.minos.bigbluebutton.BigBlueButton;
+	import cc.minos.bigbluebutton.IBigBlueButton;
 	import cc.minos.bigbluebutton.model.BBBUser;
+	import cc.minos.console.Console;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.net.NetConnection;
@@ -13,8 +14,8 @@ package cc.minos.bigbluebutton.plugins
 	 */
 	public class Plugin extends EventDispatcher
 	{
-		/** 主類引用 */
-		protected var bbb:BigBlueButton = null;
+		/** 服务器 */
+		protected var bbb:IBigBlueButton = null;
 		/** 應用短名稱 */
 		public var shortcut:String = null;
 		/** 應用標識 */
@@ -37,7 +38,7 @@ package cc.minos.bigbluebutton.plugins
 		 * 設置BBB主類
 		 * @param	bbb
 		 */
-		public function setup( bbb:BigBlueButton ):void
+		public function setup( bbb:IBigBlueButton ):void
 		{
 			this.bbb = bbb;
 			init();
@@ -70,18 +71,24 @@ package cc.minos.bigbluebutton.plugins
 		}
 		
 		/**
-		 * 網絡連接
+		 * 連接
 		 */
 		public function get connection():NetConnection
 		{
 			return bbb.conferenceParameters.connection;
 		}
 		
+		/**
+		 * 
+		 */
 		public function get userID():String
 		{
 			return bbb.conferenceParameters.userID;
 		}
 		
+		/**
+		 * 
+		 */
 		public function get username():String
 		{
 			return bbb.conferenceParameters.username;
@@ -93,17 +100,14 @@ package cc.minos.bigbluebutton.plugins
 		public function get presenter():Boolean
 		{
 			if ( bbb.hasPlugin( "users" ) )
-				return bbb.plugins[ 'users' ].getMe().presenter;
+				return bbb.getPlugin("users")['getMe']().presenter;
 			return false;
 		}
 		
-		/**
-		 *
-		 * @param	e
-		 */
-		public function dispatchRawEvent( e:Event ):void
+		public function dispatchRawEvent(e:Event):Boolean 
 		{
-			bbb.dispatchEvent( e );
+			return bbb.dispatchEvent( e );
 		}
+	
 	}
 }

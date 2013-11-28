@@ -1,6 +1,6 @@
 package cc.minos.bigbluebutton.plugins.whiteboard
 {
-	import cc.minos.bigbluebutton.interfaces.IMessageListener;
+	import cc.minos.bigbluebutton.IMessageListener;
 	import cc.minos.bigbluebutton.plugins.Plugin;
 	import cc.minos.bigbluebutton.plugins.present.events.NavigationEvent;
 	import cc.minos.bigbluebutton.plugins.present.events.PresentationEvent;

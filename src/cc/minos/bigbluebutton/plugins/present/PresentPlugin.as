@@ -1,6 +1,6 @@
 package cc.minos.bigbluebutton.plugins.present
 {
-	import cc.minos.bigbluebutton.interfaces.IMessageListener;
+	import cc.minos.bigbluebutton.IMessageListener;
 	import cc.minos.bigbluebutton.plugins.Plugin;
 	import cc.minos.bigbluebutton.plugins.present.events.*;
 	import cc.minos.console.Console;

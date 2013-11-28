@@ -2,8 +2,11 @@ package cc.minos.bigbluebutton.plugins.voice
 {
 	import cc.minos.bigbluebutton.events.BigBlueButtonEvent;
 	import cc.minos.bigbluebutton.plugins.Plugin;
+	import cc.minos.bigbluebutton.plugins.users.UsersPlugin;
+	import cc.minos.bigbluebutton.plugins.voice.events.*;
 	import flash.events.StatusEvent;
 	import flash.media.Microphone;
+	import flash.net.NetConnection;
 	import flash.net.NetStream;
 	import flash.system.Security;
 	import flash.system.SecurityPanel;
@@ -66,14 +69,14 @@ package cc.minos.bigbluebutton.plugins.voice
 		 */
 		private function onCallConnected( e:ConnectionEvent ):void
 		{
-			streamManager.setConnection( connectionManager.connection );
+			streamManager.setConnection( connection );
 			streamManager.callConnected( e.playStreamName, e.publishStreamName, e.codec );
 			onCall = true;
 			rejoining = false;
 			
 			if ( options.muteAll && presenter )
 			{
-				bbb.plugins['users'].muteAllUsers( true );
+				UsersPlugin( bbb.getPlugin( 'users' ) ).muteAllUsers(true);
 			}
 		}
 		
@@ -86,6 +89,11 @@ package cc.minos.bigbluebutton.plugins.voice
 			//left ? rejoin
 			hangup();
 			rejoin();
+		}
+		
+		override public function get connection():NetConnection 
+		{
+			return connectionManager.connection;
 		}
 		
 		/**

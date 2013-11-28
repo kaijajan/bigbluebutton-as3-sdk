@@ -16,21 +16,21 @@ package cc.minos.bigbluebutton.plugins.users
 		/** 用戶語音狀態 */
 		private const SO_NAME:String = "meetMeUsersSO";
 		
-		private var plugin:UsersPlugin;
+		private var plugin:IUsersManager;
 		private var _listenersSO:SharedObject;
 		
-		public function ListenersSOService( plugin:UsersPlugin )
+		public function ListenersSOService( plugin:IUsersManager )
 		{
 			this.plugin = plugin;
 		}
 		
-		public function connect():void
+		public function connect( connection:NetConnection , uri:String ):void
 		{
-			_listenersSO = SharedObject.getRemote( SO_NAME, plugin.uri, false );
+			_listenersSO = SharedObject.getRemote( SO_NAME, uri, false );
 			_listenersSO.addEventListener( NetStatusEvent.NET_STATUS, netStatusHandler );
 			_listenersSO.addEventListener( AsyncErrorEvent.ASYNC_ERROR, asyncErrorHandler );
 			_listenersSO.client = this;
-			_listenersSO.connect( plugin.connection );
+			_listenersSO.connect( connection );
 			
 		}
 		
@@ -66,6 +66,8 @@ package cc.minos.bigbluebutton.plugins.users
 						bu.voiceUserid = userID;
 						bu.voiceMuted = muted;
 						bu.voiceJoined = true;
+						bu.talking = talking;
+						bu.voiceLocked = locked;
 						
 						sendListenerEvent( UsersEvent.USER_VOICE_JOINED, bu.userID );
 					}
@@ -199,6 +201,10 @@ package cc.minos.bigbluebutton.plugins.users
 			var event:UsersEvent = new UsersEvent( type );
 			event.userID = userID;
 			plugin.dispatchEvent( event );
+			
+			var changedEvent:UsersEvent = new UsersEvent( UsersEvent.USER_STATES_CHANGED );
+			changedEvent.userID = userID;
+			plugin.dispatchEvent( changedEvent );
 		}
 	
 	}

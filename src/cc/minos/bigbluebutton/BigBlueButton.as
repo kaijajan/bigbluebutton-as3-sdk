@@ -1,9 +1,9 @@
 package cc.minos.bigbluebutton
 {
 	import cc.minos.bigbluebutton.events.*;
-	import cc.minos.bigbluebutton.interfaces.*;
 	import cc.minos.bigbluebutton.model.*;
 	import cc.minos.bigbluebutton.plugins.*;
+	import cc.minos.console.Console;
 	import flash.events.AsyncErrorEvent;
 	import flash.events.EventDispatcher;
 	import flash.events.IOErrorEvent;
@@ -18,33 +18,36 @@ package cc.minos.bigbluebutton
 	/**
 	 * BBB主類，通過添加應用開啟不同功能。
 	 * **用戶應用（UsersPlugin）是必須開啟的**
-	 * **開始連接前需設置配置參數ConferenceParaameters**
+	 * **開始連接前需設置設置參數ConferenceParaameters**
 	 * @author Minos
 	 */
-	public class BigBlueButton extends EventDispatcher implements IPluginManager, IMessageManager
+	public class BigBlueButton extends EventDispatcher implements IBigBlueButton
 	{
 		/** 服務器版本 */
-		public static const API:Number = 0.81;
-		
-		public static const VERSION:Number = 0.3;
+		public static const SERVER_VERSION:String = "0.81";
+		/** API版本 */
+		public static const API_VERSION:String = "0.33";
 		
 		/** 應用目錄 */
 		public var plugins:Dictionary = new Dictionary();
 		
 		/** 配置 */
-		private var _conferenceParameters:ConferenceParameters;
+		protected var _conferenceParameters:ConferenceParameters;
+		
+		/** 房間地址 */
+		protected var _uri:String;
 		
 		/** 網絡連接 */
-		private var _netConnection:NetConnection;
+		protected var _netConnection:NetConnection;
 		
 		/** 通道 */
-		private var tried_tunneling:Boolean = false;
+		protected var tried_tunneling:Boolean = false;
 		
 		/** 用戶退出 */
-		private var logoutOnUserCommand:Boolean = false;
+		protected var logoutOnUserCommand:Boolean = false;
 		
 		/** 偵聽器目錄 */
-		private var _messageListeners:Vector.<IMessageListener>;
+		protected var _messageListeners:Vector.<IMessageListener>;
 		
 		public function BigBlueButton()
 		{
@@ -60,14 +63,14 @@ package cc.minos.bigbluebutton
 		{
 			if ( _conferenceParameters == null )
 			{
-				trace( "配置未設置" );
-				return;
+				throw new ArgumentError("conferenceParameters不能為空");
 			}
 			tried_tunneling = tunnel;
 			try
 			{
-				var uri:String = _conferenceParameters.protocol + "://" + _conferenceParameters.host + "/bigbluebutton/" + _conferenceParameters.room;
-				_netConnection.connect( uri, //服務器地址
+				_uri = _conferenceParameters.protocol + "://" + _conferenceParameters.host + "/bigbluebutton/" + _conferenceParameters.room;
+				
+				_netConnection.connect( _uri, //服務器地址
 					_conferenceParameters.username, //用戶名
 					_conferenceParameters.role, //權限
 					_conferenceParameters.room, //房間
@@ -82,10 +85,10 @@ package cc.minos.bigbluebutton
 				switch ( e.errorID )
 				{
 					case 2004: 
-						trace( "Error! Invalid server location: " + uri );
+						trace( "服務器地址錯誤: " + _uri );
 						break;
 					default: 
-						trace( "UNKNOWN Error! Invalid server location: " + uri );
+						trace( "未知錯誤: " + _uri );
 						break;
 				}
 			}
@@ -101,9 +104,6 @@ package cc.minos.bigbluebutton
 			_netConnection.close();
 		}
 		
-		/**
-		 * 設置配置
-		 */
 		public function set conferenceParameters( value:ConferenceParameters ):void
 		{
 			_conferenceParameters = value;
@@ -131,61 +131,50 @@ package cc.minos.bigbluebutton
 		}
 		
 		/**
-		 * 網絡連接處理
+		 * 網絡連接處理方法
 		 * @param	e
 		 */
 		private function onNetStatus( e:Object ):void
 		{
 			switch ( e.info.code )
 			{
-				case "NetConnection.Connect.Success":
-					
-					_netConnection.call( "getMyUserId", new Responder( function( result:Object ):void
-						{
-							_conferenceParameters.connection = _netConnection;
-							_conferenceParameters.userID = result.toString();
-							sendConnectionSuccessEvent();
-						}, function( status:Object ):void
-						{
-						} ) );
-					
+				case "NetConnection.Connect.Success": 
+					Console.log( "連接成功: " + _uri  );
+					getMyUserId();
 					break;
 				case "NetConnection.Connect.Failed": 
 					if ( tried_tunneling )
 					{
-						trace( "连接失败" );
+						Console.log( "连接失败: " + _uri );
 						sendConnectionFailedEvent( BigBlueButtonEvent.CONNECTION_FAILED );
 					}
 					else
 					{
 						disconnect( false );
-						trace( "连接失败，尝试使用通道" );
+						Console.log( "连接失败，尝试使用通道: " + _uri );
 						var rtmptRetryTimer:Timer = new Timer( 1000, 1 );
 						rtmptRetryTimer.addEventListener( "timer", rtmptRetryTimerHandler );
 						rtmptRetryTimer.start();
 					}
 					break;
 				case "NetConnection.Connect.Closed": 
-					//if (logoutOnUserCommand) {
-						sendConnectionFailedEvent( BigBlueButtonEvent.CONNECTION_CLOSED );
-					//          } else {
-					//            autoReconnectTimer.addEventListener("timer", autoReconnectTimerHandler);
-					//            autoReconnectTimer.start();		
-//          }
+					Console.log( "連接關閉: " + _uri );
+					sendConnectionFailedEvent( BigBlueButtonEvent.CONNECTION_CLOSED );
 					break;
 				case "NetConnection.Connect.InvalidApp": 
-					trace( "错误应用" );
+					Console.log( "错误应用: " + _uri );
 					sendConnectionFailedEvent( BigBlueButtonEvent.INVALID_APP );
 					break;
 				case "NetConnection.Connect.AppShutDown": 
-					trace( "应用已经关闭" );
+					Console.log( "应用已经关闭: " + _uri );
 					sendConnectionFailedEvent( BigBlueButtonEvent.APP_SHUTDOWN );
 					break;
 				case "NetConnection.Connect.Rejected": 
-					trace( "连接被拒绝" );
+					Console.log( "连接被拒绝: " + _uri );
 					sendConnectionFailedEvent( BigBlueButtonEvent.CONNECTION_REJECTED );
 					break;
 				case "NetConnection.Connect.NetworkChange": 
+					Console.log( "網絡中斷" );
 					break;
 				default: 
 					sendConnectionFailedEvent( BigBlueButtonEvent.UNKNOWN_REASON );
@@ -193,31 +182,58 @@ package cc.minos.bigbluebutton
 			}
 		}
 		
+		private function getMyUserId():void
+		{
+			_netConnection.call( "getMyUserId", //服務器方法
+				new Responder( 
+				//獲取成功
+				function( result:Object ):void
+				{
+					_conferenceParameters.connection = _netConnection;
+					_conferenceParameters.userID = result.toString();
+					sendConnectionSuccessEvent();
+				}, 
+				//獲取失敗
+				function( status:Object ):void
+				{
+				} ) );
+		}
+		
 		private function rtmptRetryTimerHandler( e:TimerEvent ):void
 		{
 			connect( true );
 		}
 		
+		/**
+		 * 異步錯誤處理方法
+		 * @param	e
+		 */
 		private function onNetAsyncError( e:AsyncErrorEvent ):void
 		{
-			trace( "Asynchronous code error - " + e.error );
-			sendConnectionFailedEvent( BigBlueButtonEvent.UNKNOWN_REASON );
-		}
-		
-		private function onNetSecurityError( e:SecurityErrorEvent ):void
-		{
-			trace( "Security error - " + e.text );
-			sendConnectionFailedEvent( BigBlueButtonEvent.UNKNOWN_REASON );
-		}
-		
-		private function onNetIOError( e:IOErrorEvent ):void
-		{
-			trace( "Input/output error - " + e.text );
 			sendConnectionFailedEvent( BigBlueButtonEvent.UNKNOWN_REASON );
 		}
 		
 		/**
-		 *
+		 * 安全處理方法
+		 * @param	e
+		 */
+		private function onNetSecurityError( e:SecurityErrorEvent ):void
+		{
+			sendConnectionFailedEvent( BigBlueButtonEvent.UNKNOWN_REASON );
+		}
+		
+		/**
+		 *528
+		 * 
+		 * @param	e
+		 */
+		private function onNetIOError( e:IOErrorEvent ):void
+		{
+			sendConnectionFailedEvent( BigBlueButtonEvent.UNKNOWN_REASON );
+		}
+		
+		/**
+		 * 拋出連接成功事件
 		 */
 		private function sendConnectionSuccessEvent():void
 		{
@@ -226,21 +242,16 @@ package cc.minos.bigbluebutton
 		}
 		
 		/**
-		 *
-		 * @param	reason
+		 * 拋出連接錯誤事件
+		 * @param	reason	:	事件類型
 		 */
 		private function sendConnectionFailedEvent( reason:String ):void
 		{
-			if ( this.logoutOnUserCommand )
-			{
-				var outEvent:BigBlueButtonEvent = new BigBlueButtonEvent( BigBlueButtonEvent.USER_LOGGED_OUT );
-				dispatchEvent( outEvent );
-				return;
-			}
-			
 			var failedEvent:BigBlueButtonEvent = new BigBlueButtonEvent( reason );
 			dispatchEvent( failedEvent );
 		}
+		
+		/* 服務器調用 */
 		
 		public function setUserId( id:Number, role:String ):String
 		{

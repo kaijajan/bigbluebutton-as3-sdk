@@ -4,6 +4,7 @@ package cc.minos.bigbluebutton.plugins.users
 	import cc.minos.bigbluebutton.model.BBBUser;
 	import cc.minos.bigbluebutton.plugins.Plugin;
 	import cc.minos.bigbluebutton.Role;
+	import cc.minos.console.Console;
 	import flash.events.TimerEvent;
 	import flash.net.NetConnection;
 	import flash.net.Responder;
@@ -76,8 +77,8 @@ package cc.minos.bigbluebutton.plugins.users
 		 */
 		override public function start():void
 		{
-			participantsSOService.connect();
-			listenersSOService.connect();
+			participantsSOService.connect( connection, uri );
+			listenersSOService.connect( connection, uri );
 			refreshTimer.addEventListener( TimerEvent.TIMER, onRefreshTimer );
 			
 			getParticipants();
@@ -108,8 +109,8 @@ package cc.minos.bigbluebutton.plugins.users
 		
 		/*********************************************** (用戶狀態接口) ***********************************************************/
 		
-		/**
-		 *
+		/** 
+		 * 獲取當前在線用戶
 		 */
 		private function getParticipants():void
 		{
@@ -118,7 +119,7 @@ package cc.minos.bigbluebutton.plugins.users
 		
 		private function onGetParticipantsResult( result:Object ):void
 		{
-			trace( "在線人數: " + result.count );
+			//Console.log( "在線人數: " + result.count );
 			if ( result.count > 0 )
 			{
 				for ( var p:Object in result.participants )
@@ -198,8 +199,13 @@ package cc.minos.bigbluebutton.plugins.users
 		 */
 		public function kickUser( userID:String ):void
 		{
-			if ( options.allowKickUser )
+			if ( options.allowKickUser ) {
 				participantsSOService.kickUser( userID );
+			}
+			else
+			{
+				
+			}
 		}
 		
 		/******************************************** (用戶語音狀態接口) ********************************************************/
@@ -284,7 +290,7 @@ package cc.minos.bigbluebutton.plugins.users
 		{
 			if ( !hasUser( newuser.userID ) )
 			{
-				if ( newuser.userID == bbb.conferenceParameters.userID )
+				if ( newuser.userID == userID )
 				{
 					newuser.externUserID = bbb.conferenceParameters.externUserID;
 					newuser.me = true;

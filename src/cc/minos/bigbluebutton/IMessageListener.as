@@ -1,4 +1,4 @@
-package cc.minos.bigbluebutton.interfaces
+package cc.minos.bigbluebutton
 {
 	
 	/**

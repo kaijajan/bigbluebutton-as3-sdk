@@ -1,7 +1,7 @@
 package cc.minos.bigbluebutton.plugins.chat
 {
 	import cc.minos.bigbluebutton.events.BigBlueButtonEvent;
-	import cc.minos.bigbluebutton.interfaces.IMessageListener;
+	import cc.minos.bigbluebutton.IMessageListener;
 	import cc.minos.bigbluebutton.plugins.Plugin;
 	import flash.net.registerClassAlias;
 	

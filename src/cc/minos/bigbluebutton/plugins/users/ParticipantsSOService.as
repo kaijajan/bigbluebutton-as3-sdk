@@ -21,9 +21,9 @@ package cc.minos.bigbluebutton.plugins.users
 		private static const SO_NAME:String = "participantsSO";
 		
 		private var _participantsSO:SharedObject;
-		private var plugin:UsersPlugin;
+		private var plugin:IUsersManager;
 		
-		public function ParticipantsSOService( plugin:UsersPlugin )
+		public function ParticipantsSOService( plugin:IUsersManager )
 		{
 			this.plugin = plugin;
 		}
@@ -31,13 +31,13 @@ package cc.minos.bigbluebutton.plugins.users
 		/**
 		 * 連接用戶狀態服務
 		 */
-		public function connect():void
+		public function connect( connection:NetConnection , uri:String ):void
 		{
-			_participantsSO = SharedObject.getRemote( SO_NAME, plugin.uri, false );
+			_participantsSO = SharedObject.getRemote( SO_NAME, uri, false );
 			_participantsSO.addEventListener( NetStatusEvent.NET_STATUS, netStatusHandler );
 			_participantsSO.addEventListener( AsyncErrorEvent.ASYNC_ERROR, asyncErrorHandler );
 			_participantsSO.client = this;
-			_participantsSO.connect( plugin.connection );
+			_participantsSO.connect( connection );
 		}
 		
 		/**
@@ -69,6 +69,10 @@ package cc.minos.bigbluebutton.plugins.users
 			var event:UsersEvent = new UsersEvent( type );
 			event.userID = userID;
 			plugin.dispatchEvent( event );
+			
+			var changedEvent:UsersEvent = new UsersEvent( UsersEvent.USER_STATES_CHANGED );
+			changedEvent.userID = userID;
+			plugin.dispatchEvent( changedEvent );
 		}
 		
 		/**
