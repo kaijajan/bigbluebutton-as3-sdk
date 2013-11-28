@@ -13,12 +13,12 @@ package cc.minos.bigbluebutton.apis
 		public var onMonitoringCallback:Function = null;
 		public var onAdministrationCallback:Function = null;
 		
-		protected var securitySalt:String = "bd2650da77e39ff3473976ce187923a0";
-		protected var host:String = "http://fd.tt.gzedu.com/bigbluebutton/api/";
+		protected var securitySalt:String = "your-security";
+		protected var host:String = "http://your-server/bigbluebutton/api/";
 		
 		public function API( host:String, securitySalt:String )
 		{
-			if ( host.indexOf( "http://" ) !=0 )
+			if ( host.indexOf( "http://" ) !=0 && host.indexOf("https://") !=0 )
 			{
 				host = "http://" + host;
 			}
