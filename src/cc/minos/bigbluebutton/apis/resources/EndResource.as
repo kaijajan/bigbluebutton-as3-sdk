@@ -1,5 +1,6 @@
 package cc.minos.bigbluebutton.apis.resources
 {
+	import cc.minos.bigbluebutton.apis.responses.EndResponse;
 	
 	/**
 	 * Ends meeting.
@@ -16,6 +17,7 @@ package cc.minos.bigbluebutton.apis.resources
 			super( completedCallback );
 			callName = CALL_NAME;
 			requirs.push( "password" );
+			response = new EndResponse();
 		}
 		
 		/**

@@ -119,24 +119,8 @@ package cc.minos.bigbluebutton.plugins.video
 				ns.videoStreamSettings = h264;
 			}
 			
+			ns.attachCamera( camera );
 			ns.publish( stream );
-			
-			/*var file:FileReference = new FileReference()
-			file.addEventListener(Event.COMPLETE, onFileComplete );
-			file.addEventListener(Event.SELECT, onFileSelect );
-			file.browse();
-			
-			function onFileSelect( e:Event ):void
-			{
-				file.load();
-			}
-			
-			function onFileComplete( e:Event ):void
-			{
-				//trace( file.data );
-				ns.appendBytes( file.data );
-				//ns.
-			}*/
 		}
 		
 		/**

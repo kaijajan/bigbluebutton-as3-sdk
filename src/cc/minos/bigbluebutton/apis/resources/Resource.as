@@ -90,7 +90,14 @@ package cc.minos.bigbluebutton.apis.resources
 		{
 			if ( q != null )
 			{
-				params[ q ] = escape(d);
+				if ( d == null )
+				{
+					delete params[ q ];
+				}
+				else
+				{
+					params[ q ] = escape(d);
+				}
 			}
 		}
 		

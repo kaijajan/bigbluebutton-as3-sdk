@@ -149,7 +149,7 @@ package cc.minos.bigbluebutton.plugins.video
 				var uid:String = me.userID;
 				var res:String = options.videoWidth + "x" + options.videoHeight;
 				this.streamName = res.concat( "-" + uid ) + "-" + curTime;
-				Console.log( '設置攝像頭成功' );
+				Console.log( '設置攝像頭成功: ' + streamName );
 				return true;
 			}
 			Console.log( "沒有檢測到攝像頭" );

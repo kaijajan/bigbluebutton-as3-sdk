@@ -14,6 +14,7 @@ package cc.minos.bigbluebutton.apis.resources
 			super( completedCallback );
 			callName = CALL_NAME;
 			requirs.length = 0;
+			
 		}
 	
 	}

@@ -42,11 +42,6 @@ package cc.minos.bigbluebutton.apis.responses
 		{
 			return xml.messageKey;
 		}
-		
-		/*public function get message():String
-		{
-			return xml.message;
-		}*/
 	
 	}
 
