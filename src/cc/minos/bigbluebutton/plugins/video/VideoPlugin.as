@@ -1,176 +1,144 @@
 package cc.minos.bigbluebutton.plugins.video
 {
+	import cc.minos.bigbluebutton.core.IVideoConnection;
+	import cc.minos.bigbluebutton.core.VideoConnection;
 	import cc.minos.bigbluebutton.events.MadePresenterEvent;
-	import cc.minos.bigbluebutton.model.BBBUser;
 	import cc.minos.bigbluebutton.plugins.Plugin;
-	import cc.minos.bigbluebutton.plugins.users.UsersEvent;
-	import cc.minos.bigbluebutton.plugins.users.UsersPlugin;
-	import cc.minos.console.Console;
+	import cc.minos.bigbluebutton.plugins.users.IUsersPlugin;
 	import flash.events.ActivityEvent;
 	import flash.events.StatusEvent;
 	import flash.media.Camera;
+	import flash.media.H264VideoStreamSettings;
 	import flash.net.NetConnection;
 	
 	/**
-	 * 視頻應用
+	 * ...
 	 * @author Minos
 	 */
 	public class VideoPlugin extends Plugin
 	{
-		public var options:VideoOptions;
-		private var proxy:VideoProxy;
-		
-		private var _camera:Camera;
-		private var streamName:String;
+		protected var streamName:String;
+		protected var camera:Camera;
+		protected var options:VideoOptions;
+		protected var videoConnection:IVideoConnection;
 		
 		public function VideoPlugin( options:VideoOptions = null )
 		{
 			super();
+			if ( options == null )
+				options = new VideoOptions();
 			this.options = options;
-			if ( this.options == null )
-				this.options = new VideoOptions();
-			this.name = '[VideoPlugin]';
-			this.shortcut = 'video';
-			this.application = 'video';
+			this._application = "video";
+			this._name = "[VideoPlugin]";
+			this._shortcut = "video";
 		}
 		
-		override protected function init():void
+		override public function init():void
 		{
-			proxy = new VideoProxy( this );
-			bbb.addEventListener( MadePresenterEvent.PRESENTER_NAME_CHANGE, onSwitchedPresenter );
+			videoConnection = new VideoConnection();
+			bbb.addEventListener( MadePresenterEvent.SWITCH_TO_VIEWER_MODE, onPresenterChanged );
 		}
 		
-		/**
-		 *
-		 */
-		override public function get connection():NetConnection
+		private function onPresenterChanged( e:MadePresenterEvent ):void
 		{
-			return proxy.connection;
+			stopPublish();
 		}
 		
-		/**
-		 *
-		 */
-		public function get camera():Camera
-		{
-			return _camera;
-		}
-		
-		/**
-		 *
-		 * @param	e
-		 */
-		private function onSwitchedPresenter( e:MadePresenterEvent ):void
-		{
-			if ( e.userID != userID )
-			{
-				stopPublish();
-			}
-			Console.log( e.userID + " 獲得演講者權限" );
-		}
-		
-		/**
-		 * 開啟視頻應用
-		 */
 		override public function start():void
 		{
-			if ( connection != null && !connection.connected ) {
-				proxy.connect( uri );
+			if ( connection != null && !connection.connected )
+			{
+				videoConnection.connect( uri );
 			}
 		}
 		
-		/**
-		 * 
-		 */
-		override public function stop():void 
+		override public function stop():void
 		{
-			proxy.disconnect();
+			videoConnection.disconnect( true );
 		}
 		
-		/**
-		 * 開啟視頻流，限定演講者權限
-		 */
+		override public function get connection():NetConnection
+		{
+			return videoConnection.connection;
+		}
+		
+		protected function setupCamera():Boolean
+		{
+			camera = Camera.getCamera();
+			if ( camera )
+			{
+				camera.setMotionLevel( 5, 1000 );
+				if ( camera.muted )
+				{
+				}
+				
+				camera.addEventListener( ActivityEvent.ACTIVITY, onActivityEvent );
+				camera.addEventListener( StatusEvent.STATUS, onStatusEvent );
+				
+				camera.setKeyFrameInterval( options.camKeyFrameInterval );
+				camera.setMode( options.videoWidth, options.videoHeight, options.camModeFps );
+				camera.setQuality( options.camQualityBandwidth, options.videoQuality );
+				
+				var d:Date = new Date();
+				var curTime:Number = d.getTime();
+				var uid:String = userID;
+				var res:String = options.videoWidth + "x" + options.videoHeight;
+				streamName = res.concat( "-" + uid ) + "-" + curTime;
+				return true;
+			}
+			return false;
+		}
+		
+		private function onActivityEvent(e:ActivityEvent):void 
+		{
+			
+		}
+		
+		private function onStatusEvent(e:StatusEvent):void 
+		{
+			
+		}
+		
 		public function startPublish():void
 		{
-			if ( !presenter )
+			if ( options.presenterShareOnly && !presenter )
 			{
-				dispatchEvent( new VideoEvent( VideoEvent.PRESENTER_SHARE_ONLY ) );
+				trace( name + " presenter share only." );
 				return;
 			}
 			
 			if ( setupCamera() )
 			{
-				proxy.startPublishing( _camera, streamName );
-				UsersPlugin( bbb.getPlugin("users") ).addStream( userID, streamName );
+				var h264:H264VideoStreamSettings = null;
+				if ( options.enableH264 )
+				{
+					h264 = new H264VideoStreamSettings();
+					h264.setProfileLevel( options.h264Profile, options.h264Level );
+				}
+				videoConnection.startPublish( camera, streamName, h264 );
+				if ( usersPlugin )
+				{
+					usersPlugin.addStream( userID, streamName );
+				}
 			}
 			else
 			{
-				dispatchEvent( new VideoEvent( VideoEvent.CAMERA_NOT_FOUND ) );
+				trace( name + " camera not found." );
 			}
 		}
 		
-		/**
-		 * 停止視頻流
-		 */
 		public function stopPublish():void
 		{
-			proxy.stopBroadcasting();
-			UsersPlugin( bbb.getPlugin("users") ).removeStream( userID, streamName );
-		}
-		
-		private function get me():BBBUser
-		{
-			return UsersPlugin( bbb.getPlugin("users") ).getMe();
-		}
-		
-		/**
-		 * 設置攝像頭
-		 * @return 返回設置是否成功
-		 */
-		private function setupCamera():Boolean
-		{
-			_camera = Camera.getCamera();
-			if ( _camera )
+			videoConnection.stopPublish();
+			if ( usersPlugin )
 			{
-				_camera.setMotionLevel( 5, 1000 );
-				if ( _camera.muted )
-				{
-				}
-				
-				_camera.addEventListener( ActivityEvent.ACTIVITY, onActivityEvent );
-				_camera.addEventListener( StatusEvent.STATUS, onStatusEvent );
-				
-				_camera.setKeyFrameInterval( options.camKeyFrameInterval );
-				_camera.setMode( options.videoWidth, options.videoHeight, options.camModeFps );
-				_camera.setQuality( options.camQualityBandwidth, options.videoQuality );
-				
-				var d:Date = new Date();
-				var curTime:Number = d.getTime();
-				var uid:String = me.userID;
-				var res:String = options.videoWidth + "x" + options.videoHeight;
-				this.streamName = res.concat( "-" + uid ) + "-" + curTime;
-				Console.log( '設置攝像頭成功: ' + streamName );
-				return true;
-			}
-			Console.log( "沒有檢測到攝像頭" );
-			return false;
-		}
-		
-		private function onActivityEvent( e:ActivityEvent ):void
-		{
-			if ( e.activating )
-			{
+				usersPlugin.removeStream( userID, streamName );
 			}
 		}
 		
-		private function onStatusEvent( e:StatusEvent ):void
+		protected function get usersPlugin():IUsersPlugin
 		{
-			if ( e.code == "Camera.Unmuted" )
-			{
-			}
-			else if ( e.code == "Camera.Muted" )
-			{
-			}
+			return bbb.getPlugin( "users" ) as IUsersPlugin;
 		}
 	
 	}

@@ -53,10 +53,10 @@ package cc.minos.bigbluebutton.apis.resources
 			checksum = SHA1.hash( checksum );
 			setQuery( "checksum", checksum );
 			
-			request = new URLRequest( uri );
+			request = new URLRequest( url );
 			request.method = URLRequestMethod.POST;
 			
-			trace( 'call: ' + request.url );
+			trace( '[API] call: ' + request.url );
 			
 			loader = new URLLoader();
 			loader.addEventListener( Event.COMPLETE, onComplete );
@@ -68,7 +68,7 @@ package cc.minos.bigbluebutton.apis.resources
 			calling = true;
 		}
 		
-		public function get uri():String
+		public function get url():String
 		{
 			return host + callName + "?" + getQueryString();
 		}

@@ -1,379 +1,335 @@
 package cc.minos.bigbluebutton
 {
+	import cc.minos.bigbluebutton.apis.*;
+	import cc.minos.bigbluebutton.apis.resources.*;
+	import cc.minos.bigbluebutton.apis.responses.*;
+	import cc.minos.bigbluebutton.core.*;
 	import cc.minos.bigbluebutton.events.*;
-	import cc.minos.bigbluebutton.model.*;
+	import cc.minos.bigbluebutton.models.*;
 	import cc.minos.bigbluebutton.plugins.*;
-	import cc.minos.console.Console;
-	import flash.events.AsyncErrorEvent;
+	import cc.minos.bigbluebutton.plugins.chat.ChatPlugin;
+	import cc.minos.bigbluebutton.plugins.chat.IChatPlugin;
+	import cc.minos.bigbluebutton.plugins.present.IPresentPlugin;
+	import cc.minos.bigbluebutton.plugins.present.PresentPlugin;
+	import cc.minos.bigbluebutton.plugins.test.TestPlugin;
+	import cc.minos.bigbluebutton.plugins.users.IUsersPlugin;
+	import cc.minos.bigbluebutton.plugins.users.UsersPlugin;
+	import cc.minos.bigbluebutton.plugins.video.VideoPlugin;
+	import cc.minos.bigbluebutton.plugins.voice.VoicePlugin;
+	import cc.minos.bigbluebutton.plugins.whiteboard.IWhiteboardPlugin;
+	import cc.minos.bigbluebutton.plugins.whiteboard.WhiteboardPlugin;
+	import flash.events.Event;
 	import flash.events.EventDispatcher;
-	import flash.events.IOErrorEvent;
-	import flash.events.NetStatusEvent;
-	import flash.events.SecurityErrorEvent;
-	import flash.events.TimerEvent;
-	import flash.net.NetConnection;
-	import flash.net.Responder;
-	import flash.utils.Dictionary;
-	import flash.utils.Timer;
+	import flash.events.IEventDispatcher;
+	import flash.events.ProgressEvent;
+	import flash.net.FileFilter;
+	import flash.net.FileReference;
 	
 	/**
-	 * BBB主類，通過添加應用開啟不同功能。
-	 * **用戶應用（UsersPlugin）是必須開啟的**
-	 * **開始連接前需設置設置參數ConferenceParaameters**
+	 * ...
 	 * @author Minos
 	 */
-	public class BigBlueButton extends EventDispatcher implements IBigBlueButton
+	public class BigBlueButton extends EventDispatcher
 	{
-		/** 服務器版本 */
-		public static const SERVER_VERSION:String = "0.81";
-		/** API版本 */
-		public static const API_VERSION:String = "0.33";
+		public static const version:String = "1.00";
 		
-		/** 應用目錄 */
-		public var plugins:Dictionary = new Dictionary();
+		protected var api:API;
+		protected var bbb:IBigBlueButtonConnection;
+		protected var config:IConfig;
+		protected var conferenceParameters:IConferenceParameters;
 		
-		/** 配置 */
-		protected var _conferenceParameters:ConferenceParameters;
-		
-		/** 房間地址 */
-		protected var _uri:String;
-		
-		/** 網絡連接 */
-		protected var _netConnection:NetConnection;
-		
-		/** 通道 */
-		protected var tried_tunneling:Boolean = false;
-		
-		/** 用戶退出 */
-		protected var logoutOnUserCommand:Boolean = false;
-		
-		/** 偵聽器目錄 */
-		protected var _messageListeners:Vector.<IMessageListener>;
-		
-		public function BigBlueButton()
+		public function BigBlueButton( config:IConfig )
 		{
-			_messageListeners = new Vector.<IMessageListener>();
-			buildNetConnection();
+			this.config = config;
+			
+			api = new API( config.host, config.securitySalt );
+			api.onAdministrationCallback = onAdministrationCallback;
+			api.onMonitoringCallback = onMonitoringCallback;
+			api.onRecordingCallback = onRecordingCallback;
+			
+			bbb = new BigBlueButtonConnection( config );
+			bbb.addEventListener( ConnectionSuccessEvent.SUCCESS, onBigBlueButtonConnectionSuccess );
+			
+			bbb.addPlugin( new TestPlugin() );
+			bbb.addEventListener( PortTestEvent.PORT_TEST_SUCCESS, onPortTest );
+			bbb.addEventListener( PortTestEvent.PORT_TEST_FAILED, onPortTest );
+			
+			bbb.addPlugin( new UsersPlugin() );
+			bbb.addEventListener( UsersEvent.JOINED, onUsers );
+			bbb.addEventListener( UsersEvent.LEFT, onUsers );
+			bbb.addEventListener( UsersEvent.RAISE_HAND, onUsers );
+			bbb.addEventListener( UsersEvent.KICKED, onUsers );
+			bbb.addEventListener( UsersEvent.USER_VOICE_JOINED, onUsers );
+			bbb.addEventListener( UsersEvent.USER_VOICE_LEFT, onUsers );
+			bbb.addEventListener( UsersEvent.USER_VOICE_LOCKED, onUsers );
+			bbb.addEventListener( UsersEvent.USER_VOICE_MUTED, onUsers );
+			bbb.addEventListener( UsersEvent.USER_VOICE_TALKING, onUsers );
+			bbb.addEventListener( UsersEvent.USER_VIDEO_STREAM_STARTED, onUsers );
+			bbb.addEventListener( UsersEvent.USER_VIDEO_STREAM_STOPED, onUsers );
+			bbb.addEventListener( MadePresenterEvent.SWITCH_TO_PRESENTER_MODE, onSwitchMode );
+			bbb.addEventListener( MadePresenterEvent.SWITCH_TO_VIEWER_MODE, onSwitchMode );
+			
+			bbb.addPlugin( new ChatPlugin() );
+			bbb.addEventListener( ChatMessageEvent.PUBLIC_CHAT_MESSAGE, onMessage );
+			bbb.addEventListener( ChatMessageEvent.PRIVATE_CHAT_MESSAGE, onMessage );
+			
+			bbb.addPlugin( new VoicePlugin() );
+			
+			//vdieo
+			bbb.addPlugin( new VideoPlugin() );
+			
+			//present
+			bbb.addPlugin( new PresentPlugin() );
+			bbb.addEventListener( PresentationEvent.PRESENTATION_READY, onPresentation );
+			bbb.addEventListener( PresentationEvent.PRESENTATION_LOADED, onPresentation );
+			bbb.addEventListener( PresentationEvent.PRESENTATION_REMOVED_EVENT, onPresentation );
+			bbb.addEventListener( PresentationEvent.PRESENTATION_ADDED_EVENT, onPresentation );
+			
+			bbb.addEventListener( NavigationEvent.GOTO_PAGE, onGotoPage );
+			
+			bbb.addEventListener( CursorEvent.UPDATE_CURSOR, onCursor );
+			bbb.addEventListener( MoveEvent.CUR_SLIDE_SETTING, onMove );
+			bbb.addEventListener( MoveEvent.MOVE, onMove );
+			
+			bbb.addEventListener( UploadEvent.OFFICE_DOC_CONVERSION_SUCCESS, onUpload );
+			bbb.addEventListener( UploadEvent.OFFICE_DOC_CONVERSION_FAILED, onUpload );
+			bbb.addEventListener( UploadEvent.SUPPORTED_DOCUMENT, onUpload );
+			bbb.addEventListener( UploadEvent.UNSUPPORTED_DOCUMENT, onUpload );
+			bbb.addEventListener( UploadEvent.THUMBNAILS_UPDATE, onUpload );
+			bbb.addEventListener( UploadEvent.PAGE_COUNT_FAILED, onUpload );
+			bbb.addEventListener( UploadEvent.CONVERT_UPDATE, onUpload );
+			bbb.addEventListener( UploadEvent.CLEAR_PRESENTATION, onUpload );
+			
+			bbb.addPlugin( new WhiteboardPlugin() );
+			bbb.addEventListener( WhiteboardDrawEvent.CHANGE_PRESENTATION, onWhiteboard );
+			bbb.addEventListener( WhiteboardDrawEvent.CHANGE_PAGE, onWhiteboard );
+			bbb.addEventListener( WhiteboardDrawEvent.CLEAR, onWhiteboard );
+			bbb.addEventListener( WhiteboardDrawEvent.UNDO, onWhiteboard );
+			bbb.addEventListener( WhiteboardDrawEvent.NEW_ANNOTATION, onWhiteboard );
 		}
 		
-		/**
-		 * 連接服務器（必須先設置配置)
-		 * @param	tunnel
-		 */
-		public function connect( tunnel:Boolean = false ):void
+		private function onSwitchMode(e:MadePresenterEvent):void 
 		{
-			if ( _conferenceParameters == null )
+			dispatchEvent(e);
+		}
+		
+		private function onWhiteboard( e:WhiteboardDrawEvent ):void
+		{
+			dispatchEvent(e);
+		}
+		
+		private function onCursor( e:CursorEvent ):void
+		{
+			dispatchEvent(e);
+		}
+		
+		private function onMove( e:MoveEvent ):void
+		{
+			if ( !usersPlugin.presenter )
 			{
-				throw new ArgumentError("conferenceParameters不能為空");
+				dispatchEvent( e );
 			}
-			tried_tunneling = tunnel;
-			try
+		}
+		
+		private function onGotoPage( e:NavigationEvent ):void
+		{
+			dispatchEvent( e );
+		}
+		
+		private function onUpload( e:UploadEvent ):void
+		{
+			//trace( e.presentationName, e.type );
+		}
+		
+		private function onPresentation( e:PresentationEvent ):void
+		{
+			if ( e.type == PresentationEvent.PRESENTATION_READY )
 			{
-				_uri = _conferenceParameters.protocol + "://" + _conferenceParameters.host + "/bigbluebutton/" + _conferenceParameters.room;
-				
-				_netConnection.connect( _uri, //服務器地址
-					_conferenceParameters.username, //用戶名
-					_conferenceParameters.role, //權限
-					_conferenceParameters.room, //房間
-					_conferenceParameters.voicebridge, //語音通道（類似於房間id）
-					_conferenceParameters.record, //是否記錄
-					_conferenceParameters.externUserID, //外部id
-					_conferenceParameters.internalUserID ); //內部id
-				
+				presentPlugin.loadPresentation( e.presentationName );
 			}
-			catch ( e:ArgumentError )
+			else if ( e.type == PresentationEvent.PRESENTATION_LOADED )
 			{
-				switch ( e.errorID )
+				dispatchEvent( e );
+			}
+		}
+		
+		private function onMessage( e:ChatMessageEvent ):void
+		{
+		}
+		
+		private function onUsers( e:UsersEvent ):void
+		{
+			trace( e.type, e.userID );
+		}
+		
+		private function onBigBlueButtonConnectionSuccess( e:ConnectionSuccessEvent ):void
+		{
+			bbb.getPlugin( "users" ).start();
+			bbb.getPlugin( "chat" ).start();
+			bbb.getPlugin( "voice" ).start();
+			bbb.getPlugin( "video" ).start();
+			bbb.getPlugin( "present" ).start();
+			bbb.getPlugin("whiteboard").start();
+		}
+		
+		private function onPortTest( e:PortTestEvent ):void
+		{
+			if ( e.type == PortTestEvent.PORT_TEST_SUCCESS )
+			{
+				trace( "[PortTest] success! connecting to bbb " );
+				bbb.connect( conferenceParameters );
+			}
+			else if ( e.type == PortTestEvent.PORT_TEST_FAILED )
+			{
+				trace( "[PortTest] test failed!" );
+			}
+		}
+		
+		public function connect():void
+		{
+			api.isMeetingRunning( config.meetingID );
+		}
+		
+		public function disconnect():void
+		{
+			bbb.disconnect( true );
+		}
+		
+		private function onAdministrationCallback( callName:String, response:Response ):void
+		{
+			if ( response.returncode == "SUCCESS" )
+			{
+				switch ( callName )
 				{
-					case 2004: 
-						trace( "服務器地址錯誤: " + _uri );
+					case CreateResource.CALL_NAME: 
+						api.join( config.username, config.meetingID, config.role );
+						break;
+					case EnterResource.CALL_NAME:
+						
+						var res:JoinResponse = JoinResponse( response );
+						conferenceParameters = new ConferenceParameters();
+						conferenceParameters.conference = res.conference;
+						conferenceParameters.meetingName = res.meetingID;
+						conferenceParameters.externMeetingID = res.externMeetingID;
+						conferenceParameters.room = res.room;
+						
+						conferenceParameters.externUserID = res.externUserID;
+						conferenceParameters.internalUserID = res.internalUserID;
+						conferenceParameters.username = res.fullname;
+						conferenceParameters.role = res.role;
+						
+						conferenceParameters.voicebridge = res.voicebridge;
+						conferenceParameters.webvoiceconf = res.webvoiceconf;
+						
+						conferenceParameters.welcome = res.welcome;
+						conferenceParameters.record = res.record;
+						
+						if ( bbb.hasPlugin( "test" ) )
+						{
+							bbb.getPlugin( "test" ).start();
+						}
+						else
+						{
+							bbb.connect( conferenceParameters );
+						}
+						
 						break;
 					default: 
-						trace( "未知錯誤: " + _uri );
-						break;
-				}
-			}
-		}
-		
-		/**
-		 * 斷開連接
-		 * @param	logoutOnUserCommand		:	是否用戶操作
-		 */
-		public function disconnect( logoutOnUserCommand:Boolean ):void
-		{
-			this.logoutOnUserCommand = logoutOnUserCommand;
-			_netConnection.close();
-		}
-		
-		public function set conferenceParameters( value:ConferenceParameters ):void
-		{
-			_conferenceParameters = value;
-		}
-		
-		/**
-		 * 獲取配置
-		 */
-		public function get conferenceParameters():ConferenceParameters
-		{
-			return _conferenceParameters;
-		}
-		
-		/**
-		 * 創建網絡連接
-		 */
-		private function buildNetConnection():void
-		{
-			_netConnection = new NetConnection();
-			_netConnection.client = this;
-			_netConnection.addEventListener( NetStatusEvent.NET_STATUS, onNetStatus );
-			_netConnection.addEventListener( AsyncErrorEvent.ASYNC_ERROR, onNetAsyncError );
-			_netConnection.addEventListener( SecurityErrorEvent.SECURITY_ERROR, onNetSecurityError );
-			_netConnection.addEventListener( IOErrorEvent.IO_ERROR, onNetIOError );
-		}
-		
-		/**
-		 * 網絡連接處理方法
-		 * @param	e
-		 */
-		private function onNetStatus( e:Object ):void
-		{
-			switch ( e.info.code )
-			{
-				case "NetConnection.Connect.Success": 
-					Console.log( "連接成功: " + _uri  );
-					getMyUserId();
-					break;
-				case "NetConnection.Connect.Failed": 
-					if ( tried_tunneling )
-					{
-						Console.log( "连接失败: " + _uri );
-						sendConnectionFailedEvent( BigBlueButtonEvent.CONNECTION_FAILED );
-					}
-					else
-					{
-						disconnect( false );
-						Console.log( "连接失败，尝试使用通道: " + _uri );
-						var rtmptRetryTimer:Timer = new Timer( 1000, 1 );
-						rtmptRetryTimer.addEventListener( "timer", rtmptRetryTimerHandler );
-						rtmptRetryTimer.start();
-					}
-					break;
-				case "NetConnection.Connect.Closed": 
-					Console.log( "連接關閉: " + _uri );
-					sendConnectionFailedEvent( BigBlueButtonEvent.CONNECTION_CLOSED );
-					break;
-				case "NetConnection.Connect.InvalidApp": 
-					Console.log( "错误应用: " + _uri );
-					sendConnectionFailedEvent( BigBlueButtonEvent.INVALID_APP );
-					break;
-				case "NetConnection.Connect.AppShutDown": 
-					Console.log( "应用已经关闭: " + _uri );
-					sendConnectionFailedEvent( BigBlueButtonEvent.APP_SHUTDOWN );
-					break;
-				case "NetConnection.Connect.Rejected": 
-					Console.log( "连接被拒绝: " + _uri );
-					sendConnectionFailedEvent( BigBlueButtonEvent.CONNECTION_REJECTED );
-					break;
-				case "NetConnection.Connect.NetworkChange": 
-					Console.log( "網絡中斷" );
-					break;
-				default: 
-					sendConnectionFailedEvent( BigBlueButtonEvent.UNKNOWN_REASON );
-					break;
-			}
-		}
-		
-		private function getMyUserId():void
-		{
-			_netConnection.call( "getMyUserId", //服務器方法
-				new Responder( 
-				//獲取成功
-				function( result:Object ):void
-				{
-					_conferenceParameters.connection = _netConnection;
-					_conferenceParameters.userID = result.toString();
-					sendConnectionSuccessEvent();
-				}, 
-				//獲取失敗
-				function( status:Object ):void
-				{
-				} ) );
-		}
-		
-		private function rtmptRetryTimerHandler( e:TimerEvent ):void
-		{
-			connect( true );
-		}
-		
-		/**
-		 * 異步錯誤處理方法
-		 * @param	e
-		 */
-		private function onNetAsyncError( e:AsyncErrorEvent ):void
-		{
-			sendConnectionFailedEvent( BigBlueButtonEvent.UNKNOWN_REASON );
-		}
-		
-		/**
-		 * 安全處理方法
-		 * @param	e
-		 */
-		private function onNetSecurityError( e:SecurityErrorEvent ):void
-		{
-			sendConnectionFailedEvent( BigBlueButtonEvent.UNKNOWN_REASON );
-		}
-		
-		/**
-		 *528
-		 * 
-		 * @param	e
-		 */
-		private function onNetIOError( e:IOErrorEvent ):void
-		{
-			sendConnectionFailedEvent( BigBlueButtonEvent.UNKNOWN_REASON );
-		}
-		
-		/**
-		 * 拋出連接成功事件
-		 */
-		private function sendConnectionSuccessEvent():void
-		{
-			var event:BigBlueButtonEvent = new BigBlueButtonEvent( BigBlueButtonEvent.USER_LOGGED_IN );
-			dispatchEvent( event );
-		}
-		
-		/**
-		 * 拋出連接錯誤事件
-		 * @param	reason	:	事件類型
-		 */
-		private function sendConnectionFailedEvent( reason:String ):void
-		{
-			var failedEvent:BigBlueButtonEvent = new BigBlueButtonEvent( reason );
-			dispatchEvent( failedEvent );
-		}
-		
-		/* 服務器調用 */
-		
-		public function setUserId( id:Number, role:String ):String
-		{
-			trace( "setUserId: " + id );
-			if ( isNaN( id ) )
-				return "FAILED";
-			return "OK";
-		}
-		
-		public function onBWCheck( ... rest ):Number
-		{
-			return 0;
-		}
-		
-		public function onBWDone( ... rest ):void
-		{
-			var p_bw:Number;
-			if ( rest.length > 0 )
-				p_bw = rest[ 0 ];
-		}
-		
-		/* cc.minos.bigbluebutton.extensions.IMessageManager (信息管理接口)*/
-		
-		/**
-		 * 添加信息偵聽器
-		 * @param	listener
-		 */
-		public function addMessageListener( listener:IMessageListener ):void
-		{
-			_messageListeners.push( listener );
-		}
-		
-		/**
-		 * 移除信息偵聽器
-		 * @param	listener
-		 */
-		public function removeMessageListener( listener:IMessageListener ):void
-		{
-			for ( var ob:int = 0; ob < _messageListeners.length; ob++ )
-			{
-				if ( _messageListeners[ ob ] == listener )
-				{
-					_messageListeners.splice( ob, 1 );
-					break;
-				}
-			}
-		}
-		
-		/**
-		 * 由服務器調用，接受服務器的信息，並根據類型調用相應的信息接收器
-		 * @param	messageName		:	信息類型
-		 * @param	message			:	信息數據
-		 */
-		public function onMessageFromServer( messageName:String, message:Object ):void
-		{
-			if ( messageName != null && messageName != "" )
-			{
-				for ( var notify:String in _messageListeners )
-				{
-					_messageListeners[ notify ].onMessage( messageName, message );
 				}
 			}
 			else
 			{
-				trace( "信息類型未定義" );
+				trace( "api: create meeting error." );
 			}
 		}
 		
-		/**
-		 * 發送信息
-		 * @param	args 參數數組[command, responder , ...rest ]
-		 */
-		public function send( args:Array ):void
+		private function onMonitoringCallback( callName:String, response:Response ):void
 		{
-			_netConnection.call.apply( null, args );
-		}
-		
-		/* cc.minos.bigbluebutton.extensions.IPluginManager （應用管理接口）*/
-		
-		/**
-		 * 添加應用
-		 * @param	pi	:	應用為Plugin的子類
-		 */
-		public function addPlugin( pi:Plugin ):void
-		{
-			plugins[ pi.shortcut ] = pi;
-			pi.setup( this );
-		}
-		
-		/**
-		 * 移除應用
-		 * @param	shortcut	:	應用的短名稱
-		 */
-		public function removePlugin( shortcut:String ):void
-		{
-			var pi:Plugin = getPlugin( shortcut );
-			if ( pi )
+			if ( response.returncode == "SUCCESS" )
 			{
-				pi.stop();
-				delete plugins[ pi.shortcut ];
-				pi = null;
+				if ( RunningResponse( response ).running )
+				{
+					api.join( config.username, config.meetingID, config.role );
+				}
+				else if ( config.role == Role.MODERATOR )
+				{
+					api.create( config.meetingID, config.meetingID, Role.VIEWER, Role.MODERATOR, "welcome" );
+				}
+				else
+				{
+					trace( "api: not meeting running." );
+				}
+				
 			}
 		}
 		
-		/**
-		 * 獲取應用
-		 * @param	shortcut	:	應用的短名稱
-		 * @return	根據shortcut返回相應的應用
-		 */
-		public function getPlugin( shortcut:String ):Plugin
+		private function onRecordingCallback( callName:String, response:Response ):void
 		{
-			return plugins[ shortcut ];
+			//TODO
 		}
 		
-		/**
-		 * 檢查是否存在應用
-		 * @param	shortcut
-		 * @return	根據shortcut檢查是否存在應用，存在則返回true，不存在為false
-		 */
-		public function hasPlugin( shortcut:String ):Boolean
+		private var file:FileReference;
+		private var uploading:Boolean = false;
+		
+		public function browse():void
 		{
-			return getPlugin( shortcut ) != null;
+			if ( uploading )
+			{
+				trace( "uploading other file, please try again late" );
+				return;
+			}
+			file = new FileReference();
+			file.addEventListener( Event.SELECT, onSelect );
+			file.addEventListener( Event.CANCEL, onCancel );
+			file.browse([ new FileFilter( "演示文件", "*.pdf;*.doc;*.docx;*.xls;*.xlsx;*.ppt;*.pptx;*.txt;*.rtf;*.odt;*.ods;*.odp;*.odg;*.odc;*.odi;*.jpg;*.png" ), new FileFilter( "pdf", "*.pdf" ), new FileFilter( "word", "*.doc;*.docx;*.odt;*.rtf;*.txt" ), new FileFilter( "excel", "*.xls;*.xlsx;*.ods" ), new FileFilter( "powerpoint", "*.ppt;*.pptx;*.odp" ), new FileFilter( "image", "*.jpg;*.jpeg;*.png" ) ] );
+		}
+		
+		private function onCancel( e:Event ):void
+		{
+			file.removeEventListener( Event.SELECT, onSelect );
+			file.removeEventListener( Event.CANCEL, onCancel );
+			file = null
+		}
+		
+		private function onSelect( e:Event ):void
+		{
+			uploading = true;
+			file.addEventListener( Event.COMPLETE, onComplete );
+			file.addEventListener( ProgressEvent.PROGRESS, onProgress );
+			IPresentPlugin( bbb.getPlugin( "present" ) ).upload( file );
+		}
+		
+		private function onComplete( e:Event ):void
+		{
+			uploading = false;
+			trace( "upload completed!" );
+		}
+		
+		private function onProgress( e:ProgressEvent ):void
+		{
+			trace( "upload " + Number(( e.bytesLoaded / e.bytesTotal ).toFixed( 2 ) ) * 100 + "%" );
+		}
+		
+		/** */
+		
+		public function get usersPlugin():IUsersPlugin
+		{
+			return bbb.getPlugin( "users" ) as IUsersPlugin;
+		}
+		
+		public function get chatPlugin():IChatPlugin
+		{
+			return bbb.getPlugin( "chat" ) as IChatPlugin;
+		}
+		
+		public function get presentPlugin():IPresentPlugin
+		{
+			return bbb.getPlugin( "present" ) as IPresentPlugin;
+		}
+		
+		public function get whiteboardPlugin():IWhiteboardPlugin
+		{
+			return bbb.getPlugin( "whiteboard" ) as IWhiteboardPlugin;
 		}
 	}
 

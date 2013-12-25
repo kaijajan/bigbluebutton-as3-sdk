@@ -1,104 +1,104 @@
 package cc.minos.bigbluebutton.plugins.voice
 {
-	import cc.minos.bigbluebutton.events.BigBlueButtonEvent;
+	import cc.minos.bigbluebutton.core.IVoiceConnection;
+	import cc.minos.bigbluebutton.core.VoiceConnection;
 	import cc.minos.bigbluebutton.plugins.Plugin;
-	import cc.minos.bigbluebutton.plugins.users.UsersPlugin;
-	import cc.minos.bigbluebutton.plugins.voice.events.*;
-	import flash.events.StatusEvent;
+	import cc.minos.utils.VersionUtil;
 	import flash.media.Microphone;
-	import flash.net.NetConnection;
-	import flash.net.NetStream;
-	import flash.system.Security;
-	import flash.system.SecurityPanel;
+	import flash.media.MicrophoneEnhancedMode;
+	import flash.media.MicrophoneEnhancedOptions;
+	import flash.media.SoundCodec;
 	
 	/**
-	 * 語音應用
-	 * 連接到語音服務器
+	 * ...
 	 * @author Minos
 	 */
 	public class VoicePlugin extends Plugin
 	{
-		/** 連接管理 */
-		private var connectionManager:ConnectionManager;
-		/** 音頻流管理 */
-		private var streamManager:StreamManager;
-		/** 已經加入 */
-		private var _onCall:Boolean = false;
-		/** 正在加入 */
-		private var rejoining:Boolean = false;
-		/** 是否用戶掛斷 */
-		private var userHangup:Boolean = false;
-		/** */
-		public var options:VoiceOptions;
+		
+		protected var voiceConnection:IVoiceConnection;
+		protected var options:VoiceOptions;
+		protected var mic:Microphone;
 		
 		public function VoicePlugin( options:VoiceOptions = null )
 		{
 			super();
+			if ( options == null )
+				options = new VoiceOptions();
 			this.options = options;
-			if ( this.options == null )
-				this.options = new VoiceOptions();
-			this.name = "[VoicePlugin]";
-			this.shortcut = "voice";
-			this.application = "sip";
+			this._application = "sip";
+			this._name = "[VoicePlugin]";
+			this._shortcut = "voice";
 		}
 		
-		/**
-		 *
-		 */
-		override protected function init():void
+		public function join():void
 		{
-			connectionManager = new ConnectionManager( this );
-			streamManager = new StreamManager( this );
-			this.addEventListener( ConnectionEvent.CALL_CONNECTED, onCallConnected );
-			this.addEventListener( ConnectionEvent.CALL_DISCONNECTED, onCallDisconnected );
-			this.addEventListener( ConnectionStatusEvent.CONNECTION_STATUS_EVENT, onConnectionStatus );
+			setupMicrophone();
+			var uname:String = encodeURIComponent( bbb.conferenceParameters.externUserID + "-bbbID-" + bbb.conferenceParameters.username );
+			voiceConnection.connect( uri, bbb.conferenceParameters.internalUserID, uname , bbb.conferenceParameters.webvoiceconf ,mic);
 		}
 		
-		/**
-		 * 服務器連接狀態
-		 * @param	e
-		 */
-		private function onConnectionStatus( e:ConnectionStatusEvent ):void
+		public function hangup():void
 		{
-			connectionManager.doCall( bbb.conferenceParameters.webvoiceconf );
+			voiceConnection.hangup();
 		}
 		
-		/**
-		 * 音頻連接成功
-		 * @param	e
-		 */
-		private function onCallConnected( e:ConnectionEvent ):void
+		protected function setupMicrophone():void
 		{
-			streamManager.setConnection( connection );
-			streamManager.callConnected( e.playStreamName, e.publishStreamName, e.codec );
-			onCall = true;
-			rejoining = false;
-			
-			if ( options.muteAll && presenter )
+			if ( noMicrophone() )
 			{
-				UsersPlugin( bbb.getPlugin( 'users' ) ).muteAllUsers(true);
+				trace( name + " microphone not found. " );
+			}
+			else
+			{
+				mic = Microphone.getMicrophone();
+				if (( VersionUtil.getFlashPlayerVersion() >= 10.3 ) && options.enabledEchoCancel )
+				{
+					trace( name + " Using acoustic echo cancellation." );
+					mic = Microphone( Microphone[ "getEnhancedMicrophone" ]() );
+					var micOptions:MicrophoneEnhancedOptions = new MicrophoneEnhancedOptions();
+					micOptions.mode = MicrophoneEnhancedMode.FULL_DUPLEX;
+					micOptions.autoGain = false;
+					micOptions.echoPath = 128;
+					micOptions.nonLinearProcessing = true;
+					mic[ 'enhancedOptions' ] = micOptions;
+				}
+				else
+				{
+				}
+				
+				mic.setUseEchoSuppression( true );
+				mic.setLoopBack( false );
+				mic.setSilenceLevel( 0, 20000 );
+				if ( options.codec == "SPEEX" )
+				{
+					mic.encodeQuality = 6;
+					mic.codec = SoundCodec.SPEEX;
+					mic.framesPerPacket = 1;
+					mic.noiseSuppressionLevel = 0;
+					mic.rate = 16;
+					trace( name + " Using SPEEX whideband codec." );
+				}
+				else
+				{
+					mic.codec = SoundCodec.NELLYMOSER;
+					mic.rate = 8;
+					trace( "Using Nellymoser codec." );
+				}
+				mic.gain = 60;
 			}
 		}
 		
-		/**
-		 * 服務器連接失敗或斷開
-		 * @param	e
-		 */
-		private function onCallDisconnected( e:ConnectionEvent ):void
+		protected function noMicrophone():Boolean
 		{
-			//left ? rejoin
-			hangup();
-			rejoin();
+			return (( Microphone.getMicrophone() == null ) || ( Microphone.names.length == 0 ) || (( Microphone.names.length == 1 ) && ( Microphone.names[ 0 ] == "Unknown Microphone" ) ) );
 		}
 		
-		override public function get connection():NetConnection 
+		override public function init():void
 		{
-			return connectionManager.connection;
+			voiceConnection = new VoiceConnection();
 		}
 		
-		/**
-		 * 啟動語音應用
-		 */
 		override public function start():void
 		{
 			if ( options.autoJoin )
@@ -109,99 +109,15 @@ package cc.minos.bigbluebutton.plugins.voice
 				}
 				else
 				{
-					dispatchRawEvent( new BigBlueButtonEvent( BigBlueButtonEvent.SHOW_MIC_SETTINGS ) );
+					//show miicphone settings.
 				}
 			}
 		}
 		
-		/**
-		 * 停止語音應用並且斷開連接
-		 */
 		override public function stop():void
 		{
-			userRequestedHangup();
-			connectionManager.disconnect();
+			voiceConnection.disconnect( true );
 		}
-		
-		/**
-		 * 加入語音
-		 */
-		public function join():void
-		{
-			userHangup = false;
-			setupMic();
-			var uid:String = String( Math.floor( new Date().getTime() ) );
-			var uname:String = encodeURIComponent( bbb.conferenceParameters.externUserID + "-bbbID-" + bbb.conferenceParameters.username );
-			connectionManager.connect( uid, bbb.conferenceParameters.internalUserID, uname, bbb.conferenceParameters.room, uri );
-		}
-		
-		/**
-		 * 重新加入
-		 */
-		public function rejoin():void
-		{
-			if ( !rejoining && !userHangup )
-			{
-				rejoining = true;
-				join();
-			}
-		}
-		
-		/**
-		 * 用戶退出語音
-		 */
-		public function userRequestedHangup():void
-		{
-			userHangup = true;
-			hangup();
-		}
-		
-		/**
-		 * 退出語音
-		 */
-		public function hangup():void
-		{
-			if ( onCall )
-			{
-				streamManager.stopStreams();
-				connectionManager.doHangUp();
-				onCall = false;
-			}
-		}
-		
-		/**
-		 * 設置麥克風
-		 */
-		private function setupMic():void
-		{
-			if ( noMicrophone() ) {
-				trace("noMicrophone");
-				streamManager.initWithNoMicrophone();
-			}
-			else 
-			{
-				trace("setupMic");
-				streamManager.initMicrophone();
-			}
-		}
-		
-		/**
-		 * 檢測麥克風
-		 * @return 檢測不到麥克風返回true
-		 */
-		public function noMicrophone():Boolean
-		{
-			return (( Microphone.getMicrophone() == null ) || ( Microphone.names.length == 0 ) || (( Microphone.names.length == 1 ) && ( Microphone.names[ 0 ] == "Unknown Microphone" ) ) );
-		}
-		
-		public function get onCall():Boolean
-		{
-			return _onCall;
-		}
-		
-		public function set onCall( value:Boolean ):void
-		{
-			_onCall = value;
-		}
+	
 	}
 }

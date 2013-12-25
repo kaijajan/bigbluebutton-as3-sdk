@@ -132,6 +132,7 @@ package cc.minos.bigbluebutton.apis
 		 */
 		public function isMeetingRunning( meetingID:String ):RunningResoure
 		{
+			trace("[API] check meeting: " + meetingID );
 			var runningRes:RunningResoure = new RunningResoure( onMonitoringCallback );
 			runningRes.meetingID = meetingID;
 			runningRes.call( host, securitySalt );

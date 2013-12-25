@@ -1,580 +1,369 @@
 package cc.minos.bigbluebutton.plugins.users
 {
-	import cc.minos.bigbluebutton.events.BigBlueButtonEvent;
-	import cc.minos.bigbluebutton.model.BBBUser;
+	import cc.minos.bigbluebutton.events.MadePresenterEvent;
+	import cc.minos.bigbluebutton.events.UsersEvent;
+	import cc.minos.bigbluebutton.models.BBBUser;
+	import cc.minos.bigbluebutton.models.IUsersList;
+	import cc.minos.bigbluebutton.models.UsersList;
 	import cc.minos.bigbluebutton.plugins.Plugin;
-	import cc.minos.bigbluebutton.Role;
-	import cc.minos.console.Console;
-	import flash.events.TimerEvent;
-	import flash.net.NetConnection;
 	import flash.net.Responder;
-	import flash.utils.Timer;
 	
 	/**
-	 * 在線用戶應用（必須）
-	 * 用戶加入退出房間，語音，視頻狀態處理
+	 * ...
 	 * @author Minos
 	 */
-	public class UsersPlugin extends Plugin implements IUsersManager
+	public class UsersPlugin extends Plugin implements IParticipantsSOServiceClient, IListenersSOServiceClient, IUsersPlugin
 	{
-		/** 獲取在線用戶數據 */
-		private static const GET_PARTICIPANTS:String = "participants.getParticipants";
-		/** 設置用戶狀態 */
-		private static const SET_PARTICIPANT_STATUS:String = "participants.setParticipantStatus";
-		/** 設置演講者 */
-		private static const SET_PRESENTER:String = "participants.assignPresenter";
-		/** 獲取語音房間的用戶 */
-		private const GET_MEETMEUSERS:String = "voice.getMeetMeUsers";
-		/** 獲取房間的狀態 */
-		private const GET_ROOMMUTED_STATE:String = "voice.isRoomMuted";
-		/** 設置用戶麥克風是否禁用 */
-		private const SET_LOCK_USER:String = "voice.lockMuteUser";
-		/** 設置是否靜音用戶麥克風 */
-		private const SET_MUTE_USER:String = "voice.muteUnmuteUser";
-		/** 靜音全部用戶 */
-		private const SET_MUTE_ALL_USER:String = "voice.muteAllUsers";
-		/** 關閉用戶語音 */
-		private const SET_KILL_USER:String = "voice.kickUSer";
+		protected const GET_PARTICIPANTS:String = "participants.getParticipants";
+		protected const SET_PARTICIPANT_STATUS:String = "participants.setParticipantStatus";
+		protected const SET_PRESENTER:String = "participants.assignPresenter";
+		protected const GET_MEETMEUSERS:String = "voice.getMeetMeUsers";
+		protected const GET_ROOM_STATUS:String = "voice.isRoomMuted";
+		protected const SET_LOCK_USER:String = "voice.lockMuteUser";
+		protected const SET_MUTE_USER:String = "voice.muteUnmuteUser";
+		protected const SET_MUTE_ALL_USER:String = "voice.muteAllUsers";
+		protected const SET_KILL_USER:String = "voice.kickUSer";
 		
-		/** 自定義設置 */
-		private var options:UsersOptions;
-		/** 本人 */
-		private var me:BBBUser;
-		/** 狀態服務 */
-		private var participantsSOService:ParticipantsSOService;
-		/** 語音服務 */
-		private var listenersSOService:ListenersSOService;
-		/** 用戶數據 */
-		public var users:Array;
-		/** 刷新頻率 */
-		private var refreshTimer:Timer;
+		protected var _usersList:IUsersList;
+		protected var options:UsersOptions;
+		
+		protected var participantsSO:ParticipantsSOService;
+		protected var listenersSO:ListenersSOService;
 		
 		public function UsersPlugin( options:UsersOptions = null )
 		{
 			super();
+			if ( options == null )
+				options = new UsersOptions();
 			this.options = options;
-			if ( this.options == null )
-				this.options = new UsersOptions();
-			this.name = "[UsersPlugin]";
-			this.shortcut = "users";
+			this._name = "[UsersPlugin]";
+			this._shortcut = "users";
 		}
 		
 		/**
-		 * 初始化用戶應用
-		 */
-		override protected function init():void
-		{
-			refreshTimer = new Timer( 200 );
-			me = new BBBUser();
-			users = [];
-			participantsSOService = new ParticipantsSOService( this );
-			listenersSOService = new ListenersSOService( this );
-		}
-		
-		/**
-		 * 啟用用戶應用
-		 * 連接服務
+		 *
 		 */
 		override public function start():void
 		{
-			participantsSOService.connect( connection, uri );
-			listenersSOService.connect( connection, uri );
-			refreshTimer.addEventListener( TimerEvent.TIMER, onRefreshTimer );
+			participantsSO.connect( connection, uri );
+			listenersSO.connect( connection, uri );
 			
-			getParticipants();
-			getMeetMeUsers();
-			getRoomMuteState();
+			bbb.send( GET_PARTICIPANTS, new Responder( onGetParticipantsResult ) );
+			bbb.send( GET_MEETMEUSERS, new Responder( onGetMeetMeUsersResult ) );
+			bbb.send( GET_ROOM_STATUS, new Responder( muteStateCallback ) );
 		}
 		
 		/**
-		 * 停止用戶應用
+		 *
 		 */
 		override public function stop():void
 		{
-			me = null;
-			users.length = 0;
-			participantsSOService.disconnect();
-			listenersSOService.disconnect();
-			refreshTimer.removeEventListener( TimerEvent.TIMER, onRefreshTimer );
+			participantsSO.disconnect();
+			listenersSO.disconnect();
 		}
 		
 		/**
-		 * 服務器地址
+		 *
 		 */
 		override public function get uri():String
 		{
-			var _uri:String = super.uri + "/" + bbb.conferenceParameters.room;
-			return _uri;
+			return super.uri + "/" + bbb.conferenceParameters.room;
 		}
 		
-		/*********************************************** (用戶狀態接口) ***********************************************************/
-		
-		/** 
-		 * 獲取當前在線用戶
-		 */
-		private function getParticipants():void
+		override public function init():void
 		{
-			bbb.send([ GET_PARTICIPANTS, new Responder( onGetParticipantsResult, onGetParticipantsStatus ) ] );
+			_usersList = new UsersList();
+			
+			participantsSO = new ParticipantsSOService( this );
+			listenersSO = new ListenersSOService( this );
+		
 		}
 		
-		private function onGetParticipantsResult( result:Object ):void
+		protected function onGetParticipantsResult( result:Object ):void
 		{
-			//Console.log( "在線人數: " + result.count );
 			if ( result.count > 0 )
 			{
+				trace( name + " online: " + result.count );
 				for ( var p:Object in result.participants )
 				{
-					participantsSOService.participantJoined( result.participants[ p ] );
+					participantJoined( result.participants[ p ] );
 				}
 			}
-			becomePresenterIfLoneModerator();
-		}
-		
-		private function becomePresenterIfLoneModerator():void
-		{
-			if ( hasOnlyOneModerator() )
+			if ( options.autoPresenter && usersList.hasOnlyOneModerator() )
 			{
-				var user:BBBUser = getTheOnlyModerator();
+				var user:BBBUser = usersList.getTheOnlyModerator();
 				if ( user )
 				{
+					trace( name + " assign presenter > " + user.userID );
 					assignPresenter( user.userID, user.name, 1 );
 				}
 			}
 		}
 		
-		private function onGetParticipantsStatus( status:Object ):void
-		{
-			dispatchRawEvent( new BigBlueButtonEvent( BigBlueButtonEvent.UNKNOWN_REASON ) );
-		}
-		
-		/**
-		 * 添加視頻流
-		 * @param	userID		:	用戶ID
-		 * @param	streamName	:	視頻流名稱
-		 */
-		public function addStream( userID:String, streamName:String ):void
-		{
-			bbb.send([ SET_PARTICIPANT_STATUS, responder, userID, "hasStream", "true,stream=" + streamName ] );
-		}
-		
-		/**
-		 * 移除視頻流
-		 * @param	userID		:	用戶ID
-		 * @param	streamName	:	視頻流名稱
-		 */
-		public function removeStream( userID:String, streamName:String ):void
-		{
-			bbb.send([ SET_PARTICIPANT_STATUS, responder, userID, "hasStream", "false,stream=" + streamName ] );
-		}
-		
-		/**
-		 * 設置演講者
-		 * @param	userID		:	用戶ID
-		 * @param	name		:	用戶名
-		 * @param	assignedBy	:
-		 */
-		public function assignPresenter( userID:String, name:String, assignedBy:Number ):void
-		{
-			bbb.send([ SET_PRESENTER, responder, userID, name, assignedBy ] );
-		}
-		
-		/**
-		 * 舉手
-		 * @param	userID		:	用戶ID
-		 * @param	raise		:	是否舉手(true|false)
-		 */
-		public function raiseHand( userID:String, raise:Boolean ):void
-		{
-			bbb.send([ SET_PARTICIPANT_STATUS, responder, userID, "raiseHand", raise ] );
-		}
-		
-		public function raiseMyHand( raise:Boolean ):void
-		{
-			bbb.send( [ SET_PARTICIPANT_STATUS, responder, me.userID, "raiseHand", raise ] );
-		}
-		
-		/**
-		 * 踢人
-		 * @param	userID		:	用戶ID
-		 */
-		public function kickUser( userID:String ):void
-		{
-			if ( options.allowKickUser ) {
-				participantsSOService.kickUser( userID );
-			}
-			else
-			{
-				
-			}
-		}
-		
-		/******************************************** (用戶語音狀態接口) ********************************************************/
-		
-		/**
-		 * 獲取當前加入語音列表的用戶
-		 */
-		private function getMeetMeUsers():void
-		{
-			bbb.send([ GET_MEETMEUSERS, new Responder( onGetMeetMeUsersResult ) ] );
-		}
-		
-		private function onGetMeetMeUsersResult( result:Object ):void
+		protected function onGetMeetMeUsersResult( result:Object ):void
 		{
 			if ( result.count > 0 )
 			{
+				trace( name + " voice: " + result.count );
 				for ( var p:Object in result.participants )
 				{
 					var u:Object = result.participants[ p ];
-					listenersSOService.userJoin( u.participant, u.name, u.name, u.muted, u.talking, u.locked );
+					userJoin( u.participant, u.name, u.name, u.muted, u.talking, u.locked );
 				}
 			}
 		}
 		
-		/**
-		 *
-		 */
-		public function getRoomMuteState():void
+		public function participantJoined( joinedUser:Object ):void
 		{
-			bbb.send([ GET_ROOMMUTED_STATE, new Responder( function( result:Object ):void
+			var user:BBBUser = new BBBUser();
+			user.userID = joinedUser.userid;
+			user.name = joinedUser.name;
+			user.role = joinedUser.role;
+			user.externUserID = joinedUser.externUserID;
+			user.isLeavingFlag = false;
+			
+			if ( user.userID == userID )
+			{
+				user.me = true;
+				usersList.me = user;
+			}
+			usersList.addUser( user );
+			
+			sendUsersEvent( UsersEvent.JOINED, user.userID );
+			
+			participantStatusChange( user.userID, "hasStream", joinedUser.status.hasStream );
+			participantStatusChange( user.userID, "presenter", joinedUser.status.presenter );
+			participantStatusChange( user.userID, "raiseHand", joinedUser.status.raiseHand );
+		}
+		
+		public function participantLeft( userID:String ):void
+		{
+			var user:BBBUser = usersList.getUser( userID );
+			if ( user != null )
+			{
+				user.isLeavingFlag = true;
+				usersList.removeUser( userID );
+				sendUsersEvent( UsersEvent.LEFT, user.userID );
+			}
+		}
+		
+		public function assignPresenter( userID:String, name:String, assignedBy:Number ):void
+		{
+			bbb.send( SET_PRESENTER, null, userID, name, assignedBy );
+		}
+		
+		public function assignPresenterCallback( userID:String, name:String, assignedBy:String ):void
+		{
+			var pEvent:MadePresenterEvent;
+			
+			if ( this.userID == userID )
+			{
+				trace( name + " switch to presenter" );
+				pEvent = new MadePresenterEvent( MadePresenterEvent.SWITCH_TO_PRESENTER_MODE );
+			}
+			else
+			{
+				trace( name + " switch to viewer" );
+				pEvent = new MadePresenterEvent( MadePresenterEvent.SWITCH_TO_VIEWER_MODE );
+			}
+			pEvent.userID = userID;
+			pEvent.assignerBy = assignedBy;
+			pEvent.presenterName = name;
+			dispatchRawEvent( pEvent );
+		}
+		
+		public function kickUser( userID:String ):void
+		{
+			if ( options.allowKickUser )
+			{
+				participantsSO.kickUser( userID );
+			}
+		}
+		
+		public function kickUserCallback( userID:String ):void
+		{
+			sendUsersEvent( UsersEvent.KICKED, userID );
+		}
+		
+		public function participantStatusChange( userID:String, status:String, value:Object ):void
+		{
+			var user:BBBUser = usersList.getUser( userID );
+			if ( user != null )
+			{
+				trace( name + " status change: " + userID + "." + status + "=" + value );
+				switch ( status )
 				{
-					listenersSOService.muteStateCallback( result as Boolean );
-				} ) ] );
+					case "presenter": 
+						user.presenter = value as Boolean;
+						dispatchRawEvent( new MadePresenterEvent( MadePresenterEvent.PRESENTER_NAME_CHANGE ) );
+						break;
+					case "hasStream": 
+						var streamInfo:Array = String( value ).split( /,/ );
+						user.hasStream = ( String( streamInfo[ 0 ] ).toUpperCase() == "TRUE" );
+						var streamNameInfo:Array = String( streamInfo[ 1 ] ).split( /=/ );
+						user.streamName = streamNameInfo[ 1 ];
+						if ( user.hasStream )
+						{
+							sendUsersEvent( UsersEvent.USER_VIDEO_STREAM_STARTED, user.userID );
+						}
+						else
+						{
+							if ( user.streamName != null )
+							{
+								user.streamName = null;
+								sendUsersEvent( UsersEvent.USER_VIDEO_STREAM_STOPED, user.userID );
+							}
+						}
+						break;
+					case "raiseHand": 
+						user.raiseHand = value as Boolean;
+						sendUsersEvent( UsersEvent.RAISE_HAND, user.userID );
+						break;
+				}
+			}
+		
 		}
 		
-		/**
-		 * 踢出語音用戶
-		 * @param	userID
-		 */
-		public function ejectUser( userID:Number ):void
+		public function muteStateCallback( mute:Boolean ):void
 		{
-			bbb.send([ SET_KILL_USER, responder, userID ] );
 		}
 		
-		/**
-		 * 靜音所有用戶
-		 * @param	mute
-		 */
+		public function userLeft( voiceID:Number ):void
+		{
+			var user:BBBUser = usersList.getUserByVoiceID( voiceID );
+			if ( user )
+			{
+				user.voiceJoined = false;
+				user.voiceUserID = 0;
+				user.talking = false
+				user.voiceMuted = false;
+				user.voiceLocked = false;
+				sendUsersEvent( UsersEvent.USER_VOICE_LEFT, user.userID );
+			}
+		}
+		
+		public function userTalk( voiceID:Number, talk:Boolean ):void
+		{
+			var user:BBBUser = usersList.getUserByVoiceID( voiceID );
+			if ( user )
+			{
+				user.talking = talk;
+				sendUsersEvent( UsersEvent.USER_VOICE_TALKING, user.userID );
+			}
+		}
+		
+		public function userLockedMute( voiceID:Number, locked:Boolean ):void
+		{
+			var user:BBBUser = usersList.getUserByVoiceID( voiceID );
+			if ( user )
+			{
+				user.voiceLocked = locked;
+				sendUsersEvent( UsersEvent.USER_VOICE_LOCKED, user.userID );
+			}
+		}
+		
+		public function userMute( voiceID:Number, mute:Boolean ):void
+		{
+			var user:BBBUser = usersList.getUserByVoiceID( voiceID );
+			if ( user )
+			{
+				user.voiceMuted = mute;
+				sendUsersEvent( UsersEvent.USER_VOICE_MUTED, user.userID );
+				if ( user.voiceMuted )
+				{
+					userTalk( voiceID, false );
+				}
+			}
+		}
+		
+		public function userJoin( voiceID:Number, cidName:String, cidNum:String, muted:Boolean, talking:Boolean, locked:Boolean ):void
+		{
+			if ( cidName )
+			{
+				var pattern:RegExp = /(.*)-bbbID-(.*)$/;
+				var result:Object = pattern.exec( cidName );
+				
+				if ( result != null )
+				{
+					if ( usersList.hasUser( result[ 1 ] ) )
+					{
+						trace( name + " voice join: " + cidName );
+						var user:BBBUser = usersList.getUser( result[ 1 ] );
+						user.voiceUserID = voiceID;
+						user.voiceMuted = muted;
+						user.voiceJoined = true;
+						user.talking = talking;
+						user.voiceLocked = locked;
+						sendUsersEvent( UsersEvent.USER_VOICE_JOINED, user.userID );
+					}
+				}
+			}
+		}
+		
+		private var pingCount:int = 0;
+		
+		public function ping( message:String ):void
+		{
+			if ( pingCount < 100 )
+			{
+				pingCount++;
+			}
+			else
+			{
+				var date:Date = new Date();
+				var t:String = date.toLocaleTimeString();
+				trace( "[" + t + '] - Received ping from server: ' + message );
+				pingCount = 0;
+			}
+		}
+		
+		protected function sendUsersEvent( type:String, userID:String ):void
+		{
+			var usersEvent:UsersEvent = new UsersEvent( type );
+			usersEvent.userID = userID;
+			dispatchRawEvent( usersEvent );
+		}
+		
+		/* INTERFACE cc.minos.bigbluebutton.plugins.users.IUsersPlugin */
+		
+		public function raiseHand( userID:String, raise:Boolean ):void
+		{
+			bbb.send( SET_PARTICIPANT_STATUS, null, userID, "raiseHand", raise );
+		}
+		
+		public function ejectVoiceUser( voiceID:Number ):void
+		{
+			bbb.send( SET_KILL_USER , null, voiceID );
+		}
+		
 		public function muteAllUsers( mute:Boolean ):void
 		{
-			bbb.send([ SET_MUTE_ALL_USER, responder, mute ] );
-			listenersSOService.muteAllUsers( mute );
+			bbb.send( SET_MUTE_ALL_USER, null, mute );
 		}
 		
-		/**
-		 * 設置用戶靜音狀態
-		 * @param	userID
-		 * @param	mute
-		 */
-		public function muteUnmuteUser( userID:Number, mute:Boolean ):void
+		public function muteUser( voiceID:Number, mute:Boolean ):void
 		{
-			bbb.send([ SET_MUTE_USER, responder, userID, mute ] );
+			bbb.send( SET_MUTE_USER, null, voiceID, mute );
 		}
 		
-		/**
-		 * 設置用戶麥克風鎖定狀態
-		 * @param	userID
-		 * @param	lock
-		 */
-		public function lockMuteUser( userID:Number, lock:Boolean ):void
+		public function lockUser( voiceID:Number, lock:Boolean ):void
 		{
-			bbb.send([ SET_LOCK_USER, responder, userID, lock ] );
+			bbb.send( SET_LOCK_USER, null, voiceID, lock );
 		}
 		
-		/** cc.minos.bigbluebutton.plugins.users.IUsersManager (用戶管理接口) */
-		
-		/**
-		 * 添加用戶到數組
-		 * @param	newuser
-		 */
-		public function addUser( newuser:BBBUser ):void
+		public function addStream( userID:String, streamName:String ):void
 		{
-			if ( !hasUser( newuser.userID ) )
-			{
-				if ( newuser.userID == userID )
-				{
-					newuser.externUserID = bbb.conferenceParameters.externUserID;
-					newuser.me = true;
-					me = newuser;
-				}
-				users.push( newuser );
-				refresh();
-			}
+			bbb.send( SET_PARTICIPANT_STATUS, null, userID, "hasStream", "true,stream=" + streamName );
 		}
 		
-		/**
-		 * 移除用戶
-		 * @param	userID
-		 * @return
-		 */
-		public function hasUser( userID:String ):Boolean
+		public function removeStream( userID:String, streamName:String ):void
 		{
-			var p:Object = getUserIndex( userID );
-			if ( p != null )
-			{
-				return true;
-			}
-			return false;
+			bbb.send( SET_PARTICIPANT_STATUS, null, userID, "hasStream", "false,stream=" + streamName );
 		}
 		
-		/**
-		 * 判斷是否只有一個管理員
-		 * @return 只有一個管理員返回true，默認false
-		 */
-		public function hasOnlyOneModerator():Boolean
+		public function get usersList():IUsersList 
 		{
-			var p:BBBUser;
-			var moderatorCount:int = 0;
-			for ( var i:int = 0; i < users.length; i++ )
-			{
-				p = users[ i ];
-				if ( p.role == Role.MODERATOR )
-				{
-					moderatorCount++;
-				}
-			}
-			if ( moderatorCount == 1 )
-				return true;
-			return false;
+			return _usersList;
 		}
-		
-		/**
-		 * 獲取唯一的管理員
-		 * @return	如果有則返回BBBUser，沒返回null
-		 */
-		public function getTheOnlyModerator():BBBUser
-		{
-			if ( !hasOnlyOneModerator() )
-				return null;
-			var p:BBBUser;
-			for ( var i:int = 0; i < users.length; i++ )
-			{
-				p = users[ i ];
-				if ( p.role == Role.MODERATOR )
-				{
-					return p;
-				}
-			}
-			return null;
-		}
-		
-		/**
-		 * 獲取演講者
-		 * @return	如果有則返回BBBUser，沒返回null
-		 */
-		public function getPresenter():BBBUser
-		{
-			var p:BBBUser;
-			for ( var i:int = 0; i < users.length; i++ )
-			{
-				p = users[ i ];
-				if ( isUserPresenter( p.userID ) )
-				{
-					return p;
-				}
-			}
-			
-			return null;
-		}
-		
-		/**
-		 * 獲取用戶
-		 * @param	userID	:	用戶ID
-		 * @return	如果有則返回BBBUser，沒返回null
-		 */
-		public function getUser( userID:String ):BBBUser
-		{
-			var p:Object = getUserIndex( userID );
-			if ( p != null )
-			{
-				return p.participant as BBBUser;
-			}
-			
-			return null;
-		}
-		
-		/**
-		 * 判斷用戶是否演講者
-		 * @param	userID		:	用戶ID
-		 * @return	用戶如果為演講者則返回true，不然返回false
-		 */
-		public function isUserPresenter( userID:String ):Boolean
-		{
-			var user:Object = getUserIndex( userID );
-			if ( user == null )
-			{
-				return false;
-			}
-			var a:BBBUser = user.participant as BBBUser;
-			return a.presenter;
-		}
-		
-		/**
-		 * 移除用戶
-		 * @param	userID		:	用戶ID
-		 */
-		public function removeUser( userID:String ):void
-		{
-			var p:Object = getUserIndex( userID );
-			if ( p != null )
-			{
-				users.splice( p.index, 1 );
-				refresh();
-			}
-		}
-		
-		/**
-		 * 獲取用戶{}
-		 * @param	userID
-		 * @return
-		 */
-		private function getUserIndex( userID:String ):Object
-		{
-			var aUser:BBBUser;
-			
-			for ( var i:int = 0; i < users.length; i++ )
-			{
-				aUser = users[ i ];
-				if ( aUser.userID == userID )
-				{
-					return { index: i, participant: aUser };
-				}
-			}
-			return null;
-		}
-		
-		/**
-		 * 根據語音id獲取用戶
-		 * @param	voiceUserID
-		 * @return	如果有則返回BBBUser，沒返回null
-		 */
-		public function getVoiceUser( voiceUserID:Number ):BBBUser
-		{
-			for ( var i:int = 0; i < users.length; i++ )
-			{
-				var aUser:BBBUser = users[ i ];
-				if ( aUser.voiceUserid == voiceUserID )
-					return aUser;
-			}
-			
-			return null;
-		}
-		
-		/**
-		 * @return
-		 */
-		public function getMe():BBBUser
-		{
-			return me;
-		}
-		
-		/**
-		 *
-		   public function removeAllParticipants():void
-		   {
-		   users.length = 0;
-		   refresh();
-		 }*/
-		
-		/**
-		 * 獲取用戶id數組
-		 * @return
-		 */
-		public function getUserIDs():Array
-		{
-			var uids:Array = new Array();
-			for ( var i:int = 0; i < users.length; i++ )
-			{
-				var u:BBBUser = users[ i ];
-				uids.push( u.userID );
-			}
-			return uids;
-		}
-		
-		/**
-		 *
-		 * @param	e
-		 */
-		private function onRefreshTimer( e:TimerEvent ):void
-		{
-			users.sort( sortFunction );
-			dispatchEvent( new UsersEvent( UsersEvent.REFRESH ) );
-			refreshTimer.stop();
-		}
-		
-		/**
-		 * 刷新用戶
-		 */
-		public function refresh():void
-		{
-			if ( !refreshTimer.running )
-				refreshTimer.start();
-		}
-		
-		/**
-		 * 房間名
-		 */
-		public function get room():String
-		{
-			return bbb.conferenceParameters.room;
-		}
-		
-		/**
-		 * 根據用戶狀態、權限排序
-		 * @param	a
-		 * @param	b
-		 * @param	array
-		 * @return
-		 */
-		private function sortFunction( a:Object, b:Object, array:Array = null ):int
-		{
-			if ( a.presenter )
-			{
-				return -1;
-			}
-			else if ( b.presenter )
-			{
-				return 1;
-			}
-			if ( a.role == Role.MODERATOR && b.role == Role.MODERATOR )
-			{
-				// do nothing go to the end and check names
-			}
-			else if ( a.role == Role.MODERATOR )
-				return -1;
-			else if ( b.role == Role.MODERATOR )
-				return 1;
-			else if ( a.raiseHand && b.raiseHand )
-			{
-				// do nothing go to the end and check names
-			}
-			else if ( a.raiseHand )
-				return -1;
-			else if ( b.raiseHand )
-				return 1;
-			/*else if ( a.phoneUser && b.phoneUser )
-			   {
-			   }
-			   else if ( a.phoneUser )
-			   return -1;
-			   else if ( b.phoneUser )
-			 return 1;*/
-			
-			/*
-			 * Check name (case-insensitive) in the event of a tie up above. If the name
-			 * is the same then use userID which should be unique making the order the same
-			 * across all clients.
-			 */
-			if ( a.name.toLowerCase() < b.name.toLowerCase() )
-				return -1;
-			else if ( a.name.toLowerCase() > b.name.toLowerCase() )
-				return 1;
-			else if ( a.userID.toLowerCase() > b.userID.toLowerCase() )
-				return -1;
-			else if ( a.userID.toLowerCase() < b.userID.toLowerCase() )
-				return 1;
-			
-			return 0;
-		}
-	
 	}
 }

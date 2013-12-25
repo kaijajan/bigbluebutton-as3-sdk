@@ -14,7 +14,9 @@ package cc.minos.bigbluebutton.plugins.present
 		private var _loader:URLLoader;
 		private var _loaded:Boolean = false;
 		private var _slideUri:String;
-		private var _slideHandler:Function;
+		private var _slideLoadedHandler:Function;
+		//private var /*_slideProgressHandler*/:Function;
+		
 		private var _slideNum:Number;
 		private var _thumbUri:String;
 		private var _txtUri:String;
@@ -39,7 +41,7 @@ package cc.minos.bigbluebutton.plugins.present
 			}
 			else
 			{
-				_slideHandler = slideLoadedHandler;
+				_slideLoadedHandler = slideLoadedHandler;
 				_loader.load( new URLRequest( _slideUri ) );
 			}
 		}
@@ -51,9 +53,9 @@ package cc.minos.bigbluebutton.plugins.present
 		private function handleComplete( e:Event ):void
 		{
 			_loaded = true;
-			if ( _slideHandler != null )
+			if ( _slideLoadedHandler != null )
 			{
-				_slideHandler( _slideNum, _loader.data );
+				_slideLoadedHandler( _slideNum, _loader.data );
 			}
 		}
 		

@@ -1,74 +1,103 @@
 package cc.minos.bigbluebutton.plugins.present
 {
-	import cc.minos.bigbluebutton.IMessageListener;
+	import cc.minos.bigbluebutton.core.IMessageListener;
+	import cc.minos.bigbluebutton.events.*;
 	import cc.minos.bigbluebutton.plugins.Plugin;
-	import cc.minos.bigbluebutton.plugins.present.events.*;
-	import cc.minos.console.Console;
 	import cc.minos.utils.ArrayUtil;
 	import flash.events.TimerEvent;
 	import flash.net.FileReference;
-	import flash.utils.ByteArray;
-	import flash.utils.Dictionary;
+	import flash.net.Responder;
 	import flash.utils.Timer;
 	
 	/**
-	 * 演示應用
-	 * 上傳文檔轉換，演示
+	 * ...
 	 * @author Minos
 	 */
-	public class PresentPlugin extends Plugin implements IMessageListener
+	public class PresentPlugin extends Plugin implements IMessageListener, IPresentSOServiceClient, IPresentPlugin
 	{
-		/** 文檔演示數據加載服務 */
-		private var service:PresentationService;
-		/** 同步服務 */
-		private var soService:PresentSOService;
-		/** 文檔上傳服務 */
+		/** 轉換成功 */
+		private static const OFFICE_DOC_CONVERSION_SUCCESS_KEY:String = "OFFICE_DOC_CONVERSION_SUCCESS";
+		/** 轉換失敗 */
+		private static const OFFICE_DOC_CONVERSION_FAILED_KEY:String = "OFFICE_DOC_CONVERSION_FAILED";
+		/** 支持轉換 */
+		private static const SUPPORTED_DOCUMENT_KEY:String = "SUPPORTED_DOCUMENT";
+		/** 不支持轉換 */
+		private static const UNSUPPORTED_DOCUMENT_KEY:String = "UNSUPPORTED_DOCUMENT";
+		/** 頁面統計失敗 */
+		private static const PAGE_COUNT_FAILED_KEY:String = "PAGE_COUNT_FAILED";
+		/** */
+		private static const PAGE_COUNT_EXCEEDED_KEY:String = "PAGE_COUNT_EXCEEDED";
+		/** 轉換頁面 */
+		private static const GENERATED_SLIDE_KEY:String = "GENERATED_SLIDE";
+		/** 正在生成縮略圖 */
+		private static const GENERATING_THUMBNAIL_KEY:String = "GENERATING_THUMBNAIL";
+		/** 成縮略圖完成 */
+		private static const GENERATED_THUMBNAIL_KEY:String = "GENERATED_THUMBNAIL";
+		/** 轉換完成 */
+		private static const CONVERSION_COMPLETED_KEY:String = "CONVERSION_COMPLETED";
+		
+		/** 發送鼠標坐標 */
+		private static const SEND_CURSOR_UPDATE:String = "presentation.sendCursorUpdate";
+		/** 重置或移動頁面 */
+		private static const RESIZE_AND_MOVE_SLIDE:String = "presentation.resizeAndMoveSlide";
+		/** 移除文檔 */
+		private static const REMOVE_PRESENTATION:String = "presentation.removePresentation";
+		/** 獲取文檔信息 */
+		private static const GET_PRESENTATION_INFO:String = "presentation.getPresentationInfo";
+		/** 跳轉 */
+		private static const GOTO_SLIDE:String = "presentation.gotoSlide";
+		/** 共享文檔 */
+		private static const SHARE_PRESENTATION:String = "presentation.sharePresentation";
+		/** 演講 */
+		private static const PRESENTER:String = "presenter";
+		/** */
+		private static const SHARING:String = "sharing";
+		/** */
+		private static const UPDATE_MESSAGE:String = "updateMessage";
+		/** 當前頁面 */
+		private static const CURRENT_PAGE:String = "currentPage";
+		
+		private var presentationNames:Array;
+		//private var slides:Array;
+		
+		private var presentSO:PresentSOService;
 		private var uploadService:FileUploadService;
-		/** 服務器地址 */
+		private var loader:PresentationLoader;
+		private var currentSlide:Number = -1;
+		
 		private var host:String;
-		/** 會議 */
 		private var conference:String;
-		/** 房間 */
 		private var room:String;
-		/** 當前文檔演示名稱 */
+		
+		private var presenterViewedRegionX:Number = 0;
+		private var presenterViewedRegionY:Number = 0;
+		private var presenterViewedRegionW:Number = 100;
+		private var presenterViewedRegionH:Number = 100;
+		
 		private var _currentPresentation:String;
-		/** 文檔數組 */
-		public var presentationNames:Array;
-		/** 頁面數組 */
-		public var slides:Array;
+		private var _currentPageNumber:int = 0;
 		
 		public function PresentPlugin()
 		{
 			super();
-			this.name = "[PresentPlugin]";
-			this.shortcut = "present";
+			this._name = "[PresentPlugin]";
+			this._shortcut = "present";
 		}
 		
-		/**
-		 *
-		 */
-		override protected function init():void
+		override public function init():void
 		{
-			host = "http://" + bbb.conferenceParameters.host;
-			conference = bbb.conferenceParameters.conference;
-			room = bbb.conferenceParameters.room;
-			
 			presentationNames = [];
-			slides = [];
-			soService = new PresentSOService( this );
-			service = new PresentationService();
-			service.addCompleteListener( onPresentationDataCompleted );
-			uploadService = new FileUploadService( this, host + "/bigbluebutton/presentation/upload", conference, room );
+			//slides = [];
 			
-			this.addEventListener( PresentationEvent.PRESENTATION_ADDED_EVENT, onPresentation );
-			this.addEventListener( PresentationEvent.PRESENTATION_REMOVED_EVENT, onPresentation );
-			this.addEventListener( PresentationEvent.PRESENTATION_READY, onPresentation );
+			presentSO = new PresentSOService( this );
+			loader = new PresentationLoader( onPresentationCompleted );
+			uploadService = new FileUploadService();
+			
+			bbb.addEventListener( PresentationEvent.PRESENTATION_ADDED_EVENT, onPresentation );
+			bbb.addEventListener( PresentationEvent.PRESENTATION_REMOVED_EVENT, onPresentation );
+			bbb.addEventListener( PresentationEvent.PRESENTATION_READY, onPresentation );
 		}
 		
-		/**
-		 *
-		 * @param	e
-		 */
 		private function onPresentation( e:PresentationEvent ):void
 		{
 			if ( e.type == PresentationEvent.PRESENTATION_ADDED_EVENT || e.type == PresentationEvent.PRESENTATION_READY )
@@ -78,97 +107,119 @@ package cc.minos.bigbluebutton.plugins.present
 			}
 			else if ( e.type == PresentationEvent.PRESENTATION_REMOVED_EVENT )
 			{
-				for ( var i:int = 0; i < presentationNames.length; i++ )
-				{
-					if ( presentationNames[ i ] == e.presentationName )
-						presentationNames.splice( i, 1 );
-				}
+				ArrayUtil.removeValue( presentationNames, e.presentationName );
 			}
-			
-			//Console.log( "newest presentationNames: " );
-			//Console.log( presentationNames );
-			
 		}
 		
-		/**
-		 * 演示xml數據加載完成
-		 * @param	presentationName
-		 * @param	slides
-		 */
-		private function onPresentationDataCompleted( presentationName:String, slides:Array ):void
+		override public function start():void
+		{
+			host = "http://" + bbb.config.host;
+			conference = bbb.conferenceParameters.conference;
+			room = bbb.conferenceParameters.room;
+			
+			bbb.addMessageListener( this );
+			presentSO.connect( connection, uri );
+			
+			bbb.send( GET_PRESENTATION_INFO, new Responder( onGetPresentationInfo ) );
+			presentSO.queryPresenterForSlideInfo( userID );
+		}
+		
+		override public function stop():void
+		{
+			bbb.removeMessageListener( this );
+			presentSO.disconnect();
+		}
+		
+		override public function get uri():String
+		{
+			return super.uri + "/" + bbb.conferenceParameters.room;
+		}
+		
+		private function onPresentationCompleted( presentationName:String, slides:Array ):void
 		{
 			if ( slides.length > 0 )
 			{
 				if ( presentationName == _currentPresentation )
 					return;
 				
-				Console.log( 'presentation has been loaded  presentationName=' + presentationName );
-				
-				//var added:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_ADDED_EVENT );
-				//added.presentationName = presentationName;
-				//dispatchEvent( added );
-					
 				_currentPresentation = presentationName;
+				_currentPageNumber = slides.length;
+				
+				trace( name + " loaded " + presentationName, slides.length );
 				
 				var loadedEvent:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_LOADED );
 				loadedEvent.presentationName = presentationName;
 				loadedEvent.slides = slides;
-				dispatchEvent( loadedEvent );
+				dispatchRawEvent( loadedEvent );
 				
 				if ( presenter )
 				{
-					//设置文档共享信息为true，通知其他用户
-					sharePresentation( true, presentationName );
+					sharePresentation( presentationName, true );
 				}
 				else
 				{
-					//加載當前頁
-					loadCurrentSlideLocally();
+					if ( currentSlide >= 0 )
+					{
+						var e:NavigationEvent = new NavigationEvent( NavigationEvent.GOTO_PAGE )
+						e.pageNumber = currentSlide;
+						dispatchRawEvent( e );
+					}
 				}
 				
 			}
-			else
+		
+		}
+		
+		private function onGetPresentationInfo( result:Object ):void
+		{
+			if ( result.presenter.hasPresenter )
 			{
-				trace( 'failed to load presentation' );
+				//plugin.dispatchEvent( new MadePresenterEvent( MadePresenterEvent.SWITCH_TO_VIEWER_MODE ) );
+			}
+			
+			if ( result.presentation.xOffset )
+			{
+				trace( name + " Sending presenters slide settings" );
+				var e:MoveEvent = new MoveEvent( MoveEvent.CUR_SLIDE_SETTING );
+				e.xOffset = Number( result.presentation.xOffset );
+				e.yOffset = Number( result.presentation.yOffset );
+				e.slideToCanvasWidthRatio = Number( result.presentation.widthRatio );
+				e.slideToCanvasHeightRatio = Number( result.presentation.heightRatio );
+				trace( name + " presenter settings [" + e.xOffset + "," + e.yOffset + "," + e.slideToCanvasWidthRatio + "," + e.slideToCanvasHeightRatio + "]" );
+				dispatchRawEvent( e );
+			}
+			
+			if ( result.presentations )
+			{
+				for ( var p:Object in result.presentations )
+				{
+					var u:Object = result.presentations[ p ]
+					trace( name + " Presentation name " + u as String );
+					//var 
+					var added:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_ADDED_EVENT );
+					added.presentationName = u as String;
+					dispatchRawEvent( added );
+				}
+			}
+			
+			if ( result.presentation.sharing )
+			{
+				currentSlide = Number( result.presentation.slide );
+				
+				trace( name + " The presenter has shared slides and showing slide " + currentSlide );
+				
+				var shareEvent:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_READY );
+				shareEvent.presentationName = String( result.presentation.currentPresentation );
+				dispatchRawEvent( shareEvent );
 			}
 		}
 		
-		/**
-		 * 服務器地址
-		 */
-		override public function get uri():String
+		public function upload( file:FileReference ):void
 		{
-			var _uri:String = super.uri + "/" + bbb.conferenceParameters.room;
-			return _uri;
-		}
-		
-		/**
-		 * 啟用文檔演示應用
-		 */
-		override public function start():void
-		{
-			soService.connect();
-			bbb.addMessageListener( this );
-		}
-		
-		/**
-		 * 停用文檔演示應用
-		 */
-		override public function stop():void
-		{
-			soService.disconnect();
-			bbb.removeMessageListener( this );
-		}
-		
-		/**
-		 * 開始上傳
-		 * @param	presentationName
-		 * @param	file
-		 */
-		public function startUpload( presentationName:String, file:FileReference ):void
-		{
+			
 			var fileSize:Number = file.size;
 			var maxFileSize:Number = 30000000;
+			var presentationName:String = file.name;
 			
 			if ( fileSize > maxFileSize )
 			{
@@ -180,137 +231,73 @@ package cc.minos.bigbluebutton.plugins.present
 				var filenamePattern:RegExp = /(.+)(\..+)/i;
 				presentationName = presentationName.replace( filenamePattern, "$1" )
 				trace( "Uploadling presentation name: " + presentationName );
-				uploadService.upload( presentationName, file );
+				uploadService.upload( host + "/bigbluebutton/presentation/upload", presentationName, file, conference, room );
 			}
 		
 		}
 		
-		/**
-		 * 跳轉頁面
-		 * @param	slideNumber	:	頁面>=0
-		 */
-		public function gotoSlide( slideNumber:Number ):void
-		{
-			soService.gotoSlide( slideNumber );
-		}
-		
-		/**
-		 * 加載當前頁
-		 */
-		public function loadCurrentSlideLocally():void
-		{
-			soService.getCurrentSlideNumber();
-		}
-		
-		/**
-		 * 重置大小
-		 */
-		public function resetZoom():void
-		{
-			soService.restore();
-		}
-		
-		/**
-		 * 加載演示數據
-		 * @param	presentationName
-		 */
 		public function loadPresentation( presentationName:String ):void
 		{
 			if ( presentationName == _currentPresentation )
 				return;
 			
+			trace( name + " loading " + presentationName );
 			var fullUri:String = host + "/bigbluebutton/presentation/" + conference + "/" + room + "/" + presentationName + "/slides";
 			fullUri = encodeURI( fullUri );
 			var slideUri:String = host + "/bigbluebutton/presentation/" + conference + "/" + room + "/" + presentationName;
 			slideUri = encodeURI( slideUri );
-			
-			Console.log( fullUri );
-			service.load( fullUri, slides, slideUri );
+			loader.load( fullUri , slideUri );
 		}
 		
-		/**
-		 * 共享演示文件
-		 * @param	share
-		 * @param	presentationName
-		 */
-		public function sharePresentation( share:Boolean, presentationName:String ):void
+		public function sharePresentation( name:String, share:Boolean ):void
 		{
-			soService.sharePresentation( share, presentationName );
+			bbb.send( SHARE_PRESENTATION, null, name, share );
 			var timer:Timer = new Timer( 3000, 1 );
 			timer.addEventListener( TimerEvent.TIMER, sendViewerNotify );
 			timer.start();
 		}
 		
-		/**
-		 * 移除
-		 * @param	presentationName
-		 */
-		public function removePresentation( presentationName:String ):void
+		private function sendViewerNotify(e:TimerEvent):void 
 		{
-			if ( _currentPresentation == presentationName )
+			gotoSlide(0);
+		}
+		
+		public function removePresentation( name:String ):void
+		{
+			if ( _currentPresentation == name )
 				_currentPresentation = "";
-			soService.removePresentation( presentationName );
+			bbb.send( REMOVE_PRESENTATION, null, name );
 		}
 		
-		/**
-		 * 共享文檔後加載第一頁
-		 * @param	e
-		 */
-		private function sendViewerNotify( e:TimerEvent ):void
+		public function gotoSlide( num:Number ):void
 		{
-			soService.gotoSlide( 0 );
+			//trace( name + " gotoSlide: " +num );
+			bbb.send( GOTO_SLIDE, null, num );
 		}
 		
-		/**
-		 * 移動頁面
-		 * @param	xOffset
-		 * @param	yOffset
-		 * @param	slideToCanvasWidthRatio
-		 * @param	slideToCanvasHeightRatio
-		 */
-		public function moveSlide( xOffset:Number, yOffset:Number, slideToCanvasWidthRatio:Number, slideToCanvasHeightRatio:Number ):void
+		public function resizeSlide( size:Number ):void
 		{
-			soService.move( xOffset, yOffset, slideToCanvasWidthRatio, slideToCanvasHeightRatio );
+			presentSO.resizeSlide( size );
 		}
 		
-		/**
-		 * 縮放頁面
-		 * @param	xOffset
-		 * @param	yOffset
-		 * @param	slideToCanvasWidthRatio
-		 * @param	slideToCanvasHeightRatio
-		 */
-		public function zoomSlide( xOffset:Number, yOffset:Number, slideToCanvasWidthRatio:Number, slideToCanvasHeightRatio:Number ):void
+		private function onPresentationCursorUpdateCommand( message:Object ):void
 		{
-			soService.zoom( xOffset, yOffset, slideToCanvasWidthRatio, slideToCanvasHeightRatio );
+			var e:CursorEvent = new CursorEvent( CursorEvent.UPDATE_CURSOR );
+			e.xPercent = message.xPercent;
+			e.yPercent = message.yPercent;
+			dispatchRawEvent( e );
 		}
 		
-		/**
-		 * 發送鼠標位置到服務器
-		 * @param	xPercent
-		 * @param	yPercent
-		 */
 		public function sendCursorUpdate( xPercent:Number, yPercent:Number ):void
 		{
-			soService.sendCursorUpdate( xPercent, yPercent );
+			bbb.send( SEND_CURSOR_UPDATE, null, xPercent, yPercent );
 		}
 		
-		/**
-		 * 設置頁面大小
-		 * @param	newSizeInPercent
-		 */
-		public function resizeSlide( newSizeInPercent:Number ):void
+		public function updateSlide( xOffset:Number, yOffset:Number, widthRatio:Number, heightRatio:Number ):void
 		{
-			soService.resizeSlide( newSizeInPercent );
+			bbb.send( RESIZE_AND_MOVE_SLIDE, null, xOffset, yOffset, widthRatio, heightRatio );
 		}
 		
-		/* INTERFACE cc.minos.bigbluebutton.extensions.IMessageListener (信息偵聽器) */
-		
-		/**
-		 *
-		 * @param	messageName
-		 * @param	message
-		 */
 		public function onMessage( messageName:String, message:Object ):void
 		{
 			switch ( messageName )
@@ -322,17 +309,165 @@ package cc.minos.bigbluebutton.plugins.present
 			}
 		}
 		
-		/**
-		 * 鼠標移送處理
-		 * @param	message
-		 */
-		private function onPresentationCursorUpdateCommand( message:Object ):void
+		public function zoomCallback( xOffset:Number, yOffset:Number, widthRatio:Number, heightRatio:Number ):void
 		{
-			var e:CursorEvent = new CursorEvent( CursorEvent.UPDATE_CURSOR );
-			e.xPercent = message.xPercent;
-			e.yPercent = message.yPercent;
-			dispatchEvent( e );
+			var e:ZoomEvent = new ZoomEvent( ZoomEvent.ZOOM );
+			e.xOffset = xOffset;
+			e.yOffset = yOffset;
+			e.slideToCanvasWidthRatio = widthRatio;
+			e.slideToCanvasHeightRatio = heightRatio;
+			dispatchRawEvent( e );
 		}
+		
+		public function resizeSlideCallback( size:Number ):void
+		{
+			var e:ZoomEvent = new ZoomEvent( ZoomEvent.RESIZE );
+			e.zoomPercentage = size;
+			dispatchRawEvent( e );
+		}
+		
+		public function moveCallback( xOffset:Number, yOffset:Number, widthRatio:Number, heightRatio:Number ):void
+		{
+			var e:MoveEvent = new MoveEvent( MoveEvent.MOVE );
+			e.xOffset = xOffset;
+			e.yOffset = yOffset;
+			e.slideToCanvasWidthRatio = widthRatio;
+			e.slideToCanvasHeightRatio = heightRatio;
+			dispatchRawEvent( e );
+		}
+		
+		public function whatIsTheSlideInfo( userID:String ):void
+		{
+			//trace("whatIsTheSlideInfo");
+			if ( presenter )
+			{
+				presentSO.whatIsTheSlideInfo( userID, presenterViewedRegionX, presenterViewedRegionY, presenterViewedRegionW, presenterViewedRegionH );
+			}
+		}
+		
+		public function whatIsTheSlideInfoCallback( userID:String, xOffset:Number, yOffset:Number, widthRatio:Number, heightRatio:Number ):void
+		{
+			trace( "whatIsTheSlideInfoCallback" );
+			if ( this.userID == userID )
+			{
+				var e:MoveEvent = new MoveEvent( MoveEvent.CUR_SLIDE_SETTING );
+				e.xOffset = xOffset;
+				e.yOffset = yOffset;
+				e.slideToCanvasWidthRatio = widthRatio;
+				e.slideToCanvasHeightRatio = heightRatio;
+				dispatchRawEvent( e );
+			}
+		}
+		
+		public function maximizeCallback():void
+		{
+			dispatchRawEvent( new ZoomEvent( ZoomEvent.MAXIMIZE ) );
+		}
+		
+		public function restoreCallback():void
+		{
+			dispatchRawEvent( new ZoomEvent( ZoomEvent.RESTORE ) );
+		}
+		
+		public function clearCallback():void
+		{
+			presentSO.setProperty( SHARING, false );
+			dispatchRawEvent( new UploadEvent( UploadEvent.CLEAR_PRESENTATION ) );
+		}
+		
+		public function gotoSlideCallback( page:Number ):void
+		{
+			//trace( name + " gotoSlideCallback: " + page );
+			var e:NavigationEvent = new NavigationEvent( NavigationEvent.GOTO_PAGE )
+			e.pageNumber = page;
+			dispatchRawEvent( e );
+		}
+		
+		public function sharePresentationCallback( name:String, share:Boolean ):void
+		{
+			if ( share )
+			{
+				var e:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_READY );
+				e.presentationName = name;
+				dispatchRawEvent( e );
+			}
+			else
+			{
+				dispatchRawEvent( new UploadEvent( UploadEvent.CLEAR_PRESENTATION ) );
+			}
+		}
+		
+		public function removePresentationCallback( name:String ):void
+		{
+			var removeEvent:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_REMOVED_EVENT );
+			removeEvent.presentationName = name;
+			dispatchRawEvent( removeEvent );
+		}
+		
+		public function pageCountExceededUpdateMessageCallback( conference:String, room:String, code:String, presentationName:String, messageKey:String, numberOfPage:Number, maxNumberOfPages:Number ):void
+		{
+			var uploadEvent:UploadEvent = new UploadEvent( UploadEvent.PAGE_COUNT_EXCEEDED );
+			uploadEvent.maximumSupportedNumberOfSlides = maxNumberOfPages;
+			dispatchRawEvent( uploadEvent );
+		}
+		
+		public function generatedSlideUpdateMessageCallback( conference:String, room:String, code:String, presentationName:String, messageKey:String, numberOfPages:Number, pagesCompleted:Number ):void
+		{
+			var uploadEvent:UploadEvent = new UploadEvent( UploadEvent.CONVERT_UPDATE );
+			uploadEvent.totalSlides = numberOfPages;
+			uploadEvent.completedSlides = pagesCompleted;
+			dispatchRawEvent( uploadEvent );
+		}
+		
+		public function conversionCompletedUpdateMessageCallback( conference:String, room:String, code:String, presentationName:String, messageKey:String, slidesInfo:String ):void
+		{
+			var readyEvent:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_READY );
+			readyEvent.presentationName = presentationName;
+			dispatchRawEvent( readyEvent );
+		}
+		
+		public function conversionUpdateMessageCallback( conference:String, room:String, code:String, presentationName:String, messageKey:String ):void
+		{
+			var totalSlides:Number;
+			var completedSlides:Number;
+			var message:String;
+			var uploadEvent:UploadEvent;
+			
+			trace( name + " " + messageKey );
+			switch ( messageKey )
+			{
+				case OFFICE_DOC_CONVERSION_SUCCESS_KEY: 
+					uploadEvent = new UploadEvent( UploadEvent.OFFICE_DOC_CONVERSION_SUCCESS );
+					dispatchRawEvent( uploadEvent );
+					break;
+				case OFFICE_DOC_CONVERSION_FAILED_KEY: 
+					uploadEvent = new UploadEvent( UploadEvent.OFFICE_DOC_CONVERSION_FAILED );
+					dispatchRawEvent( uploadEvent );
+					break;
+				case SUPPORTED_DOCUMENT_KEY: 
+					uploadEvent = new UploadEvent( UploadEvent.SUPPORTED_DOCUMENT );
+					dispatchRawEvent( uploadEvent );
+					break;
+				case UNSUPPORTED_DOCUMENT_KEY: 
+					uploadEvent = new UploadEvent( UploadEvent.UNSUPPORTED_DOCUMENT );
+					dispatchRawEvent( uploadEvent );
+					break;
+				case GENERATING_THUMBNAIL_KEY: 
+					uploadEvent = new UploadEvent( UploadEvent.THUMBNAILS_UPDATE );
+					dispatchRawEvent( uploadEvent );
+					break;
+				case PAGE_COUNT_FAILED_KEY: 
+					uploadEvent = new UploadEvent( UploadEvent.PAGE_COUNT_FAILED );
+					dispatchRawEvent( uploadEvent );
+					break;
+				case GENERATED_THUMBNAIL_KEY: 
+					trace( "GENERATED_THUMBNAIL_KEY " + messageKey );
+					break;
+				default: 
+					trace( "Unknown message " + messageKey );
+					break;
+			}
+		}
+	
 	}
-
 }

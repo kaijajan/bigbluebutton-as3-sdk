@@ -18,7 +18,7 @@ package cc.minos.bigbluebutton.apis.resources
 			response = new JoinResponse();
 		}
 		
-		override public function get uri():String
+		override public function get url():String
 		{
 			return host + callName;
 		}
