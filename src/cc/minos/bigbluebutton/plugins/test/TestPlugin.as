@@ -7,7 +7,7 @@ package cc.minos.bigbluebutton.plugins.test
 	 * ...
 	 * @author Minos
 	 */
-	public class TestPlugin extends Plugin
+	public class TestPlugin extends Plugin implements ITestPlugin
 	{
 		protected var protocol:String;
 		
@@ -17,6 +17,13 @@ package cc.minos.bigbluebutton.plugins.test
 			this._application = "video/portTest";
 			this._name = "[PortTest]";
 			this._shortcut = "test";
+		}
+		
+		/* INTERFACE cc.minos.bigbluebutton.plugins.test.ITestPlugin */
+		
+		public function test():void
+		{
+			connect( "rtmp", "1935" );
 		}
 		
 		private function connect( protocol:String, port:String = "", testTimeout:Number = 10000 ):void
@@ -46,11 +53,11 @@ package cc.minos.bigbluebutton.plugins.test
 				
 			}
 		}
-		
-		override public function start():void
-		{
-			connect( "rtmp", "1935" );
-		}
+	
+	/*override public function start():void
+	   {
+	   connect( "rtmp", "1935" );
+	 }*/
 	
 	}
 }

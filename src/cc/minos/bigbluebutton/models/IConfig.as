@@ -12,7 +12,7 @@ package cc.minos.bigbluebutton.models
 		function get role():String;
 		function get securitySalt():String;
 		function get username():String;
-		function get record():Boolean;
+		function get record():String;
 		function load( obj:Object ):void;
 	}
 

@@ -13,7 +13,7 @@ package cc.minos.bigbluebutton.plugins.voice
 	 * ...
 	 * @author Minos
 	 */
-	public class VoicePlugin extends Plugin
+	public class VoicePlugin extends Plugin implements IVoicePlugin
 	{
 		
 		protected var voiceConnection:IVoiceConnection;
@@ -97,6 +97,7 @@ package cc.minos.bigbluebutton.plugins.voice
 		override public function init():void
 		{
 			voiceConnection = new VoiceConnection();
+			
 		}
 		
 		override public function start():void

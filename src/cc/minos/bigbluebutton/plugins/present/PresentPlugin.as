@@ -113,7 +113,11 @@ package cc.minos.bigbluebutton.plugins.present
 		
 		override public function start():void
 		{
-			host = "http://" + bbb.config.host;
+			host = bbb.config.host;
+			if ( host.indexOf( "http://" ) != 0 || host.indexOf( "https://" ) != 0 )
+			{
+				host = "http://" + host;
+			}
 			conference = bbb.conferenceParameters.conference;
 			room = bbb.conferenceParameters.room;
 			
@@ -132,7 +136,7 @@ package cc.minos.bigbluebutton.plugins.present
 		
 		override public function get uri():String
 		{
-			return super.uri + "/" + bbb.conferenceParameters.room;
+			return super.uri + "/" + room;
 		}
 		
 		private function onPresentationCompleted( presentationName:String, slides:Array ):void
@@ -241,12 +245,12 @@ package cc.minos.bigbluebutton.plugins.present
 			if ( presentationName == _currentPresentation )
 				return;
 			
-			trace( name + " loading " + presentationName );
-			var fullUri:String = host + "/bigbluebutton/presentation/" + conference + "/" + room + "/" + presentationName + "/slides";
-			fullUri = encodeURI( fullUri );
+			//var fullUri:String = host + "/bigbluebutton/presentation/" + conference + "/" + room + "/" + presentationName + "/slides";
+			//fullUri = encodeURI( fullUri );
 			var slideUri:String = host + "/bigbluebutton/presentation/" + conference + "/" + room + "/" + presentationName;
 			slideUri = encodeURI( slideUri );
-			loader.load( fullUri , slideUri );
+			trace( name + " loading " + presentationName , slideUri + "/slides" );
+			loader.load( slideUri );
 		}
 		
 		public function sharePresentation( name:String, share:Boolean ):void
@@ -257,9 +261,9 @@ package cc.minos.bigbluebutton.plugins.present
 			timer.start();
 		}
 		
-		private function sendViewerNotify(e:TimerEvent):void 
+		private function sendViewerNotify( e:TimerEvent ):void
 		{
-			gotoSlide(0);
+			gotoSlide( 0 );
 		}
 		
 		public function removePresentation( name:String ):void

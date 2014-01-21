@@ -154,14 +154,14 @@ package cc.minos.bigbluebutton.plugins.whiteboard
 		
 		private function handleRequestAnnotationHistoryReply( message:Object ):void
 		{
-			trace( "handleRequestAnnotationHistoryReply: Annotation history for [" + message.presentationID + "," + message.pageNumber + "]" );
+			trace( name + " Annotation history for [" + message.presentationID + "," + message.pageNumber + "]" );
 			if ( message.count == 0 )
 			{
-				trace( "handleRequestAnnotationHistoryReply: No annotations." );
+				trace( name + " No annotations." );
 			}
 			else
 			{
-				trace( "handleRequestAnnotationHistoryReply: Number of annotations in history = " + message.count );
+				trace( name + " Number of annotations in history = " + message.count );
 				var annotations:Array = message.annotations as Array;
 				for ( var i:int = 0; i < message.count; i++ )
 				{

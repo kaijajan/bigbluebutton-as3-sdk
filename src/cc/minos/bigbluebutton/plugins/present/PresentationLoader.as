@@ -2,6 +2,7 @@ package cc.minos.bigbluebutton.plugins.present
 {
 	import flash.events.Event;
 	import flash.events.IOErrorEvent;
+	import flash.events.SecurityErrorEvent;
 	import flash.net.URLLoader;
 	import flash.net.URLRequest;
 	
@@ -11,7 +12,6 @@ package cc.minos.bigbluebutton.plugins.present
 	 */
 	public class PresentationLoader
 	{
-		//private var slides:Array;
 		private var url:String;
 		private var slideUri:String;
 		private var urlLoader:URLLoader;
@@ -22,16 +22,15 @@ package cc.minos.bigbluebutton.plugins.present
 			onCompletedListener = callback;
 		}
 		
-		public function load( url:String, slideUri:String ):void
+		public function load( slideUri:String ):void
 		{
-			this.url = url;
-			//this.slides = slides;
+			//this.url = url;
 			this.slideUri = slideUri;
 			
 			urlLoader = new URLLoader();
 			urlLoader.addEventListener( Event.COMPLETE, onComplete );
 			urlLoader.addEventListener( IOErrorEvent.IO_ERROR, onIOError );
-			urlLoader.load( new URLRequest( url ) );
+			urlLoader.load( new URLRequest( slideUri + "/slides" ) );
 		}
 		
 		private function onComplete( e:Event ):void

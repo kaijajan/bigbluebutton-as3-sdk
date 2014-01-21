@@ -2,7 +2,10 @@ package cc.minos.bigbluebutton.plugins.video
 {
 	import cc.minos.bigbluebutton.core.IVideoConnection;
 	import cc.minos.bigbluebutton.core.VideoConnection;
+	import cc.minos.bigbluebutton.events.ConnectionFailedEvent;
+	import cc.minos.bigbluebutton.events.ConnectionSuccessEvent;
 	import cc.minos.bigbluebutton.events.MadePresenterEvent;
+	import cc.minos.bigbluebutton.events.VideoConnectionEvent;
 	import cc.minos.bigbluebutton.plugins.Plugin;
 	import cc.minos.bigbluebutton.plugins.users.IUsersPlugin;
 	import flash.events.ActivityEvent;
@@ -15,12 +18,14 @@ package cc.minos.bigbluebutton.plugins.video
 	 * ...
 	 * @author Minos
 	 */
-	public class VideoPlugin extends Plugin
+	public class VideoPlugin extends Plugin implements IVideoPlugin
 	{
 		protected var streamName:String;
-		protected var camera:Camera;
+		protected var _camera:Camera;
 		protected var options:VideoOptions;
 		protected var videoConnection:IVideoConnection;
+		
+		public var publishing:Boolean = false;
 		
 		public function VideoPlugin( options:VideoOptions = null )
 		{
@@ -36,7 +41,23 @@ package cc.minos.bigbluebutton.plugins.video
 		override public function init():void
 		{
 			videoConnection = new VideoConnection();
+			( videoConnection as VideoConnection ).addEventListener( ConnectionSuccessEvent.SUCCESS, onConnectionSuccess );
+			( videoConnection as VideoConnection ).addEventListener( ConnectionFailedEvent.FAILED, onConnectionFailed );
+			
 			bbb.addEventListener( MadePresenterEvent.SWITCH_TO_VIEWER_MODE, onPresenterChanged );
+		}
+		
+		private function onConnectionFailed( e:ConnectionFailedEvent ):void
+		{
+			var vEvent:VideoConnectionEvent = new VideoConnectionEvent( VideoConnectionEvent.FAILED );
+			vEvent.reason = e.reason;
+			dispatchRawEvent( vEvent );
+		}
+		
+		private function onConnectionSuccess( e:ConnectionSuccessEvent ):void
+		{
+			var vEvent:VideoConnectionEvent = new VideoConnectionEvent( VideoConnectionEvent.SUCCESS );
+			dispatchRawEvent( vEvent );
 		}
 		
 		private function onPresenterChanged( e:MadePresenterEvent ):void
@@ -64,7 +85,7 @@ package cc.minos.bigbluebutton.plugins.video
 		
 		protected function setupCamera():Boolean
 		{
-			camera = Camera.getCamera();
+			_camera = Camera.getCamera();
 			if ( camera )
 			{
 				camera.setMotionLevel( 5, 1000 );
@@ -89,14 +110,14 @@ package cc.minos.bigbluebutton.plugins.video
 			return false;
 		}
 		
-		private function onActivityEvent(e:ActivityEvent):void 
+		private function onActivityEvent( e:ActivityEvent ):void
 		{
-			
+		
 		}
 		
-		private function onStatusEvent(e:StatusEvent):void 
+		private function onStatusEvent( e:StatusEvent ):void
 		{
-			
+		
 		}
 		
 		public function startPublish():void
@@ -116,6 +137,7 @@ package cc.minos.bigbluebutton.plugins.video
 					h264.setProfileLevel( options.h264Profile, options.h264Level );
 				}
 				videoConnection.startPublish( camera, streamName, h264 );
+				publishing = true;
 				if ( usersPlugin )
 				{
 					usersPlugin.addStream( userID, streamName );
@@ -129,16 +151,25 @@ package cc.minos.bigbluebutton.plugins.video
 		
 		public function stopPublish():void
 		{
-			videoConnection.stopPublish();
-			if ( usersPlugin )
+			if ( publishing )
 			{
-				usersPlugin.removeStream( userID, streamName );
+				publishing = false;
+				videoConnection.stopPublish();
+				if ( usersPlugin )
+				{
+					usersPlugin.removeStream( userID, streamName );
+				}
 			}
 		}
 		
 		protected function get usersPlugin():IUsersPlugin
 		{
 			return bbb.getPlugin( "users" ) as IUsersPlugin;
+		}
+		
+		public function get camera():Camera
+		{
+			return _camera;
 		}
 	
 	}

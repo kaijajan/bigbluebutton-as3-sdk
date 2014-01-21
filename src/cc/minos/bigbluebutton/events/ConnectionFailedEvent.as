@@ -12,7 +12,7 @@ package cc.minos.bigbluebutton.events
 		/** 未知錯誤 */
 		public static const UNKNOWN_REASON:String = "unknownReason";
 		/** 連接失敗 */
-		public static const CONNECTION_FAILED:String = "connectionFailed";
+		//public static const CONNECTION_FAILED:String = "connectionFailed";
 		/** 連接關閉 */
 		public static const CONNECTION_CLOSED:String = "connectionClosed";
 		/** 無效服務 */

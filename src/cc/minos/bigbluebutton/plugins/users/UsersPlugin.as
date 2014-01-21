@@ -158,12 +158,12 @@ package cc.minos.bigbluebutton.plugins.users
 			
 			if ( this.userID == userID )
 			{
-				trace( name + " switch to presenter" );
+				trace( this.name + " " + name + " switch to presenter" );
 				pEvent = new MadePresenterEvent( MadePresenterEvent.SWITCH_TO_PRESENTER_MODE );
 			}
 			else
 			{
-				trace( name + " switch to viewer" );
+				trace( this.name + " " + name + " switch to viewer" );
 				pEvent = new MadePresenterEvent( MadePresenterEvent.SWITCH_TO_VIEWER_MODE );
 			}
 			pEvent.userID = userID;

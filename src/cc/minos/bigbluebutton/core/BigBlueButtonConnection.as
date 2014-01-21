@@ -17,6 +17,7 @@ package cc.minos.bigbluebutton.core
 	 */
 	public class BigBlueButtonConnection extends BaseConnectionCallback implements IBigBlueButtonConnection
 	{
+		public static const version:String = "1.00";
 		
 		public var plugins:Dictionary;
 		
@@ -71,7 +72,11 @@ package cc.minos.bigbluebutton.core
 				_conferenceParameters.record, //是否記錄
 				_conferenceParameters.externUserID, //外部id
 				_conferenceParameters.internalUserID ); //內部id
-		
+			
+			if ( _conferenceParameters.record )
+			{
+				trace( "recording.." );
+			}
 		}
 		
 		public function disconnect( userCommand:Boolean ):void
@@ -169,6 +174,17 @@ package cc.minos.bigbluebutton.core
 		public function hasPlugin( shortcut:String ):Boolean
 		{
 			return plugins[ shortcut ] != null;
+		}
+		
+		public function startAllPlugin():void
+		{
+			for each ( var p:IPlugin in plugins )
+			{
+				if ( p )
+				{
+					p.start();
+				}
+			}
 		}
 		
 		///////////////////////

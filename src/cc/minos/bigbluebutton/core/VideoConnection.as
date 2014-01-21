@@ -76,8 +76,8 @@ package cc.minos.bigbluebutton.core
 		override internal function onSuccess( reason:String = "" ):void
 		{
 			trace( "[VideoConnection] success" );
-			super.onSuccess( reason );
 			outgoingStream = new NetStream( connection );
+			super.onSuccess( reason );
 		}
 		
 		override internal function onFailed( reason:String = "" ):void

@@ -14,7 +14,7 @@ package cc.minos.bigbluebutton.models
 		public var fromUsername:String;
 		public var fromColor:String;
 		public var fromTime:Number;
-		public var fromTimezoneOffset:String;
+		public var fromTimezoneOffset:Number;
 		public var fromLang:String;
 		public var toUserID:String = "public_chat_userid";
 		public var toUsername:String = "public_chat_username";

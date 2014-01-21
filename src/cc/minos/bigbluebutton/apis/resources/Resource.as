@@ -78,9 +78,21 @@ package cc.minos.bigbluebutton.apis.resources
 			var query:String = "";
 			for ( var p:Object in params )
 			{
-				if ( params[p] != null )
+				if ( params[ p ] != null )
 				{
-					query += "&" + p.toString() + "=" + params[ p ].toString();
+					if ( p.toString() == "meta" )
+					{
+						var metas:Array = params[ p ].toString().split( ";" );
+						for ( var i:int = 0; i < metas.length; i++ )
+						{
+							var obs:Array = metas[ i ].split( ":" );
+							query += "&meta_" + obs[ 0 ] + "=" + encodeURI( obs[ 1 ] );
+						}
+					}
+					else
+					{
+						query += "&" + p.toString() + "=" + encodeURI( params[ p ].toString() );
+					}
 				}
 			}
 			return query.substr( 1 );
@@ -96,7 +108,7 @@ package cc.minos.bigbluebutton.apis.resources
 				}
 				else
 				{
-					params[ q ] = escape(d);
+					params[ q ] = d;
 				}
 			}
 		}

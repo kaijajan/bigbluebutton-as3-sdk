@@ -57,6 +57,7 @@ package cc.minos.bigbluebutton.core
 		 */
 		function hasPlugin( shortcut:String ):Boolean;
 		
+		function startAllPlugin():void
 		///////////////////////
 		// GETTERS/SETTERS
 		///////////////////////

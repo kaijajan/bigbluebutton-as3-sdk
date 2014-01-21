@@ -11,10 +11,13 @@ package cc.minos.bigbluebutton
 	import cc.minos.bigbluebutton.plugins.chat.IChatPlugin;
 	import cc.minos.bigbluebutton.plugins.present.IPresentPlugin;
 	import cc.minos.bigbluebutton.plugins.present.PresentPlugin;
+	import cc.minos.bigbluebutton.plugins.test.ITestPlugin;
 	import cc.minos.bigbluebutton.plugins.test.TestPlugin;
 	import cc.minos.bigbluebutton.plugins.users.IUsersPlugin;
 	import cc.minos.bigbluebutton.plugins.users.UsersPlugin;
+	import cc.minos.bigbluebutton.plugins.video.IVideoPlugin;
 	import cc.minos.bigbluebutton.plugins.video.VideoPlugin;
+	import cc.minos.bigbluebutton.plugins.voice.IVoicePlugin;
 	import cc.minos.bigbluebutton.plugins.voice.VoicePlugin;
 	import cc.minos.bigbluebutton.plugins.whiteboard.IWhiteboardPlugin;
 	import cc.minos.bigbluebutton.plugins.whiteboard.WhiteboardPlugin;
@@ -26,12 +29,86 @@ package cc.minos.bigbluebutton
 	import flash.net.FileReference;
 	
 	/**
+	 * 连接成功
+	 */
+	[Event( name = "connectionSuccess", type = "cc.minos.bigbluebutton.events.ConnectionSuccessEvent" )]
+	
+	/**
+	 * 连接失败
+	 */
+	[Event( name="connectionFailed",type="cc.minos.bigbluebutton.events.ConnectionFailedEvent" )]
+	
+	/**
+	 * 切换到演讲者模式
+	 */
+	[Event( name = "switchToPresenterMode", type = "cc.minos.bigbluebutton.events.MadePresenterEvent" )]
+	
+	/**
+	 * 切换到观众模式
+	 */
+	[Event( name="switchToViewerMode",type="cc.minos.bigbluebutton.events.MadePresenterEvent" )]
+	
+	/**
+	 * 新用户加入会议
+	 */
+	[Event( name = "pariticipantJoined", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
+	
+	/**
+	 * 用户离开会议
+	 */
+	[Event( name = "pariticipantLeft", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
+	
+	/**
+	 * 用户被踢出会议
+	 */
+	[Event( name = "pariticipantKicked", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
+	
+	/**
+	 * 举手
+	 */
+	[Event( name = "userRaiseHand", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
+	
+	/**
+	 * 
+	 */
+	[Event( name = "userVoiceJoined", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
+	
+	/**
+	 *
+	 */
+	[Event( name = "userVoiceMuted", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
+	
+	/**
+	 *
+	 */
+	[Event( name = "userVoiceLocked", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
+	
+	/**
+	 *
+	 */
+	[Event( name = "userVoiceLeft", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
+	
+	/**
+	 *
+	 */
+	[Event( name = "userVoiceTalking", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
+	
+	/**
+	 * 
+	 */
+	[Event( name = "userVideoStreamStarted", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
+	
+	/**
+	 *
+	 */
+	[Event( name="userVideoStreamStoped",type="cc.minos.bigbluebutton.events.UsersEvent" )]
+	
+	/**
 	 * ...
 	 * @author Minos
 	 */
 	public class BigBlueButton extends EventDispatcher
 	{
-		public static const version:String = "1.00";
 		
 		protected var api:API;
 		protected var bbb:IBigBlueButtonConnection;
@@ -42,18 +119,37 @@ package cc.minos.bigbluebutton
 		{
 			this.config = config;
 			
+			//api
 			api = new API( config.host, config.securitySalt );
 			api.onAdministrationCallback = onAdministrationCallback;
 			api.onMonitoringCallback = onMonitoringCallback;
 			api.onRecordingCallback = onRecordingCallback;
 			
+			//connection
 			bbb = new BigBlueButtonConnection( config );
 			bbb.addEventListener( ConnectionSuccessEvent.SUCCESS, onBigBlueButtonConnectionSuccess );
+			bbb.addEventListener( ConnectionFailedEvent.FAILED, onBigBlueButtonConnectionFailed );
 			
+			addTestPlugin();
+			addUsersPlugin();
+			addChatPlugin();
+			addVoicePlugin();
+			addVideoPlugin();
+			addPresentPlugin();
+			addWhiteboardPlugin();
+		}
+		
+		protected function addTestPlugin():void
+		{
+			//test
 			bbb.addPlugin( new TestPlugin() );
 			bbb.addEventListener( PortTestEvent.PORT_TEST_SUCCESS, onPortTest );
 			bbb.addEventListener( PortTestEvent.PORT_TEST_FAILED, onPortTest );
-			
+		}
+		
+		protected function addUsersPlugin():void
+		{
+			//users
 			bbb.addPlugin( new UsersPlugin() );
 			bbb.addEventListener( UsersEvent.JOINED, onUsers );
 			bbb.addEventListener( UsersEvent.LEFT, onUsers );
@@ -68,16 +164,42 @@ package cc.minos.bigbluebutton
 			bbb.addEventListener( UsersEvent.USER_VIDEO_STREAM_STOPED, onUsers );
 			bbb.addEventListener( MadePresenterEvent.SWITCH_TO_PRESENTER_MODE, onSwitchMode );
 			bbb.addEventListener( MadePresenterEvent.SWITCH_TO_VIEWER_MODE, onSwitchMode );
-			
+		}
+		
+		protected function addChatPlugin():void
+		{
+			//chat
 			bbb.addPlugin( new ChatPlugin() );
 			bbb.addEventListener( ChatMessageEvent.PUBLIC_CHAT_MESSAGE, onMessage );
-			bbb.addEventListener( ChatMessageEvent.PRIVATE_CHAT_MESSAGE, onMessage );
-			
+			//bbb.addEventListener( ChatMessageEvent.PRIVATE_CHAT_MESSAGE, onMessage );
+		}
+		
+		protected function addVoicePlugin():void
+		{
 			bbb.addPlugin( new VoicePlugin() );
-			
+		}
+		
+		protected function addVideoPlugin():void
+		{
 			//vdieo
 			bbb.addPlugin( new VideoPlugin() );
-			
+			bbb.addEventListener( VideoConnectionEvent.SUCCESS, onVideoConnection );
+			bbb.addEventListener( VideoConnectionEvent.FAILED, onVideoConnection );
+		}
+		
+		protected function addWhiteboardPlugin():void
+		{
+			//whiteboard
+			bbb.addPlugin( new WhiteboardPlugin() );
+			bbb.addEventListener( WhiteboardDrawEvent.CHANGE_PRESENTATION, onWhiteboard );
+			bbb.addEventListener( WhiteboardDrawEvent.CHANGE_PAGE, onWhiteboard );
+			bbb.addEventListener( WhiteboardDrawEvent.CLEAR, onWhiteboard );
+			bbb.addEventListener( WhiteboardDrawEvent.UNDO, onWhiteboard );
+			bbb.addEventListener( WhiteboardDrawEvent.NEW_ANNOTATION, onWhiteboard );
+		}
+		
+		protected function addPresentPlugin():void
+		{
 			//present
 			bbb.addPlugin( new PresentPlugin() );
 			bbb.addEventListener( PresentationEvent.PRESENTATION_READY, onPresentation );
@@ -99,31 +221,24 @@ package cc.minos.bigbluebutton
 			bbb.addEventListener( UploadEvent.PAGE_COUNT_FAILED, onUpload );
 			bbb.addEventListener( UploadEvent.CONVERT_UPDATE, onUpload );
 			bbb.addEventListener( UploadEvent.CLEAR_PRESENTATION, onUpload );
-			
-			bbb.addPlugin( new WhiteboardPlugin() );
-			bbb.addEventListener( WhiteboardDrawEvent.CHANGE_PRESENTATION, onWhiteboard );
-			bbb.addEventListener( WhiteboardDrawEvent.CHANGE_PAGE, onWhiteboard );
-			bbb.addEventListener( WhiteboardDrawEvent.CLEAR, onWhiteboard );
-			bbb.addEventListener( WhiteboardDrawEvent.UNDO, onWhiteboard );
-			bbb.addEventListener( WhiteboardDrawEvent.NEW_ANNOTATION, onWhiteboard );
 		}
 		
-		private function onSwitchMode(e:MadePresenterEvent):void 
+		protected function onSwitchMode( e:MadePresenterEvent ):void
 		{
-			dispatchEvent(e);
+			dispatchEvent( e );
 		}
 		
-		private function onWhiteboard( e:WhiteboardDrawEvent ):void
+		protected function onWhiteboard( e:WhiteboardDrawEvent ):void
 		{
-			dispatchEvent(e);
+			dispatchEvent( e );
 		}
 		
-		private function onCursor( e:CursorEvent ):void
+		protected function onCursor( e:CursorEvent ):void
 		{
-			dispatchEvent(e);
+			dispatchEvent( e );
 		}
 		
-		private function onMove( e:MoveEvent ):void
+		protected function onMove( e:MoveEvent ):void
 		{
 			if ( !usersPlugin.presenter )
 			{
@@ -131,17 +246,17 @@ package cc.minos.bigbluebutton
 			}
 		}
 		
-		private function onGotoPage( e:NavigationEvent ):void
+		protected function onGotoPage( e:NavigationEvent ):void
 		{
 			dispatchEvent( e );
 		}
 		
-		private function onUpload( e:UploadEvent ):void
+		protected function onUpload( e:UploadEvent ):void
 		{
-			//trace( e.presentationName, e.type );
+			dispatchEvent( e );
 		}
 		
-		private function onPresentation( e:PresentationEvent ):void
+		protected function onPresentation( e:PresentationEvent ):void
 		{
 			if ( e.type == PresentationEvent.PRESENTATION_READY )
 			{
@@ -149,34 +264,44 @@ package cc.minos.bigbluebutton
 			}
 			else if ( e.type == PresentationEvent.PRESENTATION_LOADED )
 			{
-				dispatchEvent( e );
 			}
+			dispatchEvent( e );
 		}
 		
-		private function onMessage( e:ChatMessageEvent ):void
+		protected function onMessage( e:ChatMessageEvent ):void
 		{
+			trace( "bbb: a new message." );
+			dispatchEvent( e );
 		}
 		
-		private function onUsers( e:UsersEvent ):void
+		protected function onUsers( e:UsersEvent ):void
 		{
-			trace( e.type, e.userID );
+			//trace( e.type, e.userID );
+			dispatchEvent( e );
 		}
 		
-		private function onBigBlueButtonConnectionSuccess( e:ConnectionSuccessEvent ):void
+		protected function onBigBlueButtonConnectionSuccess( e:ConnectionSuccessEvent ):void
 		{
-			bbb.getPlugin( "users" ).start();
-			bbb.getPlugin( "chat" ).start();
-			bbb.getPlugin( "voice" ).start();
-			bbb.getPlugin( "video" ).start();
-			bbb.getPlugin( "present" ).start();
-			bbb.getPlugin("whiteboard").start();
+			trace( "bbb: connection success!" );
+			bbb.startAllPlugin();
+			dispatchEvent( e );
 		}
 		
-		private function onPortTest( e:PortTestEvent ):void
+		protected function onBigBlueButtonConnectionFailed( e:ConnectionFailedEvent ):void
+		{
+			trace( "bbb: connection failed" );
+		}
+		
+		protected function onVideoConnection( e:VideoConnectionEvent ):void
+		{
+			dispatchEvent( e );
+		}
+		
+		protected function onPortTest( e:PortTestEvent ):void
 		{
 			if ( e.type == PortTestEvent.PORT_TEST_SUCCESS )
 			{
-				trace( "[PortTest] success! connecting to bbb " );
+				trace( "[PortTest] success! connecting to bbb." );
 				bbb.connect( conferenceParameters );
 			}
 			else if ( e.type == PortTestEvent.PORT_TEST_FAILED )
@@ -195,7 +320,7 @@ package cc.minos.bigbluebutton
 			bbb.disconnect( true );
 		}
 		
-		private function onAdministrationCallback( callName:String, response:Response ):void
+		protected function onAdministrationCallback( callName:String, response:Response ):void
 		{
 			if ( response.returncode == "SUCCESS" )
 			{
@@ -224,9 +349,9 @@ package cc.minos.bigbluebutton
 						conferenceParameters.welcome = res.welcome;
 						conferenceParameters.record = res.record;
 						
-						if ( bbb.hasPlugin( "test" ) )
+						if ( testPlugin != null )
 						{
-							bbb.getPlugin( "test" ).start();
+							testPlugin.test();
 						}
 						else
 						{
@@ -243,7 +368,7 @@ package cc.minos.bigbluebutton
 			}
 		}
 		
-		private function onMonitoringCallback( callName:String, response:Response ):void
+		protected function onMonitoringCallback( callName:String, response:Response ):void
 		{
 			if ( response.returncode == "SUCCESS" )
 			{
@@ -253,7 +378,9 @@ package cc.minos.bigbluebutton
 				}
 				else if ( config.role == Role.MODERATOR )
 				{
-					api.create( config.meetingID, config.meetingID, Role.VIEWER, Role.MODERATOR, "welcome" );
+					var meta:String = "description:record;email:" + config.username + ";title:" + config.meetingID + "";
+					var voiceBridge:String = Math.floor( 70000 + 9999 * Math.random() ).toString();
+					api.create( config.meetingID, config.meetingID, Role.VIEWER, Role.MODERATOR, "welcome", null, voiceBridge, null, null, config.record, 0, meta );
 				}
 				else
 				{
@@ -263,19 +390,19 @@ package cc.minos.bigbluebutton
 			}
 		}
 		
-		private function onRecordingCallback( callName:String, response:Response ):void
+		protected function onRecordingCallback( callName:String, response:Response ):void
 		{
-			//TODO
+			//<!- -!>
 		}
 		
-		private var file:FileReference;
-		private var uploading:Boolean = false;
+		protected var file:FileReference;
+		protected var uploading:Boolean = false;
 		
 		public function browse():void
 		{
 			if ( uploading )
 			{
-				trace( "uploading other file, please try again late" );
+				trace( "bbb: uploading other file, please try again late" );
 				return;
 			}
 			file = new FileReference();
@@ -284,33 +411,48 @@ package cc.minos.bigbluebutton
 			file.browse([ new FileFilter( "演示文件", "*.pdf;*.doc;*.docx;*.xls;*.xlsx;*.ppt;*.pptx;*.txt;*.rtf;*.odt;*.ods;*.odp;*.odg;*.odc;*.odi;*.jpg;*.png" ), new FileFilter( "pdf", "*.pdf" ), new FileFilter( "word", "*.doc;*.docx;*.odt;*.rtf;*.txt" ), new FileFilter( "excel", "*.xls;*.xlsx;*.ods" ), new FileFilter( "powerpoint", "*.ppt;*.pptx;*.odp" ), new FileFilter( "image", "*.jpg;*.jpeg;*.png" ) ] );
 		}
 		
-		private function onCancel( e:Event ):void
+		protected function onCancel( e:Event ):void
 		{
 			file.removeEventListener( Event.SELECT, onSelect );
 			file.removeEventListener( Event.CANCEL, onCancel );
 			file = null
 		}
 		
-		private function onSelect( e:Event ):void
+		protected function onSelect( e:Event ):void
 		{
 			uploading = true;
 			file.addEventListener( Event.COMPLETE, onComplete );
 			file.addEventListener( ProgressEvent.PROGRESS, onProgress );
-			IPresentPlugin( bbb.getPlugin( "present" ) ).upload( file );
+			presentPlugin.upload( file );
 		}
 		
-		private function onComplete( e:Event ):void
+		protected function onComplete( e:Event ):void
 		{
 			uploading = false;
-			trace( "upload completed!" );
+			trace( "bbb: upload completed!" );
 		}
 		
-		private function onProgress( e:ProgressEvent ):void
+		protected function onProgress( e:ProgressEvent ):void
 		{
-			trace( "upload " + Number(( e.bytesLoaded / e.bytesTotal ).toFixed( 2 ) ) * 100 + "%" );
+			trace( "bbb: upload " + Number(( e.bytesLoaded / e.bytesTotal ).toFixed( 2 ) ) * 100 + "%" );
 		}
 		
-		/** */
+		/* */
+		
+		public function get videoPlugin():IVideoPlugin
+		{
+			return bbb.getPlugin( "video" ) as IVideoPlugin;
+		}
+		
+		public function get voicePlugin():IVoicePlugin
+		{
+			return bbb.getPlugin( "voice" ) as IVoicePlugin;
+		}
+		
+		public function get testPlugin():ITestPlugin
+		{
+			return bbb.getPlugin( "test" ) as ITestPlugin;
+		}
 		
 		public function get usersPlugin():IUsersPlugin
 		{
