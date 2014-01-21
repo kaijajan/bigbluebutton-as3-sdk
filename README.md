@@ -1,30 +1,10 @@
 Using the BigBlueButton 0.81-RC4 API.
 
-
-```
-var bbb:BigBlueButton = new BigBlueButton();
-bbb.conferenceParameters = getConferenceParameters();
-bbb.addEventListener( BigBlueButtonEvent.USER_LOGGED_IN, onBigBlueButton );
-bbb.addEventListener( BigBlueButtonEvent.USER_LOGGED_OUT, onBigBlueButton );
-
-var testPlugin:PortTestPlugin = new PortTestPlugin();
-testPlugin.addEventListener( PortTestEvent.PORT_TEST_SUCCESS, onPortTest );
-bbb.addPlugin( testPlugin );
-testPlugin.start();
-
-function onBigBlueButton( e:BigBlueButtonEvent ):void
-{
-	trace(e.type);
-}
-
-function onPortTest( e:PortTestEvent ):void
-{
-	if ( e.type == PortTestEvent.PORT_TEST_SUCCESS )
-	{
-		bbb.connect();
-	}
-}
-```
+####PlayBack
+  * ~~presention~~
+  * ~~whiteboard~~
+  * ~~webcoms.ogg~~
+  * webcom.webm
 
 
 
