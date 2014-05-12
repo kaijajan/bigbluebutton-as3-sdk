@@ -2,6 +2,7 @@ package cc.minos.bigbluebutton.apis
 {
 	import cc.minos.bigbluebutton.apis.resources.*;
 	import cc.minos.bigbluebutton.apis.responses.*;
+	import cc.minos.console.Console;
 	
 	/**
 	 * ...
@@ -132,7 +133,7 @@ package cc.minos.bigbluebutton.apis
 		 */
 		public function isMeetingRunning( meetingID:String ):RunningResoure
 		{
-			trace("[API] check meeting: " + meetingID );
+			Console.log("[API] check meeting: " + meetingID );
 			var runningRes:RunningResoure = new RunningResoure( onMonitoringCallback );
 			runningRes.meetingID = meetingID;
 			runningRes.call( host, securitySalt );

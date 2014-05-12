@@ -14,19 +14,19 @@ package cc.minos.bigbluebutton.models
 		public var userID:String;
 		public var externUserID:String;
 		public var name:String;
-		public var me:Boolean;
-		private var _talking:Boolean;
-		private var _hasStream:Boolean;
+		public var me:Boolean = false;
+		private var _talking:Boolean = false;
+		private var _hasStream:Boolean = false;
 		public var role:String;
 		public var voiceUserID:Number;
-		private var _voiceJoined:Boolean;
-		private var _voiceMuted:Boolean;
-		private var _voiceLocked:Boolean;
-		private var _raiseHand:Boolean;
-		private var _presenter:Boolean;
+		private var _voiceJoined:Boolean = false;
+		private var _voiceMuted:Boolean = false;
+		private var _voiceLocked:Boolean = false;
+		private var _raiseHand:Boolean = false;
+		private var _presenter:Boolean = false;
 		public var streamName:String;
 		
-		public var isLeavingFlag:Boolean;
+		public var isLeavingFlag:Boolean = false;
 		
 		
 		public function BBBUser()

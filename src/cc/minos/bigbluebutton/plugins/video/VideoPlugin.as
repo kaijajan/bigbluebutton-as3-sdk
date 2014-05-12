@@ -2,17 +2,21 @@ package cc.minos.bigbluebutton.plugins.video
 {
 	import cc.minos.bigbluebutton.core.IVideoConnection;
 	import cc.minos.bigbluebutton.core.VideoConnection;
+	import cc.minos.bigbluebutton.events.CameraEvent;
 	import cc.minos.bigbluebutton.events.ConnectionFailedEvent;
 	import cc.minos.bigbluebutton.events.ConnectionSuccessEvent;
 	import cc.minos.bigbluebutton.events.MadePresenterEvent;
 	import cc.minos.bigbluebutton.events.VideoConnectionEvent;
 	import cc.minos.bigbluebutton.plugins.Plugin;
 	import cc.minos.bigbluebutton.plugins.users.IUsersPlugin;
+	import cc.minos.console.Console;
 	import flash.events.ActivityEvent;
 	import flash.events.StatusEvent;
+	import flash.events.TimerEvent;
 	import flash.media.Camera;
 	import flash.media.H264VideoStreamSettings;
 	import flash.net.NetConnection;
+	import flash.utils.Timer;
 	
 	/**
 	 * ...
@@ -26,6 +30,12 @@ package cc.minos.bigbluebutton.plugins.video
 		protected var videoConnection:IVideoConnection;
 		
 		public var publishing:Boolean = false;
+		
+		//
+		protected var activationTimer:Timer;
+		protected var waitingForActivation:Boolean = false;
+		protected var cameraAccessDenied:Boolean = false;
+		protected var autoPublishTimer:Timer;
 		
 		public function VideoPlugin( options:VideoOptions = null )
 		{
@@ -83,69 +93,165 @@ package cc.minos.bigbluebutton.plugins.video
 			return videoConnection.connection;
 		}
 		
-		protected function setupCamera():Boolean
+		protected function updateCamera():void
 		{
-			_camera = Camera.getCamera();
-			if ( camera )
+			stopCamera();
+			
+			if ( Camera.names.length == 0 )
 			{
-				camera.setMotionLevel( 5, 1000 );
-				if ( camera.muted )
-				{
-				}
-				
-				camera.addEventListener( ActivityEvent.ACTIVITY, onActivityEvent );
-				camera.addEventListener( StatusEvent.STATUS, onStatusEvent );
-				
-				camera.setKeyFrameInterval( options.camKeyFrameInterval );
-				camera.setMode( options.videoWidth, options.videoHeight, options.camModeFps );
-				camera.setQuality( options.camQualityBandwidth, options.videoQuality );
-				
-				var d:Date = new Date();
-				var curTime:Number = d.getTime();
-				var uid:String = userID;
-				var res:String = options.videoWidth + "x" + options.videoHeight;
-				streamName = res.concat( "-" + uid ) + "-" + curTime;
-				return true;
+				sendCameraWarning( 'u need a camera' );
+				return;
 			}
-			return false;
+			
+			_camera = Camera.getCamera();
+			if ( _camera == null )
+			{
+				sendCameraWarning( 'cant open camera' );
+				return;
+			}
+			
+			_camera.setMotionLevel( 5, 1000 );
+			if ( _camera.muted )
+			{
+				if ( cameraAccessDenied )
+				{
+					onCameraAccessDisallowed();
+					return;
+				}
+				else
+				{
+					sendCameraWarning( 'waiting approval' );
+				}
+			}
+			else
+			{
+				onCameraAccessAllowed();
+			}
+			
+			_camera.addEventListener( ActivityEvent.ACTIVITY, onActivityEvent );
+			_camera.addEventListener( StatusEvent.STATUS, onStatusEvent );
+			
+			_camera.setKeyFrameInterval( options.camKeyFrameInterval );
+			_camera.setMode( options.videoWidth, options.videoHeight, options.camModeFps );
+			_camera.setQuality( options.camQualityBandwidth, options.videoQuality );
+			
+			var d:Date = new Date();
+			var curTime:Number = d.getTime();
+			var uid:String = userID;
+			var res:String = options.videoWidth + "x" + options.videoHeight;
+			streamName = res.concat( "-" + uid ) + "-" + curTime;
+			return;
+		}
+		
+		private function onCameraAccessDisallowed():void
+		{
+			sendCameraWarning( 'camera denied' );
+			cameraAccessDenied = true;
+		}
+		
+		private function onCameraAccessAllowed():void
+		{
+			waitingForActivation = true;
+			if ( activationTimer != null )
+			{
+				activationTimer.stop();
+			}
+			activationTimer = new Timer( 10000, 1 );
+			activationTimer.addEventListener( TimerEvent.TIMER, onActivationTimer );
+			activationTimer.start();
+		}
+		
+		private function onActivationTimer( e:TimerEvent ):void
+		{
+			//camera is being used
+			updateCamera();
+		}
+		
+		private function stopCamera():void
+		{
+			_camera = null;
+			
+			var sEvent:CameraEvent = new CameraEvent( CameraEvent.CLOSE );
+			dispatchRawEvent( sEvent );
+		}
+		
+		/**
+		 * dispatch a event to
+		 * @param	msg
+		 * @param	color
+		 */
+		private function sendCameraWarning( text:String, color:uint = 0xff0000 ):void
+		{
+			var warningEvent:CameraEvent = new CameraEvent( CameraEvent.WARNING );
+			warningEvent.data = { text: text, color: color };
+			dispatchRawEvent( warningEvent );
+		}
+		
+		private function onAutoPublishTimer( e:TimerEvent ):void
+		{
+			autoPublishTimer.stop();
+			startPublish();
 		}
 		
 		private function onActivityEvent( e:ActivityEvent ):void
 		{
-		
+			if ( waitingForActivation && e.activating )
+			{
+				activationTimer.stop();
+				waitingForActivation = false;
+				
+				autoPublishTimer = new Timer( 3000, 1 );
+				autoPublishTimer.addEventListener( TimerEvent.TIMER, onAutoPublishTimer );
+				autoPublishTimer.start();
+			}
 		}
 		
 		private function onStatusEvent( e:StatusEvent ):void
 		{
-		
+			if ( e.code == "Camera.Unmuted" )
+			{
+				onCameraAccessAllowed();
+				sendCameraWarning( 'opening camera' );
+			}
+			else if ( e.code == "Camera.Muted" )
+			{
+				onCameraAccessDisallowed();
+			}
 		}
 		
 		public function startPublish():void
 		{
+			Console.log( "try start publish video" );
 			if ( options.presenterShareOnly && !presenter )
 			{
 				trace( name + " presenter share only." );
 				return;
 			}
 			
-			if ( setupCamera() )
+			if ( _camera == null )
 			{
-				var h264:H264VideoStreamSettings = null;
-				if ( options.enableH264 )
-				{
-					h264 = new H264VideoStreamSettings();
-					h264.setProfileLevel( options.h264Profile, options.h264Level );
-				}
-				videoConnection.startPublish( camera, streamName, h264 );
-				publishing = true;
-				if ( usersPlugin )
-				{
-					usersPlugin.addStream( userID, streamName );
-				}
+				updateCamera();
+				return;
 			}
-			else
+			
+			if ( autoPublishTimer )
 			{
-				trace( name + " camera not found." );
+				autoPublishTimer.stop();
+				autoPublishTimer.removeEventListener( TimerEvent.TIMER, onAutoPublishTimer );
+				autoPublishTimer = null;
+			}
+			
+			var h264:H264VideoStreamSettings = null;
+			if ( options.enableH264 )
+			{
+				h264 = new H264VideoStreamSettings();
+				h264.setProfileLevel( options.h264Profile, options.h264Level );
+			}
+			videoConnection.startPublish( _camera, streamName, h264 );
+			publishing = true;
+			if ( usersPlugin )
+			{
+				usersPlugin.addStream( userID, streamName );
 			}
 		}
 		
@@ -153,6 +259,7 @@ package cc.minos.bigbluebutton.plugins.video
 		{
 			if ( publishing )
 			{
+				stopCamera();
 				publishing = false;
 				videoConnection.stopPublish();
 				if ( usersPlugin )

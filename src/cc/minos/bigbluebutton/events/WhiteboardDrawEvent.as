@@ -25,14 +25,14 @@ package cc.minos.bigbluebutton.events
 		
 		public var annotation:Annotation;
 		
-		public function WhiteboardDrawEvent( type:String, bubbles:Boolean = false, cancelable:Boolean = false )
+		public function WhiteboardDrawEvent( type:String )
 		{
-			super( type, bubbles, cancelable );
+			super( type, true, false );
 		}
 		
 		public override function clone():Event
 		{
-			var e:WhiteboardDrawEvent = new WhiteboardDrawEvent( type, bubbles, cancelable );
+			var e:WhiteboardDrawEvent = new WhiteboardDrawEvent( type );
 			e.presentationID = presentationID;
 			e.numberOfPages = numberOfPages;
 			e.pageNum = pageNum;

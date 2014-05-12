@@ -7,7 +7,7 @@ package cc.minos.bigbluebutton.plugins.voice
 	 */
 	public interface IVoicePlugin 
 	{
-		function join():void;
+		function join( withMic:Boolean ):void
 		function hangup():void;
 	}
 	

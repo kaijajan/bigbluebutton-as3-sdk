@@ -13,14 +13,14 @@ package cc.minos.bigbluebutton.events
 		
 		public var reason:String;
 		
-		public function VideoConnectionEvent( type:String, bubbles:Boolean = false, cancelable:Boolean = false )
+		public function VideoConnectionEvent( type:String )
 		{
-			super( type, bubbles, cancelable );
+			super( type, true, false );
 		}
 		
 		public override function clone():Event
 		{
-			var vEvent:VideoConnectionEvent = new VideoConnectionEvent( type, bubbles, cancelable );
+			var vEvent:VideoConnectionEvent = new VideoConnectionEvent( type );
 			vEvent.reason = reason;
 			return vEvent;
 		}

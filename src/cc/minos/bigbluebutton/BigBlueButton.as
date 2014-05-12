@@ -21,6 +21,7 @@ package cc.minos.bigbluebutton
 	import cc.minos.bigbluebutton.plugins.voice.VoicePlugin;
 	import cc.minos.bigbluebutton.plugins.whiteboard.IWhiteboardPlugin;
 	import cc.minos.bigbluebutton.plugins.whiteboard.WhiteboardPlugin;
+	import cc.minos.console.Console;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.events.IEventDispatcher;
@@ -109,6 +110,8 @@ package cc.minos.bigbluebutton
 	 */
 	public class BigBlueButton extends EventDispatcher
 	{
+		public static const BBB_VERSION:String = "0.81";
+		public static const VERSION:String = "1.00";
 		
 		protected var api:API;
 		protected var bbb:IBigBlueButtonConnection;
@@ -127,8 +130,11 @@ package cc.minos.bigbluebutton
 			
 			//connection
 			bbb = new BigBlueButtonConnection( config );
-			bbb.addEventListener( ConnectionSuccessEvent.SUCCESS, onBigBlueButtonConnectionSuccess );
-			bbb.addEventListener( ConnectionFailedEvent.FAILED, onBigBlueButtonConnectionFailed );
+			bbb.addEventListener( BigBlueButtonEvent.USER_LOGIN, onBigBlueButton );
+			bbb.addEventListener( BigBlueButtonEvent.USER_LOGOUT, onBigBlueButton );
+			bbb.addEventListener( BigBlueButtonEvent.CHANGE_RECORDING_STATUS, onBigBlueButton );
+			//bbb.addEventListener( ConnectionSuccessEvent.SUCCESS, onBigBlueButtonConnectionSuccess );
+			//bbb.addEventListener( ConnectionFailedEvent.FAILED, onBigBlueButtonConnectionFailed );
 			
 			addTestPlugin();
 			addUsersPlugin();
@@ -164,6 +170,7 @@ package cc.minos.bigbluebutton
 			bbb.addEventListener( UsersEvent.USER_VIDEO_STREAM_STOPED, onUsers );
 			bbb.addEventListener( MadePresenterEvent.SWITCH_TO_PRESENTER_MODE, onSwitchMode );
 			bbb.addEventListener( MadePresenterEvent.SWITCH_TO_VIEWER_MODE, onSwitchMode );
+			bbb.addEventListener( MadePresenterEvent.PRESENTER_NAME_CHANGE, onSwitchMode );
 		}
 		
 		protected function addChatPlugin():void
@@ -213,6 +220,11 @@ package cc.minos.bigbluebutton
 			bbb.addEventListener( MoveEvent.CUR_SLIDE_SETTING, onMove );
 			bbb.addEventListener( MoveEvent.MOVE, onMove );
 			
+			bbb.addEventListener( ZoomEvent.ZOOM, onZoom );
+			bbb.addEventListener( ZoomEvent.RESTORE, onZoom );
+			bbb.addEventListener( ZoomEvent.RESIZE, onZoom );
+			//bbb.addEventListener( ZoomEvent.MAXIMIZE, onZoom );
+			
 			bbb.addEventListener( UploadEvent.OFFICE_DOC_CONVERSION_SUCCESS, onUpload );
 			bbb.addEventListener( UploadEvent.OFFICE_DOC_CONVERSION_FAILED, onUpload );
 			bbb.addEventListener( UploadEvent.SUPPORTED_DOCUMENT, onUpload );
@@ -221,6 +233,11 @@ package cc.minos.bigbluebutton
 			bbb.addEventListener( UploadEvent.PAGE_COUNT_FAILED, onUpload );
 			bbb.addEventListener( UploadEvent.CONVERT_UPDATE, onUpload );
 			bbb.addEventListener( UploadEvent.CLEAR_PRESENTATION, onUpload );
+		}
+		
+		private function onZoom(e:ZoomEvent):void 
+		{
+			dispatchEvent( e );
 		}
 		
 		protected function onSwitchMode( e:MadePresenterEvent ):void
@@ -270,27 +287,40 @@ package cc.minos.bigbluebutton
 		
 		protected function onMessage( e:ChatMessageEvent ):void
 		{
-			trace( "bbb: a new message." );
+			Console.log( "bbb: a new message." );
 			dispatchEvent( e );
 		}
 		
 		protected function onUsers( e:UsersEvent ):void
 		{
-			//trace( e.type, e.userID );
+			//Console.log( e.type, e.userID );
 			dispatchEvent( e );
 		}
 		
-		protected function onBigBlueButtonConnectionSuccess( e:ConnectionSuccessEvent ):void
+		protected function onBigBlueButton( e:BigBlueButtonEvent ):void
 		{
-			trace( "bbb: connection success!" );
-			bbb.startAllPlugin();
+			Console.log( "bbb: " + e.type );
+			if ( e.type == BigBlueButtonEvent.USER_LOGIN )
+			{
+				bbb.startAllPlugin();
+			}else if ( e.type == BigBlueButtonEvent.USER_LOGOUT )
+			{
+				disconnect();
+			}
 			dispatchEvent( e );
 		}
 		
-		protected function onBigBlueButtonConnectionFailed( e:ConnectionFailedEvent ):void
-		{
-			trace( "bbb: connection failed" );
-		}
+		//protected function onBigBlueButtonConnectionSuccess( e:ConnectionSuccessEvent ):void
+		//{
+			//trace( "bbb: connection success!" );
+			//bbb.startAllPlugin();
+			//dispatchEvent( e );
+		//}
+		//
+		//protected function onBigBlueButtonConnectionFailed( e:ConnectionFailedEvent ):void
+		//{
+			//trace( "bbb: connection failed" );
+		//}
 		
 		protected function onVideoConnection( e:VideoConnectionEvent ):void
 		{
@@ -301,12 +331,12 @@ package cc.minos.bigbluebutton
 		{
 			if ( e.type == PortTestEvent.PORT_TEST_SUCCESS )
 			{
-				trace( "[PortTest] success! connecting to bbb." );
+				Console.log( "[PortTest] success! connecting to bbb." );
 				bbb.connect( conferenceParameters );
 			}
 			else if ( e.type == PortTestEvent.PORT_TEST_FAILED )
 			{
-				trace( "[PortTest] test failed!" );
+				Console.log( "[PortTest] test failed!" );
 			}
 		}
 		
@@ -364,7 +394,7 @@ package cc.minos.bigbluebutton
 			}
 			else
 			{
-				trace( "api: create meeting error." );
+				Console.log( "api: create meeting fail." );
 			}
 		}
 		
@@ -384,15 +414,26 @@ package cc.minos.bigbluebutton
 				}
 				else
 				{
-					trace( "api: not meeting running." );
+					Console.log( "api: not meeting running." );
+					sendErrorEvent( { type: "Error", message: config.meetingID + " is closed." } );
 				}
 				
+			}else {
+				//FAILED
+				sendErrorEvent({ message: response.message , type: "Error"});
 			}
 		}
 		
 		protected function onRecordingCallback( callName:String, response:Response ):void
 		{
 			//<!- -!>
+		}
+		
+		protected function sendErrorEvent( data:Object = null ):void
+		{
+			var errorEvent:BigBlueButtonEvent = new BigBlueButtonEvent( BigBlueButtonEvent.ERROR );
+			errorEvent.data = data;
+			dispatchEvent(errorEvent);
 		}
 		
 		protected var file:FileReference;
@@ -402,7 +443,7 @@ package cc.minos.bigbluebutton
 		{
 			if ( uploading )
 			{
-				trace( "bbb: uploading other file, please try again late" );
+				Console.log( "bbb: uploading other file, please try again late" );
 				return;
 			}
 			file = new FileReference();
@@ -429,12 +470,12 @@ package cc.minos.bigbluebutton
 		protected function onComplete( e:Event ):void
 		{
 			uploading = false;
-			trace( "bbb: upload completed!" );
+			Console.log( "bbb: upload completed!" );
 		}
 		
 		protected function onProgress( e:ProgressEvent ):void
 		{
-			trace( "bbb: upload " + Number(( e.bytesLoaded / e.bytesTotal ).toFixed( 2 ) ) * 100 + "%" );
+			Console.log( "bbb: upload " + Number(( e.bytesLoaded / e.bytesTotal ).toFixed( 2 ) ) * 100 + "%" );
 		}
 		
 		/* */

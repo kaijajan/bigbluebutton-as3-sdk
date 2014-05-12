@@ -33,6 +33,7 @@
 package cc.minos.bigbluebutton.apis.utils
 {
 	import flash.utils.ByteArray;
+	//import mx.utils.Base64Encoder;
 	
 	/**
 	 *  US Secure Hash Algorithm 1 (SHA1)
@@ -85,14 +86,46 @@ package cc.minos.bigbluebutton.apis.utils
 					+ IntUtil.toHex( byteArray.readInt(), true );
 		}
 		
+		/**
+		 *  Performs the SHA1 hash algorithm on a string, then does
+		 *  Base64 encoding on the result.
+		 *
+		 *  @param s		The string to hash
+		 *  @return			The base64 encoded hash value of s
+		 *  @langversion	ActionScript 3.0
+		 *  @playerversion	9.0
+		 *  @tiptext
+		 */
+		/*public static function hashToBase64( s:String ):String
+		{
+			var blocks:Array = SHA1.createBlocksFromString( s );
+			var byteArray:ByteArray = hashBlocks(blocks);
+
+			// ByteArray.toString() returns the contents as a UTF-8 string,
+			// which we can't use because certain byte sequences might trigger
+			// a UTF-8 conversion.  Instead, we convert the bytes to characters
+			// one by one.
+			var charsInByteArray:String = "";
+			byteArray.position = 0;
+			for (var j:int = 0; j < byteArray.length; j++)
+			{
+				var byte:uint = byteArray.readUnsignedByte();
+				charsInByteArray += String.fromCharCode(byte);
+			}
+
+			var encoder:Base64Encoder = new Base64Encoder();
+			encoder.encode(charsInByteArray);
+			return encoder.flush();
+		}*/
+		
 		private static function hashBlocks( blocks:Array ):ByteArray
 		{
 			// initialize the h's
-			var h0:int = 0x67452301;
-			var h1:int = 0xefcdab89;
-			var h2:int = 0x98badcfe;
-			var h3:int = 0x10325476;
-			var h4:int = 0xc3d2e1f0;
+			var h0:uint = 0x67452301;
+			var h1:uint = 0xefcdab89;
+			var h2:uint = 0x98badcfe;
+			var h3:uint = 0x10325476;
+			var h4:uint = 0xc3d2e1f0;
 			
 			var len:int = blocks.length;
 			var w:Array = new Array( 80 );

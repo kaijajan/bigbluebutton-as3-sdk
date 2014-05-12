@@ -1,34 +1,10 @@
-Using the BigBlueButton 0.81-RC4 API.
-
-####PlayBack
-  * ~~presention~~
-  * ~~whiteboard~~
-  * ~~webcoms.ogg~~
-  * webcom.webm
+[BigBlueButton](http://www.bigbluebutton.org)是一個開源的在線會議工具，後台red5，客戶端則使用flex開發。
 
 
-
-API Resources
-=============
-
-####Administration
-
-  * create					Creates a new meeting.
-  * getDefaultConfigXML		Gets the default config.xml (these settings configure the BigBlueButton client for each user).
-  * setConfigXML			Add a custom config.xml to an existing meeting.
-  * join					Join a new user to an existing meeting.
-  * end						Ends meeting.
 	
-####Monitoring
-
-  * isMeetingRunning		Checks whether if an specified meeting is running.
-  * getMeetings				Get a list of the Meetings.
-  * getMeetingInfo			Get the details of a Meeting.
-	
-####Recording
-
-  * getRecordings			Get a list of recordings.
-  * publishRecordings		Enables to publish or unpublish a recording.
-  * deleteRecordings		Deletes a existing Recording
-	
-[API](https://code.google.com/p/bigbluebutton/wiki/API)
+####flash版本回放功能
+官方回放是用html5來實現的，也說明不會支持flash，所以分析了下xml文件，基本都實現回放了，最後卡在視頻播放。
+  * ~~文檔~~
+  * ~~白板~~
+  * ~~音頻，播放ogg文件~~
+  * 視頻，播放webm文件

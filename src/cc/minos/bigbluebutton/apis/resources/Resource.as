@@ -2,16 +2,19 @@ package cc.minos.bigbluebutton.apis.resources
 {
 	import cc.minos.bigbluebutton.apis.responses.Response;
 	import cc.minos.bigbluebutton.apis.utils.SHA1;
+	import cc.minos.console.Console;
 	import flash.events.Event;
 	import flash.events.HTTPStatusEvent;
 	import flash.events.IOErrorEvent;
 	import flash.events.ProgressEvent;
 	import flash.events.SecurityErrorEvent;
+	import flash.events.TimerEvent;
 	import flash.net.navigateToURL;
 	import flash.net.URLLoader;
 	import flash.net.URLRequest;
 	import flash.net.URLRequestMethod;
 	import flash.net.URLVariables;
+	import flash.utils.Timer;
 	
 	/**
 	 * ...
@@ -19,8 +22,8 @@ package cc.minos.bigbluebutton.apis.resources
 	 */
 	public class Resource
 	{
-		protected var host:String;
-		protected var securitySalt:String;
+		protected var host:String = "";
+		protected var securitySalt:String = "";
 		protected var callName:String = "";
 		protected var requirs:Array = [ "meetingID" ];
 		protected var _meetingID:String;
@@ -34,9 +37,21 @@ package cc.minos.bigbluebutton.apis.resources
 		protected var completedCallback:Function = null;
 		protected var response:Response;
 		
+		//
+		protected var tryTimer:Timer;
+		
 		public function Resource( completedCallback:Function = null )
 		{
 			this.completedCallback = completedCallback;
+			//tryTimer = new Timer( 3 * 1000 , 1);
+			//tryTimer.addEventListener(TimerEvent.TIMER_COMPLETE, onTryTimer );
+		}
+		
+		private function onTryTimer( e:TimerEvent ):void
+		{
+			//call(this.host, this.securitySalt);
+			loader.load( request );
+			Console.log( '[API] call: ' + request.url );
 		}
 		
 		public function call( host:String, securitySalt:String ):void
@@ -50,13 +65,14 @@ package cc.minos.bigbluebutton.apis.resources
 			
 			var querys:String = getQueryString();
 			var checksum:String = callName + querys + securitySalt;
+			
 			checksum = SHA1.hash( checksum );
 			setQuery( "checksum", checksum );
 			
 			request = new URLRequest( url );
 			request.method = URLRequestMethod.POST;
 			
-			trace( '[API] call: ' + request.url );
+			Console.log( '[API] call: ' + request.url );
 			
 			loader = new URLLoader();
 			loader.addEventListener( Event.COMPLETE, onComplete );
@@ -138,6 +154,12 @@ package cc.minos.bigbluebutton.apis.resources
 			{
 				request = null
 			}
+			if ( tryTimer && tryTimer.running )
+			{
+				tryTimer.stop();
+				tryTimer.removeEventListener( TimerEvent.TIMER_COMPLETE, onTryTimer );
+				tryTimer = null;
+			}
 			calling = false;
 		}
 		
@@ -150,22 +172,41 @@ package cc.minos.bigbluebutton.apis.resources
 				response.load( loader.data );
 				completedCallback( callName, response );
 			}
+			Console.log( loader.data );
 			clean();
 		}
 		
 		protected function onHttpStatus( e:HTTPStatusEvent ):void
 		{
-			//trace( e.status );
+			Console.log( e.status );
 		}
 		
 		protected function onIoError( e:IOErrorEvent ):void
 		{
-			clean();
+			Console.log( e.text );
+			//clean();
+			tryAgain();
 		}
 		
 		protected function onSecurityError( e:SecurityErrorEvent ):void
 		{
-			clean();
+			Console.log( e.text );
+			//clean();
+			tryAgain();
+		}
+		
+		/*
+		 *
+		 */
+		protected function tryAgain():void
+		{
+			if ( this.host != '' && this.securitySalt != '' )
+			{
+				Console.log( 'try again after 5s.' );
+				tryTimer = new Timer( 5 * 1000, 1 );
+				tryTimer.addEventListener( TimerEvent.TIMER_COMPLETE, onTryTimer );
+				tryTimer.start();
+			}
 		}
 		
 		/**

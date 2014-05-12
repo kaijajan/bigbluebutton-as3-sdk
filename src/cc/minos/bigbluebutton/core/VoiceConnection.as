@@ -1,9 +1,12 @@
 
 package cc.minos.bigbluebutton.core
 {
+	import avmplus.variableXml;
 	import cc.minos.bigbluebutton.core.BaseConnection;
 	import cc.minos.bigbluebutton.core.BaseConnectionCallback;
 	import cc.minos.bigbluebutton.core.IVoiceConnection;
+	import cc.minos.bigbluebutton.events.VideoConnectionEvent;
+	import cc.minos.bigbluebutton.events.VoiceConferenceEvent;
 	import flash.events.AsyncErrorEvent;
 	import flash.events.NetStatusEvent;
 	import flash.media.Microphone;
@@ -33,6 +36,8 @@ package cc.minos.bigbluebutton.core
 		
 		public function connect( uri:String, externUID:String, voicename:String, dial:String, mic:Microphone ):void
 		{
+			if ( bc.connection.connected ) 
+				return;
 			this.voicename = voicename;
 			this.mic = mic;
 			this.dial = dial;
@@ -48,21 +53,35 @@ package cc.minos.bigbluebutton.core
 		public function failedToJoinVoiceConferenceCallback( message:String ):*
 		{
 			trace( "[VoiceConnection] failedToJoinVoiceConferenceCallback" );
+			var failedEvt:VoiceConferenceEvent = new VoiceConferenceEvent( VoiceConferenceEvent.DISCONNECTED );
+			dispatchEvent( failedEvt );
 		}
 		
 		public function disconnectedFromJoinVoiceConferenceCallback( message:String ):*
 		{
 			trace( "[VoiceConnection] disconnectedFromJoinVoiceConferenceCallback" );
+			var failedEvt:VoiceConferenceEvent = new VoiceConferenceEvent( VoiceConferenceEvent.DISCONNECTED );
+			dispatchEvent( failedEvt );
 		}
 		
 		public function successfullyJoinedVoiceConferenceCallback( publishName:String, playName:String, codec:String ):*
 		{
 			trace( "[VoiceConnection] successfullyJoinedVoiceConferenceCallback" );
+			var joinedEvt:VoiceConferenceEvent = new VoiceConferenceEvent( VoiceConferenceEvent.JOINED );
+			dispatchEvent( joinedEvt );
+			
 			setupIncomingStream();
-			incomingStream.play( playName );
+			
 			if ( mic != null )
 			{
 				setupOutgoingStream();
+			}
+			
+			setupPlayStatusHandler();
+			
+			incomingStream.play( playName );
+			if ( mic != null )
+			{
 				outgoingStream.publish( publishName, "live" );
 			}
 		}
@@ -95,15 +114,25 @@ package cc.minos.bigbluebutton.core
 			outgoingStream.attachAudio( mic );
 		}
 		
-		/*private function setupPlayStatusHandler():void
+		private function setupPlayStatusHandler():void
 		{
 			var custom_obj:Object = new Object();
 			custom_obj.onPlayStatus = playStatus;
-			custom_obj.onMetadata = onMetadata;
+			custom_obj.onMetaData = onMetaData;
 			incomingStream.client = custom_obj;
 			if ( mic != null )
 				outgoingStream.client = custom_obj;
-		}*/
+		}
+		
+		private function onMetaData( info:Object ):void
+		{
+			trace("metadata: duration=" + info.duration + " width=" + info.width + " height=" + info.height + " framerate=" + info.framerate);
+		}
+		
+		private function playStatus( status:Object ):void
+		{
+			trace("play status: " + status );
+		}
 		
 		public function call():void
 		{
@@ -112,6 +141,8 @@ package cc.minos.bigbluebutton.core
 		
 		public function hangup():void
 		{
+			if ( !bc.connection.connected ) 
+				return;
 			stopStream();
 			connection.call( "voiceconf.hangup", null, "default" );
 		}
@@ -139,6 +170,7 @@ package cc.minos.bigbluebutton.core
 		override internal function onFailed( reason:String = "" ):void
 		{
 			super.onFailed(reason);
+			disconnect(false);
 		}
 		
 		public function get connection():NetConnection

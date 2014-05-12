@@ -25,7 +25,7 @@ package cc.minos.bigbluebutton.events
 		
 		public function PortTestEvent( type:String ):void
 		{
-			super( type, false, false );
+			super( type, true, false );
 		}
 		
 		/**

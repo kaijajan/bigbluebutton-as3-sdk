@@ -72,7 +72,8 @@ package cc.minos.bigbluebutton.view
 		
 		private function onDataComplete( num:Number, data:* ):void
 		{
-			progressTf.text = "ok";
+			progressTf.text = "complete";
+			removeChild( progressTf );
 			loader.contentLoaderInfo.addEventListener( Event.COMPLETE, onComplete );
 			loader.loadBytes( data );
 		}
@@ -81,8 +82,8 @@ package cc.minos.bigbluebutton.view
 		{
 			loader.contentLoaderInfo.removeEventListener( Event.COMPLETE, onComplete );
 			addChildAt( loader, 0 );
-			_width = loader.width;
-			_height = loader.height;
+			_width = loader.content.width;
+			_height = loader.content.height;
 			//removeChild( progressTf );
 			dispatchEvent( e );
 		}
@@ -105,6 +106,10 @@ package cc.minos.bigbluebutton.view
 			shapesContainer.x = loader.x;
 			shapesContainer.y = loader.y;
 			redrawGraphics();
+			
+			//
+			progressTf.x = this.width - progressTf.width >> 1;
+			progressTf.y = this.height - progressTf.height >> 1;
 		}
 		
 		private function redrawGraphics():void
@@ -169,7 +174,7 @@ package cc.minos.bigbluebutton.view
 		private function draw():void
 		{
 			shape.graphics.clear();
-			shape.graphics.beginFill( 0xff0000, .2 );
+			shape.graphics.beginFill( 0xff0000, 0 );
 			shape.graphics.drawRect( 0, 0, _width, _height );
 			shape.graphics.endFill();
 		}
@@ -206,12 +211,19 @@ package cc.minos.bigbluebutton.view
 		
 		public function undo():void
 		{
-			//
+			if ( _shapes.length > 0 )
+			{
+				removeGraphic( _shapes[_shapes.length-1] );
+			}
 		}
 		
 		public function clear():void
 		{
-			//
+			_shapes.length = 0;
+			while ( shapesContainer.numChildren > 0 )
+			{
+				shapesContainer.removeChildAt(0);
+			}
 		}
 	}
 

@@ -3,6 +3,7 @@ package cc.minos.bigbluebutton.core
 	import cc.minos.bigbluebutton.core.BaseConnection;
 	import cc.minos.bigbluebutton.core.BaseConnectionCallback;
 	import cc.minos.bigbluebutton.core.IVideoConnection;
+	import cc.minos.console.Console;
 	import flash.events.IOErrorEvent;
 	import flash.events.NetStatusEvent;
 	import flash.media.Camera;
@@ -49,17 +50,18 @@ package cc.minos.bigbluebutton.core
 				}
 				outgoingStream.attachCamera( camera );
 				outgoingStream.publish( publishName );
+					//outgoingStream.send("|RtmpSampleAccess", true, true);
 			}
 		}
 		
 		private function onStreamIOError( e:IOErrorEvent ):void
 		{
-		
+			Console.log( "outgoing: " + e.text );
 		}
 		
 		private function onStreamNetStatus( e:NetStatusEvent ):void
 		{
-		
+			Console.log( "outgoing: " + e.info.code );
 		}
 		
 		public function stopPublish():void
@@ -69,7 +71,14 @@ package cc.minos.bigbluebutton.core
 				outgoingStream.publish( null );
 				outgoingStream.close();
 				outgoingStream = null;
-				outgoingStream = new NetStream( connection );
+				try
+				{
+					outgoingStream = new NetStream( connection );
+				}
+				catch ( er:ArgumentError )
+				{
+					Console.log( "net connection failed, please check your network." );
+				}
 			}
 		}
 		
@@ -84,6 +93,7 @@ package cc.minos.bigbluebutton.core
 		{
 			trace( "[VideoConnection] failed " + reason );
 			super.onFailed( reason );
+			stopPublish();
 		}
 		
 		public function get connection():NetConnection

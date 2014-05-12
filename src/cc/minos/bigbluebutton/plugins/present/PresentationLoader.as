@@ -36,12 +36,12 @@ package cc.minos.bigbluebutton.plugins.present
 		private function onComplete( e:Event ):void
 		{
 			parse( new XML( e.target.data ) );
-			clean();
+			//clean();
 		}
 		
 		private function onIOError( e:Event ):void
 		{
-			clean();
+			//clean();
 		}
 		
 		private function clean():void

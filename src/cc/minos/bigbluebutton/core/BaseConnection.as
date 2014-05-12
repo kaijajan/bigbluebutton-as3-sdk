@@ -55,6 +55,9 @@ package cc.minos.bigbluebutton.core
 					break;
 				case "NetConnection.Connect.NetworkChange": 
 					break;
+				case "NetConnection.Call.Failed": 
+					trace( "error: " + e.info.description );
+					break;
 				default: 
 					sendConnectionFailedEvent( ConnectionFailedEvent.UNKNOWN_REASON );
 					break;

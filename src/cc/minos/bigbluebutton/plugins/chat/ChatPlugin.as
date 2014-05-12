@@ -4,6 +4,7 @@ package cc.minos.bigbluebutton.plugins.chat
 	import cc.minos.bigbluebutton.events.ChatMessageEvent;
 	import cc.minos.bigbluebutton.models.ChatMessageVO;
 	import cc.minos.bigbluebutton.plugins.Plugin;
+	import cc.minos.console.Console;
 	import flash.net.registerClassAlias;
 	
 	/**
@@ -37,6 +38,7 @@ package cc.minos.bigbluebutton.plugins.chat
 		
 		public function getPublicChatMessages():void
 		{
+			Console.log("getting chat history");
 			bbb.send( GET_MESSAGES, null );
 		}
 		
@@ -106,6 +108,7 @@ package cc.minos.bigbluebutton.plugins.chat
 		override public function start():void
 		{
 			bbb.addMessageListener( this );
+			getPublicChatMessages();
 		}
 		
 		override public function stop():void

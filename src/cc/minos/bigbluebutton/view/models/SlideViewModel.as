@@ -136,6 +136,8 @@ package cc.minos.bigbluebutton.view.models
 		{
 			viewportX = SlideCalcUtil.calculateViewportX( viewportW, parentW );
 			viewportY = SlideCalcUtil.calculateViewportY( viewportH, parentH );
+			
+			//trace( parentW, viewportX , viewportY );
 		}
 		
 		private function calcViewedRegion():void

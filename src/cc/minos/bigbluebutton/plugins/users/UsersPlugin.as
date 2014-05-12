@@ -1,34 +1,75 @@
 package cc.minos.bigbluebutton.plugins.users
 {
+	import cc.minos.bigbluebutton.events.BigBlueButtonEvent;
 	import cc.minos.bigbluebutton.events.MadePresenterEvent;
 	import cc.minos.bigbluebutton.events.UsersEvent;
 	import cc.minos.bigbluebutton.models.BBBUser;
 	import cc.minos.bigbluebutton.models.IUsersList;
 	import cc.minos.bigbluebutton.models.UsersList;
 	import cc.minos.bigbluebutton.plugins.Plugin;
+	import cc.minos.console.Console;
 	import flash.net.Responder;
 	
 	/**
-	 * ...
+	 * UsersPlugin
+	 * manager participants, listeners & meeting status
 	 * @author Minos
 	 */
 	public class UsersPlugin extends Plugin implements IParticipantsSOServiceClient, IListenersSOServiceClient, IUsersPlugin
 	{
+		/* remote application name */
+		
+		//get recording status
+		protected const GET_RECORDING_STATUS:String = "participants.getRecordingStatus";
+		//set recording status, it can change recording status
+		protected const SET_RECORDING_STATUS:String = "participants.setRecordingStatus";
+		//get all of users in the meeting
 		protected const GET_PARTICIPANTS:String = "participants.getParticipants";
+		//change user's status
 		protected const SET_PARTICIPANT_STATUS:String = "participants.setParticipantStatus";
+		//assign someone to presenter
 		protected const SET_PRESENTER:String = "participants.assignPresenter";
+		//get voice users
 		protected const GET_MEETMEUSERS:String = "voice.getMeetMeUsers";
-		protected const GET_ROOM_STATUS:String = "voice.isRoomMuted";
+		//meeting status
+		protected const GET_ROOM_MUTE_STATE:String = "voice.isRoomMuted";
+		//
+		protected const GET_LOCK_SETTINGS:String = "lock.getLockSettings";
+		protected const GET_ROOM_LOCK_STATE:String = "lock.isRoomLocked";
+		//lock status
 		protected const SET_LOCK_USER:String = "voice.lockMuteUser";
+		//mute status
 		protected const SET_MUTE_USER:String = "voice.muteUnmuteUser";
+		//mute all users
 		protected const SET_MUTE_ALL_USER:String = "voice.muteAllUsers";
+		//kick out someone from the meeting
 		protected const SET_KILL_USER:String = "voice.kickUSer";
 		
+		//users manager
 		protected var _usersList:IUsersList;
+		//settings
 		protected var options:UsersOptions;
 		
+		//participants sharedobject service
 		protected var participantsSO:ParticipantsSOService;
+		//listeners sharedobject service
 		protected var listenersSO:ListenersSOService;
+		
+		private var responder:Responder = new Responder( 
+			// On successful result
+			function( result:Boolean ):void
+			{
+			}, 
+			// On error occurred
+			function( status:Object ):void
+			{
+				trace( "Error occurred:" );
+				for ( var x:Object in status )
+				{
+					trace( x + " : " + status[ x ] );
+				}
+			} );
+		
 		
 		public function UsersPlugin( options:UsersOptions = null )
 		{
@@ -41,16 +82,20 @@ package cc.minos.bigbluebutton.plugins.users
 		}
 		
 		/**
-		 *
+		 * 
 		 */
 		override public function start():void
 		{
 			participantsSO.connect( connection, uri );
 			listenersSO.connect( connection, uri );
 			
-			bbb.send( GET_PARTICIPANTS, new Responder( onGetParticipantsResult ) );
-			bbb.send( GET_MEETMEUSERS, new Responder( onGetMeetMeUsersResult ) );
-			bbb.send( GET_ROOM_STATUS, new Responder( muteStateCallback ) );
+			bbb.send( GET_PARTICIPANTS, new Responder( onGetParticipantsResult , onGetStatus ) );
+			
+			//bbb.send( GET_LOCK_SETTINGS, new Responder( onGetLockSettingsResult , onGetStatus) );
+			//bbb.send( GET_RECORDING_STATUS, new Responder( onGetRecordingResult ) );
+			bbb.send( GET_MEETMEUSERS, new Responder( onGetMeetMeUsersResult , onGetStatus) );
+			bbb.send( GET_ROOM_MUTE_STATE, new Responder( muteStateCallback , onGetStatus ) );
+			//bbb.send( GET_ROOM_LOCK_STATE, new Responder( onGetRoomLockStateResult, onGetStatus ) );
 		}
 		
 		/**
@@ -77,6 +122,21 @@ package cc.minos.bigbluebutton.plugins.users
 			participantsSO = new ParticipantsSOService( this );
 			listenersSO = new ListenersSOService( this );
 		
+		}
+		
+		protected function onGetStatus(status:Object):void { 
+			for (var x:Object in status) {
+				trace(x + " : " + status[x]);
+			}
+		}
+		
+		protected function onGetRecordingResult( result:Object ):void
+		{
+			trace( name + " recording status: " + result );
+			var changeEvent:BigBlueButtonEvent = new BigBlueButtonEvent( BigBlueButtonEvent.CHANGE_RECORDING_STATUS )
+			changeEvent.data.remote = true;
+			changeEvent.data.recording = result;
+			dispatchRawEvent( changeEvent );
 		}
 		
 		protected function onGetParticipantsResult( result:Object ):void
@@ -142,14 +202,14 @@ package cc.minos.bigbluebutton.plugins.users
 			if ( user != null )
 			{
 				user.isLeavingFlag = true;
-				usersList.removeUser( userID );
 				sendUsersEvent( UsersEvent.LEFT, user.userID );
+				usersList.removeUser( userID );
 			}
 		}
 		
 		public function assignPresenter( userID:String, name:String, assignedBy:Number ):void
 		{
-			bbb.send( SET_PRESENTER, null, userID, name, assignedBy );
+			bbb.send( SET_PRESENTER, responder, userID, name, assignedBy );
 		}
 		
 		public function assignPresenterCallback( userID:String, name:String, assignedBy:String ):void
@@ -158,12 +218,12 @@ package cc.minos.bigbluebutton.plugins.users
 			
 			if ( this.userID == userID )
 			{
-				trace( this.name + " " + name + " switch to presenter" );
+				Console.log( this.name + " Received " + name + " switch to presenter" );
 				pEvent = new MadePresenterEvent( MadePresenterEvent.SWITCH_TO_PRESENTER_MODE );
 			}
 			else
 			{
-				trace( this.name + " " + name + " switch to viewer" );
+				Console.log( this.name + " Received " + name + " switch to viewer" );
 				pEvent = new MadePresenterEvent( MadePresenterEvent.SWITCH_TO_VIEWER_MODE );
 			}
 			pEvent.userID = userID;
@@ -195,7 +255,9 @@ package cc.minos.bigbluebutton.plugins.users
 				{
 					case "presenter": 
 						user.presenter = value as Boolean;
-						dispatchRawEvent( new MadePresenterEvent( MadePresenterEvent.PRESENTER_NAME_CHANGE ) );
+						var mEvent:MadePresenterEvent = new MadePresenterEvent( MadePresenterEvent.PRESENTER_NAME_CHANGE );
+						mEvent.userID = user.userID;
+						dispatchRawEvent( mEvent );
 						break;
 					case "hasStream": 
 						var streamInfo:Array = String( value ).split( /,/ );
@@ -224,8 +286,20 @@ package cc.minos.bigbluebutton.plugins.users
 		
 		}
 		
+		/* */
+		public function onGetLockSettingsResult( result:Object ):void
+		{
+			trace( name + " onGetLockSettingsResult " );
+		}
+		
+		public function onGetRoomLockStateResult( lock:Boolean ):void
+		{
+			trace( name + " Received lock status [ " + lock + " ]" );
+		}
+		
 		public function muteStateCallback( mute:Boolean ):void
 		{
+			trace( name +" Received mute status [ " + mute +" ]" );
 		}
 		
 		public function userLeft( voiceID:Number ):void
@@ -324,44 +398,55 @@ package cc.minos.bigbluebutton.plugins.users
 			dispatchRawEvent( usersEvent );
 		}
 		
+		public function recordingStatusChange( userID:String, recording:Boolean ):void
+		{
+			trace( name + " Received recording status change [ " + userID + "," + recording + " ]" );
+			onGetRecordingResult( recording );
+		}
+		
 		/* INTERFACE cc.minos.bigbluebutton.plugins.users.IUsersPlugin */
+		
+		public function changeRecordingStatus( recording:Boolean ):void
+		{
+			bbb.send( SET_RECORDING_STATUS, responder, userID, recording );
+		}
 		
 		public function raiseHand( userID:String, raise:Boolean ):void
 		{
-			bbb.send( SET_PARTICIPANT_STATUS, null, userID, "raiseHand", raise );
+			bbb.send( SET_PARTICIPANT_STATUS, responder, userID, "raiseHand", raise );
 		}
 		
 		public function ejectVoiceUser( voiceID:Number ):void
 		{
-			bbb.send( SET_KILL_USER , null, voiceID );
+			bbb.send( SET_KILL_USER, responder, voiceID );
 		}
 		
 		public function muteAllUsers( mute:Boolean ):void
 		{
-			bbb.send( SET_MUTE_ALL_USER, null, mute );
+			bbb.send( SET_MUTE_ALL_USER, responder, mute );
 		}
 		
 		public function muteUser( voiceID:Number, mute:Boolean ):void
 		{
-			bbb.send( SET_MUTE_USER, null, voiceID, mute );
+			bbb.send( SET_MUTE_USER, responder, voiceID, mute );
 		}
 		
 		public function lockUser( voiceID:Number, lock:Boolean ):void
 		{
-			bbb.send( SET_LOCK_USER, null, voiceID, lock );
+			bbb.send( SET_LOCK_USER, responder, voiceID, lock );
 		}
 		
 		public function addStream( userID:String, streamName:String ):void
 		{
-			bbb.send( SET_PARTICIPANT_STATUS, null, userID, "hasStream", "true,stream=" + streamName );
+			bbb.send( SET_PARTICIPANT_STATUS, responder, userID, "hasStream", "true,stream=" + streamName );
 		}
 		
 		public function removeStream( userID:String, streamName:String ):void
 		{
-			bbb.send( SET_PARTICIPANT_STATUS, null, userID, "hasStream", "false,stream=" + streamName );
+			bbb.send( SET_PARTICIPANT_STATUS, responder, userID, "hasStream", "false,stream=" + streamName );
 		}
 		
-		public function get usersList():IUsersList 
+		public function get usersList():IUsersList
 		{
 			return _usersList;
 		}

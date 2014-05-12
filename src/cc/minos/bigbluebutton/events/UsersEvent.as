@@ -32,7 +32,7 @@ package cc.minos.bigbluebutton.events
 		
 		public function UsersEvent( type:String )
 		{
-			super( type, false, false );
+			super( type, true, false );
 		}
 		
 		override public function clone():Event

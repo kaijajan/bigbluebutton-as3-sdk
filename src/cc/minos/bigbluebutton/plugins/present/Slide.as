@@ -1,6 +1,7 @@
 package cc.minos.bigbluebutton.plugins.present
 {
 	import flash.events.Event;
+	import flash.events.IOErrorEvent;
 	import flash.events.ProgressEvent;
 	import flash.net.URLLoader;
 	import flash.net.URLLoaderDataFormat;
@@ -30,7 +31,13 @@ package cc.minos.bigbluebutton.plugins.present
 			_loader = new URLLoader();
 			_loader.addEventListener( Event.COMPLETE, handleComplete );
 			_loader.addEventListener( ProgressEvent.PROGRESS, handleProgress );
+			_loader.addEventListener( IOErrorEvent.IO_ERROR, handlerIoError );
 			_loader.dataFormat = URLLoaderDataFormat.BINARY;
+		}
+		
+		private function handlerIoError(e:IOErrorEvent):void 
+		{
+			trace(e);
 		}
 		
 		public function load( slideLoadedHandler:Function ):void
@@ -48,6 +55,7 @@ package cc.minos.bigbluebutton.plugins.present
 		
 		private function handleProgress( e:ProgressEvent ):void
 		{
+			//trace( e.bytesLoaded / e.bytesTotal );
 		}
 		
 		private function handleComplete( e:Event ):void

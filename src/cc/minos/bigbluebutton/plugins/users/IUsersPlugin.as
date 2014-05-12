@@ -9,6 +9,7 @@ package cc.minos.bigbluebutton.plugins.users
 	 */
 	public interface IUsersPlugin extends IPlugin
 	{
+		function changeRecordingStatus( recording:Boolean ):void;
 		function assignPresenter( userID:String, name:String, assignedBy:Number ):void
 		function raiseHand( userID:String, raise:Boolean ):void;
 		function kickUser( userID:String ):void;

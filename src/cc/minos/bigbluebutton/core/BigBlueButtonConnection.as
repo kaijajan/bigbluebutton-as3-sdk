@@ -3,6 +3,7 @@ package cc.minos.bigbluebutton.core
 	import cc.minos.bigbluebutton.core.BaseConnection;
 	import cc.minos.bigbluebutton.core.BaseConnectionCallback;
 	import cc.minos.bigbluebutton.core.IBigBlueButtonConnection;
+	import cc.minos.bigbluebutton.events.BigBlueButtonEvent;
 	import cc.minos.bigbluebutton.events.ConnectionSuccessEvent;
 	import cc.minos.bigbluebutton.models.IConferenceParameters;
 	import cc.minos.bigbluebutton.models.IConfig;
@@ -17,7 +18,6 @@ package cc.minos.bigbluebutton.core
 	 */
 	public class BigBlueButtonConnection extends BaseConnectionCallback implements IBigBlueButtonConnection
 	{
-		public static const version:String = "1.00";
 		
 		public var plugins:Dictionary;
 		
@@ -48,13 +48,20 @@ package cc.minos.bigbluebutton.core
 					_userID = result.toString();
 					_conferenceParameters.userid = _userID;
 					
-					dispatchEvent( new ConnectionSuccessEvent() );
+					var loginEvent:BigBlueButtonEvent = new BigBlueButtonEvent( BigBlueButtonEvent.USER_LOGIN );
+					dispatchEvent( loginEvent );
 				}, 
 				//failed
 				function( status:Object ):void
 				{
 				} ) );
+		}
 		
+		override internal function onFailed( reason:String = "" ):void
+		{
+			//super.onFailed(reason);
+			var failedEvent:BigBlueButtonEvent = new BigBlueButtonEvent( BigBlueButtonEvent.USER_LOGOUT )
+			dispatchEvent( failedEvent );
 		}
 		
 		public function connect( params:IConferenceParameters, tunnel:Boolean = false ):void
@@ -81,6 +88,7 @@ package cc.minos.bigbluebutton.core
 		
 		public function disconnect( userCommand:Boolean ):void
 		{
+			removeAllPlugin();
 			bc.disconnect( userCommand );
 		}
 		
@@ -97,6 +105,7 @@ package cc.minos.bigbluebutton.core
 		{
 			if ( messageName != null && messageName != "" )
 			{
+				//trace( messageName , message );
 				for ( var notify:String in messageListeners )
 				{
 					messageListeners[ notify ].onMessage( messageName, message );
@@ -139,6 +148,10 @@ package cc.minos.bigbluebutton.core
 		 */
 		public function addPlugin( plugin:IPlugin ):void
 		{
+			if ( hasPlugin( plugin.shortcut ) )
+			{
+				removePlugin( plugin.shortcut );
+			}
 			plugins[ plugin.shortcut ] = plugin;
 			plugin.setup( this );
 		}
@@ -184,6 +197,14 @@ package cc.minos.bigbluebutton.core
 				{
 					p.start();
 				}
+			}
+		}
+		
+		public function removeAllPlugin():void
+		{
+			for ( var sc:String in plugins )
+			{
+				removePlugin( sc );
 			}
 		}
 		

@@ -7,6 +7,7 @@ package cc.minos.bigbluebutton.plugins.present
 	import flash.events.TimerEvent;
 	import flash.net.FileReference;
 	import flash.net.Responder;
+	import flash.utils.setTimeout;
 	import flash.utils.Timer;
 	
 	/**
@@ -74,6 +75,7 @@ package cc.minos.bigbluebutton.plugins.present
 		private var presenterViewedRegionW:Number = 100;
 		private var presenterViewedRegionH:Number = 100;
 		
+		private var loadingPresentation:String = "";
 		private var _currentPresentation:String;
 		private var _currentPageNumber:int = 0;
 		
@@ -146,6 +148,7 @@ package cc.minos.bigbluebutton.plugins.present
 				if ( presentationName == _currentPresentation )
 					return;
 				
+				loadingPresentation = "";
 				_currentPresentation = presentationName;
 				_currentPageNumber = slides.length;
 				
@@ -212,9 +215,12 @@ package cc.minos.bigbluebutton.plugins.present
 				
 				trace( name + " The presenter has shared slides and showing slide " + currentSlide );
 				
-				var shareEvent:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_READY );
-				shareEvent.presentationName = String( result.presentation.currentPresentation );
-				dispatchRawEvent( shareEvent );
+				setTimeout( function():void
+					{
+						var shareEvent:PresentationEvent = new PresentationEvent( PresentationEvent.PRESENTATION_READY );
+						shareEvent.presentationName = String( result.presentation.currentPresentation );
+						dispatchRawEvent( shareEvent );
+					}, 1111 );
 			}
 		}
 		
@@ -242,14 +248,15 @@ package cc.minos.bigbluebutton.plugins.present
 		
 		public function loadPresentation( presentationName:String ):void
 		{
-			if ( presentationName == _currentPresentation )
+			if ( presentationName == loadingPresentation || presentationName == _currentPresentation )
 				return;
 			
+			loadingPresentation = presentationName;
 			//var fullUri:String = host + "/bigbluebutton/presentation/" + conference + "/" + room + "/" + presentationName + "/slides";
 			//fullUri = encodeURI( fullUri );
 			var slideUri:String = host + "/bigbluebutton/presentation/" + conference + "/" + room + "/" + presentationName;
 			slideUri = encodeURI( slideUri );
-			trace( name + " loading " + presentationName , slideUri + "/slides" );
+			trace( name + " loading " + presentationName, slideUri + "/slides" );
 			loader.load( slideUri );
 		}
 		
@@ -351,7 +358,7 @@ package cc.minos.bigbluebutton.plugins.present
 		
 		public function whatIsTheSlideInfoCallback( userID:String, xOffset:Number, yOffset:Number, widthRatio:Number, heightRatio:Number ):void
 		{
-			trace( "whatIsTheSlideInfoCallback" );
+			//trace( "whatIsTheSlideInfoCallback" );
 			if ( this.userID == userID )
 			{
 				var e:MoveEvent = new MoveEvent( MoveEvent.CUR_SLIDE_SETTING );

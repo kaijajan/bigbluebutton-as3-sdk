@@ -122,7 +122,6 @@ package cc.minos.bigbluebutton.plugins.whiteboard
 		{
 			var clearEvent:WhiteboardDrawEvent = new WhiteboardDrawEvent( WhiteboardDrawEvent.UNDO );
 			dispatchRawEvent( clearEvent );
-		
 		}
 		
 		private function handleEnableWhiteboardCommand( message:Object ):void
