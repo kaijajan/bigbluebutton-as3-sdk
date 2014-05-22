@@ -116,13 +116,32 @@ package cc.minos.bigbluebutton.models
 		
 		public function getUserByVoiceID( voiceID:Number ):BBBUser
 		{
+			var aUser:BBBUser
 			for ( var i:int = 0; i < _users.length; i++ )
 			{
-				var aUser:BBBUser = _users[ i ];
+				aUser = _users[ i ];
 				if ( aUser.voiceUserID == voiceID )
 					return aUser;
 			}
 			return null;
+		}
+		
+		/**
+		 * 根据传入的名字返回用户
+		 * @param	userName		:	用户名字
+		 * @return	包含传入名字的数组
+		 */
+		public function getUserByName( userName:String ):Array
+		{
+			var ary:Array = [];
+			var aUser:BBBUser
+			for ( var i:int = 0; i < _users.length; i++ )
+			{
+				aUser = _users[ i ]
+				if ( aUser.name == userName )
+					ary.push( aUser );
+			}
+			return ary;
 		}
 		
 		private function getUserIndex( userID:String ):Object
@@ -148,12 +167,12 @@ package cc.minos.bigbluebutton.models
 			return _users;
 		}
 		
-		public function get me():BBBUser 
+		public function get me():BBBUser
 		{
 			return _me;
 		}
 		
-		public function set me(value:BBBUser):void 
+		public function set me( value:BBBUser ):void
 		{
 			_me = value;
 		}

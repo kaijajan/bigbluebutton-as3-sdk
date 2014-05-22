@@ -84,14 +84,14 @@ package cc.minos.bigbluebutton.core
 		
 		override internal function onSuccess( reason:String = "" ):void
 		{
-			trace( "[VideoConnection] success" );
+			Console.log( "[VideoConnection] success" );
 			outgoingStream = new NetStream( connection );
 			super.onSuccess( reason );
 		}
 		
 		override internal function onFailed( reason:String = "" ):void
 		{
-			trace( "[VideoConnection] failed " + reason );
+			Console.log( "[VideoConnection] failed " + reason );
 			super.onFailed( reason );
 			stopPublish();
 		}

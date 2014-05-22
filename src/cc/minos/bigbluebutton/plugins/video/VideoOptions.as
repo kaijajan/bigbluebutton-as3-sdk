@@ -10,6 +10,8 @@ package cc.minos.bigbluebutton.plugins.video
 	public class VideoOptions
 	{
 		
+		public var autoStart:Boolean = false;
+		
 		public var enableH264:Boolean = true;
 		
 		public var camKeyFrameInterval:Number = 30;

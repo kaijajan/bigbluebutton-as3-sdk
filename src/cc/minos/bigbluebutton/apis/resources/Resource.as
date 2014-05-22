@@ -172,13 +172,13 @@ package cc.minos.bigbluebutton.apis.resources
 				response.load( loader.data );
 				completedCallback( callName, response );
 			}
-			Console.log( loader.data );
+			//Console.log( loader.data );
 			clean();
 		}
 		
 		protected function onHttpStatus( e:HTTPStatusEvent ):void
 		{
-			Console.log( e.status );
+			//Console.log( e.status );
 		}
 		
 		protected function onIoError( e:IOErrorEvent ):void

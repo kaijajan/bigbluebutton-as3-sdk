@@ -8,6 +8,7 @@ package cc.minos.bigbluebutton.core
 	import cc.minos.bigbluebutton.models.IConferenceParameters;
 	import cc.minos.bigbluebutton.models.IConfig;
 	import cc.minos.bigbluebutton.plugins.IPlugin;
+	import cc.minos.console.Console;
 	import flash.net.NetConnection;
 	import flash.net.Responder;
 	import flash.utils.Dictionary;
@@ -195,6 +196,7 @@ package cc.minos.bigbluebutton.core
 			{
 				if ( p )
 				{
+					Console.log( 'starting ' + p.name );
 					p.start();
 				}
 			}

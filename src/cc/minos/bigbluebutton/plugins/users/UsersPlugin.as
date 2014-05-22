@@ -70,7 +70,6 @@ package cc.minos.bigbluebutton.plugins.users
 				}
 			} );
 		
-		
 		public function UsersPlugin( options:UsersOptions = null )
 		{
 			super();
@@ -82,19 +81,19 @@ package cc.minos.bigbluebutton.plugins.users
 		}
 		
 		/**
-		 * 
+		 *
 		 */
 		override public function start():void
 		{
 			participantsSO.connect( connection, uri );
 			listenersSO.connect( connection, uri );
 			
-			bbb.send( GET_PARTICIPANTS, new Responder( onGetParticipantsResult , onGetStatus ) );
+			bbb.send( GET_PARTICIPANTS, new Responder( onGetParticipantsResult, onGetStatus ) );
 			
 			//bbb.send( GET_LOCK_SETTINGS, new Responder( onGetLockSettingsResult , onGetStatus) );
 			//bbb.send( GET_RECORDING_STATUS, new Responder( onGetRecordingResult ) );
-			bbb.send( GET_MEETMEUSERS, new Responder( onGetMeetMeUsersResult , onGetStatus) );
-			bbb.send( GET_ROOM_MUTE_STATE, new Responder( muteStateCallback , onGetStatus ) );
+			bbb.send( GET_MEETMEUSERS, new Responder( onGetMeetMeUsersResult, onGetStatus ) );
+			bbb.send( GET_ROOM_MUTE_STATE, new Responder( muteStateCallback, onGetStatus ) );
 			//bbb.send( GET_ROOM_LOCK_STATE, new Responder( onGetRoomLockStateResult, onGetStatus ) );
 		}
 		
@@ -124,9 +123,11 @@ package cc.minos.bigbluebutton.plugins.users
 		
 		}
 		
-		protected function onGetStatus(status:Object):void { 
-			for (var x:Object in status) {
-				trace(x + " : " + status[x]);
+		protected function onGetStatus( status:Object ):void
+		{
+			for ( var x:Object in status )
+			{
+				trace( x + " : " + status[ x ] );
 			}
 		}
 		
@@ -143,7 +144,7 @@ package cc.minos.bigbluebutton.plugins.users
 		{
 			if ( result.count > 0 )
 			{
-				trace( name + " online: " + result.count );
+				Console.log( "online: " + result.count, name );
 				for ( var p:Object in result.participants )
 				{
 					participantJoined( result.participants[ p ] );
@@ -154,7 +155,7 @@ package cc.minos.bigbluebutton.plugins.users
 				var user:BBBUser = usersList.getTheOnlyModerator();
 				if ( user )
 				{
-					trace( name + " assign presenter > " + user.userID );
+					Console.log( "assign presenter >" + user.name + "[" + user.userID + "]", name );
 					assignPresenter( user.userID, user.name, 1 );
 				}
 			}
@@ -250,7 +251,7 @@ package cc.minos.bigbluebutton.plugins.users
 			var user:BBBUser = usersList.getUser( userID );
 			if ( user != null )
 			{
-				trace( name + " status change: " + userID + "." + status + "=" + value );
+				Console.log( "status change: " + userID + "." + status + "=" + value, name );
 				switch ( status )
 				{
 					case "presenter": 
@@ -299,7 +300,7 @@ package cc.minos.bigbluebutton.plugins.users
 		
 		public function muteStateCallback( mute:Boolean ):void
 		{
-			trace( name +" Received mute status [ " + mute +" ]" );
+			trace( name + " Received mute status [ " + mute + " ]" );
 		}
 		
 		public function userLeft( voiceID:Number ):void

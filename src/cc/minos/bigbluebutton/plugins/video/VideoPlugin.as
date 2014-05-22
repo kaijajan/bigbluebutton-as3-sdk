@@ -68,6 +68,13 @@ package cc.minos.bigbluebutton.plugins.video
 		{
 			var vEvent:VideoConnectionEvent = new VideoConnectionEvent( VideoConnectionEvent.SUCCESS );
 			dispatchRawEvent( vEvent );
+			
+			if ( options.autoStart )
+			{
+				autoPublishTimer = new Timer( 3000, 1 );
+				autoPublishTimer.addEventListener( TimerEvent.TIMER, onAutoPublishTimer );
+				autoPublishTimer.start();
+			}
 		}
 		
 		private function onPresenterChanged( e:MadePresenterEvent ):void
@@ -189,8 +196,8 @@ package cc.minos.bigbluebutton.plugins.video
 		
 		private function onAutoPublishTimer( e:TimerEvent ):void
 		{
-			autoPublishTimer.stop();
 			startPublish();
+			autoPublishTimer.stop();
 		}
 		
 		private function onActivityEvent( e:ActivityEvent ):void
@@ -222,9 +229,15 @@ package cc.minos.bigbluebutton.plugins.video
 		public function startPublish():void
 		{
 			Console.log( "try start publish video" );
+			if ( publishing )
+			{
+				Console.log( 'publishing video' );
+				return;
+			}
+			
 			if ( options.presenterShareOnly && !presenter )
 			{
-				trace( name + " presenter share only." );
+				Console.log( name + " presenter share only." );
 				return;
 			}
 			

@@ -58,7 +58,7 @@ package cc.minos.bigbluebutton.plugins.whiteboard
 		
 		private function onGotoPage( e:NavigationEvent ):void
 		{
-			currentPageNumber = e.pageNumber +1;
+			currentPageNumber = e.pageNumber + 1;
 			changePage( currentPageNumber );
 		}
 		
@@ -220,8 +220,8 @@ package cc.minos.bigbluebutton.plugins.whiteboard
 		
 		public function sendAnnotation( annotation:Annotation ):void
 		{
-			annotation.annotation["presentationID"] = currentPresentationName;
-			annotation.annotation["pageNumber"] = currentPageNumber;
+			annotation.annotation[ "presentationID" ] = currentPresentationName;
+			annotation.annotation[ "pageNumber" ] = currentPageNumber;
 			
 			bbb.send( SEND_ANNOTATION, null, annotation.annotation );
 		}
@@ -244,7 +244,6 @@ package cc.minos.bigbluebutton.plugins.whiteboard
 		{
 			bbb.send( TOGGLE_GRID, null, { enabled: enabled } );
 		}
-	
 	}
 
 }

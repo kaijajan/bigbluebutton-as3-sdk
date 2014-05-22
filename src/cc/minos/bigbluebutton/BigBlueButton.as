@@ -7,20 +7,13 @@ package cc.minos.bigbluebutton
 	import cc.minos.bigbluebutton.events.*;
 	import cc.minos.bigbluebutton.models.*;
 	import cc.minos.bigbluebutton.plugins.*;
-	import cc.minos.bigbluebutton.plugins.chat.ChatPlugin;
-	import cc.minos.bigbluebutton.plugins.chat.IChatPlugin;
-	import cc.minos.bigbluebutton.plugins.present.IPresentPlugin;
-	import cc.minos.bigbluebutton.plugins.present.PresentPlugin;
-	import cc.minos.bigbluebutton.plugins.test.ITestPlugin;
-	import cc.minos.bigbluebutton.plugins.test.TestPlugin;
-	import cc.minos.bigbluebutton.plugins.users.IUsersPlugin;
-	import cc.minos.bigbluebutton.plugins.users.UsersPlugin;
-	import cc.minos.bigbluebutton.plugins.video.IVideoPlugin;
-	import cc.minos.bigbluebutton.plugins.video.VideoPlugin;
-	import cc.minos.bigbluebutton.plugins.voice.IVoicePlugin;
-	import cc.minos.bigbluebutton.plugins.voice.VoicePlugin;
-	import cc.minos.bigbluebutton.plugins.whiteboard.IWhiteboardPlugin;
-	import cc.minos.bigbluebutton.plugins.whiteboard.WhiteboardPlugin;
+	import cc.minos.bigbluebutton.plugins.chat.*;
+	import cc.minos.bigbluebutton.plugins.present.*;
+	import cc.minos.bigbluebutton.plugins.test.*;
+	import cc.minos.bigbluebutton.plugins.users.*;
+	import cc.minos.bigbluebutton.plugins.video.*;
+	import cc.minos.bigbluebutton.plugins.voice.*;
+	import cc.minos.bigbluebutton.plugins.whiteboard.*;
 	import cc.minos.console.Console;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
@@ -28,81 +21,6 @@ package cc.minos.bigbluebutton
 	import flash.events.ProgressEvent;
 	import flash.net.FileFilter;
 	import flash.net.FileReference;
-	
-	/**
-	 * 连接成功
-	 */
-	[Event( name = "connectionSuccess", type = "cc.minos.bigbluebutton.events.ConnectionSuccessEvent" )]
-	
-	/**
-	 * 连接失败
-	 */
-	[Event( name="connectionFailed",type="cc.minos.bigbluebutton.events.ConnectionFailedEvent" )]
-	
-	/**
-	 * 切换到演讲者模式
-	 */
-	[Event( name = "switchToPresenterMode", type = "cc.minos.bigbluebutton.events.MadePresenterEvent" )]
-	
-	/**
-	 * 切换到观众模式
-	 */
-	[Event( name="switchToViewerMode",type="cc.minos.bigbluebutton.events.MadePresenterEvent" )]
-	
-	/**
-	 * 新用户加入会议
-	 */
-	[Event( name = "pariticipantJoined", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
-	
-	/**
-	 * 用户离开会议
-	 */
-	[Event( name = "pariticipantLeft", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
-	
-	/**
-	 * 用户被踢出会议
-	 */
-	[Event( name = "pariticipantKicked", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
-	
-	/**
-	 * 举手
-	 */
-	[Event( name = "userRaiseHand", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
-	
-	/**
-	 * 
-	 */
-	[Event( name = "userVoiceJoined", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
-	
-	/**
-	 *
-	 */
-	[Event( name = "userVoiceMuted", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
-	
-	/**
-	 *
-	 */
-	[Event( name = "userVoiceLocked", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
-	
-	/**
-	 *
-	 */
-	[Event( name = "userVoiceLeft", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
-	
-	/**
-	 *
-	 */
-	[Event( name = "userVoiceTalking", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
-	
-	/**
-	 * 
-	 */
-	[Event( name = "userVideoStreamStarted", type = "cc.minos.bigbluebutton.events.UsersEvent" )]
-	
-	/**
-	 *
-	 */
-	[Event( name="userVideoStreamStoped",type="cc.minos.bigbluebutton.events.UsersEvent" )]
 	
 	/**
 	 * ...
@@ -178,7 +96,7 @@ package cc.minos.bigbluebutton
 			//chat
 			bbb.addPlugin( new ChatPlugin() );
 			bbb.addEventListener( ChatMessageEvent.PUBLIC_CHAT_MESSAGE, onMessage );
-			//bbb.addEventListener( ChatMessageEvent.PRIVATE_CHAT_MESSAGE, onMessage );
+			bbb.addEventListener( ChatMessageEvent.PRIVATE_CHAT_MESSAGE, onMessage );
 		}
 		
 		protected function addVoicePlugin():void
@@ -235,7 +153,7 @@ package cc.minos.bigbluebutton
 			bbb.addEventListener( UploadEvent.CLEAR_PRESENTATION, onUpload );
 		}
 		
-		private function onZoom(e:ZoomEvent):void 
+		private function onZoom( e:ZoomEvent ):void
 		{
 			dispatchEvent( e );
 		}
@@ -303,7 +221,8 @@ package cc.minos.bigbluebutton
 			if ( e.type == BigBlueButtonEvent.USER_LOGIN )
 			{
 				bbb.startAllPlugin();
-			}else if ( e.type == BigBlueButtonEvent.USER_LOGOUT )
+			}
+			else if ( e.type == BigBlueButtonEvent.USER_LOGOUT )
 			{
 				disconnect();
 			}
@@ -312,14 +231,14 @@ package cc.minos.bigbluebutton
 		
 		//protected function onBigBlueButtonConnectionSuccess( e:ConnectionSuccessEvent ):void
 		//{
-			//trace( "bbb: connection success!" );
-			//bbb.startAllPlugin();
-			//dispatchEvent( e );
+		//trace( "bbb: connection success!" );
+		//bbb.startAllPlugin();
+		//dispatchEvent( e );
 		//}
 		//
 		//protected function onBigBlueButtonConnectionFailed( e:ConnectionFailedEvent ):void
 		//{
-			//trace( "bbb: connection failed" );
+		//trace( "bbb: connection failed" );
 		//}
 		
 		protected function onVideoConnection( e:VideoConnectionEvent ):void
@@ -415,12 +334,14 @@ package cc.minos.bigbluebutton
 				else
 				{
 					Console.log( "api: not meeting running." );
-					sendErrorEvent( { type: "Error", message: config.meetingID + " is closed." } );
+					sendErrorEvent({ type: "Error", message: "bbb.meeting.closed" } );
 				}
 				
-			}else {
+			}
+			else
+			{
 				//FAILED
-				sendErrorEvent({ message: response.message , type: "Error"});
+				sendErrorEvent({ message: response.message, type: "Error" } );
 			}
 		}
 		
@@ -433,7 +354,7 @@ package cc.minos.bigbluebutton
 		{
 			var errorEvent:BigBlueButtonEvent = new BigBlueButtonEvent( BigBlueButtonEvent.ERROR );
 			errorEvent.data = data;
-			dispatchEvent(errorEvent);
+			dispatchEvent( errorEvent );
 		}
 		
 		protected var file:FileReference;

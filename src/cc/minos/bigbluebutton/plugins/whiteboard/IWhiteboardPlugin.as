@@ -18,7 +18,7 @@ package cc.minos.bigbluebutton.plugins.whiteboard
 		function sendAnnotation( annotation:Annotation ):void
 		function checkIsWhiteboardOn():void
 		
-		function getAnnotationHistory( ):void
+		function getAnnotationHistory():void
 		function modifyEnabled( enabled:Boolean ):void
 	
 	}
