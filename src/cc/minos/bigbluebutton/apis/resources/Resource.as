@@ -11,6 +11,7 @@ package cc.minos.bigbluebutton.apis.resources
 	import flash.events.TimerEvent;
 	import flash.net.navigateToURL;
 	import flash.net.URLLoader;
+	import flash.net.URLLoaderDataFormat;
 	import flash.net.URLRequest;
 	import flash.net.URLRequestMethod;
 	import flash.net.URLVariables;
@@ -70,7 +71,7 @@ package cc.minos.bigbluebutton.apis.resources
 			setQuery( "checksum", checksum );
 			
 			request = new URLRequest( url );
-			request.method = URLRequestMethod.POST;
+			//request.method = URLRequestMethod.POST;
 			
 			Console.log( '[API] call: ' + request.url );
 			
@@ -165,6 +166,7 @@ package cc.minos.bigbluebutton.apis.resources
 		
 		protected function onComplete( e:Event ):void
 		{
+			trace( "resource: " + e.type );
 			if ( completedCallback != null )
 			{
 				if ( response == null )

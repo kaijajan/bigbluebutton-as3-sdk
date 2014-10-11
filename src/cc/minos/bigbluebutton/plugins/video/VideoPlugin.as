@@ -16,6 +16,8 @@ package cc.minos.bigbluebutton.plugins.video
 	import flash.media.Camera;
 	import flash.media.H264VideoStreamSettings;
 	import flash.net.NetConnection;
+	import flash.system.Security;
+	import flash.system.SecurityPanel;
 	import flash.utils.Timer;
 	
 	/**
@@ -29,7 +31,7 @@ package cc.minos.bigbluebutton.plugins.video
 		protected var options:VideoOptions;
 		protected var videoConnection:IVideoConnection;
 		
-		public var publishing:Boolean = false;
+		protected var publishing:Boolean = false;
 		
 		//
 		protected var activationTimer:Timer;
@@ -106,14 +108,14 @@ package cc.minos.bigbluebutton.plugins.video
 			
 			if ( Camera.names.length == 0 )
 			{
-				sendCameraWarning( 'u need a camera' );
+				sendCameraWarning( 'camera.notfound' );
 				return;
 			}
 			
 			_camera = Camera.getCamera();
 			if ( _camera == null )
 			{
-				sendCameraWarning( 'cant open camera' );
+				sendCameraWarning( 'camera.used' );
 				return;
 			}
 			
@@ -127,7 +129,7 @@ package cc.minos.bigbluebutton.plugins.video
 				}
 				else
 				{
-					sendCameraWarning( 'waiting approval' );
+					sendCameraWarning( 'camera.waiting' );
 				}
 			}
 			else
@@ -152,7 +154,7 @@ package cc.minos.bigbluebutton.plugins.video
 		
 		private function onCameraAccessDisallowed():void
 		{
-			sendCameraWarning( 'camera denied' );
+			sendCameraWarning( 'camera.denied' );
 			cameraAccessDenied = true;
 		}
 		
@@ -170,6 +172,7 @@ package cc.minos.bigbluebutton.plugins.video
 		
 		private function onActivationTimer( e:TimerEvent ):void
 		{
+			
 			//camera is being used
 			updateCamera();
 		}
@@ -177,7 +180,6 @@ package cc.minos.bigbluebutton.plugins.video
 		private function stopCamera():void
 		{
 			_camera = null;
-			
 			var sEvent:CameraEvent = new CameraEvent( CameraEvent.CLOSE );
 			dispatchRawEvent( sEvent );
 		}
@@ -189,19 +191,21 @@ package cc.minos.bigbluebutton.plugins.video
 		 */
 		private function sendCameraWarning( text:String, color:uint = 0xff0000 ):void
 		{
+			Console.log( text );
 			var warningEvent:CameraEvent = new CameraEvent( CameraEvent.WARNING );
-			warningEvent.data = { text: text, color: color };
+			warningEvent.data = { message: text, color: color };
 			dispatchRawEvent( warningEvent );
 		}
 		
 		private function onAutoPublishTimer( e:TimerEvent ):void
 		{
-			startPublish();
 			autoPublishTimer.stop();
+			startPublish();
 		}
 		
 		private function onActivityEvent( e:ActivityEvent ):void
 		{
+			trace( e );
 			if ( waitingForActivation && e.activating )
 			{
 				activationTimer.stop();
@@ -218,7 +222,7 @@ package cc.minos.bigbluebutton.plugins.video
 			if ( e.code == "Camera.Unmuted" )
 			{
 				onCameraAccessAllowed();
-				sendCameraWarning( 'opening camera' );
+				sendCameraWarning( 'camera.opening' );
 			}
 			else if ( e.code == "Camera.Muted" )
 			{
@@ -272,7 +276,7 @@ package cc.minos.bigbluebutton.plugins.video
 		{
 			if ( publishing )
 			{
-				stopCamera();
+				//stopCamera();
 				publishing = false;
 				videoConnection.stopPublish();
 				if ( usersPlugin )
@@ -289,7 +293,14 @@ package cc.minos.bigbluebutton.plugins.video
 		
 		public function get camera():Camera
 		{
+			if ( _camera == null )
+				updateCamera();
 			return _camera;
+		}
+		
+		public function get isPublishing():Boolean
+		{
+			return publishing;
 		}
 	
 	}

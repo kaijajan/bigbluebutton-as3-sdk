@@ -14,7 +14,10 @@ package cc.minos.bigbluebutton.view
 	import flash.display.Sprite;
 	import flash.events.Event;
 	import flash.events.ProgressEvent;
-	import flash.text.TextField;
+import flash.system.ApplicationDomain;
+import flash.system.LoaderContext;
+import flash.system.SecurityDomain;
+import flash.text.TextField;
 	import flash.text.TextFormat;
 	
 	/**
@@ -75,6 +78,8 @@ package cc.minos.bigbluebutton.view
 			progressTf.text = "complete";
 			removeChild( progressTf );
 			loader.contentLoaderInfo.addEventListener( Event.COMPLETE, onComplete );
+            //var c:LoaderContext = new LoaderContext( false, ApplicationDomain.currentDomain );
+            //c.allowCodeImport = true;
 			loader.loadBytes( data );
 		}
 		

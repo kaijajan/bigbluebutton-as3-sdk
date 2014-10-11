@@ -41,6 +41,7 @@ package cc.minos.bigbluebutton.core
 		
 		override internal function onSuccess( reason:String = "" ):void
 		{
+			Console.log("success", "[BigBlueButtonConnection]");
 			send( "getMyUserId", new Responder( 
 				//success
 				function( result:Object ):void
@@ -60,7 +61,7 @@ package cc.minos.bigbluebutton.core
 		
 		override internal function onFailed( reason:String = "" ):void
 		{
-			//super.onFailed(reason);
+			Console.log("failed: " + reason, "[BigBlueButtonConnection]");
 			var failedEvent:BigBlueButtonEvent = new BigBlueButtonEvent( BigBlueButtonEvent.USER_LOGOUT )
 			dispatchEvent( failedEvent );
 		}

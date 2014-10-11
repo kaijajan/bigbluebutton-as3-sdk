@@ -17,8 +17,11 @@ package cc.minos.bigbluebutton
 	import cc.minos.console.Console;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
+	import flash.events.HTTPStatusEvent;
 	import flash.events.IEventDispatcher;
+	import flash.events.IOErrorEvent;
 	import flash.events.ProgressEvent;
+	import flash.events.SecurityErrorEvent;
 	import flash.net.FileFilter;
 	import flash.net.FileReference;
 	
@@ -40,20 +43,32 @@ package cc.minos.bigbluebutton
 		{
 			this.config = config;
 			
+			createAPI();
+			createBBB();
+			createPlugins();
+		}
+		
+		protected function createAPI():void 
+		{
 			//api
 			api = new API( config.host, config.securitySalt );
 			api.onAdministrationCallback = onAdministrationCallback;
 			api.onMonitoringCallback = onMonitoringCallback;
 			api.onRecordingCallback = onRecordingCallback;
-			
+		}
+		
+		protected function createBBB():void
+		{
 			//connection
 			bbb = new BigBlueButtonConnection( config );
 			bbb.addEventListener( BigBlueButtonEvent.USER_LOGIN, onBigBlueButton );
 			bbb.addEventListener( BigBlueButtonEvent.USER_LOGOUT, onBigBlueButton );
+			bbb.addEventListener( BigBlueButtonEvent.END_MEETING, onBigBlueButton );
 			bbb.addEventListener( BigBlueButtonEvent.CHANGE_RECORDING_STATUS, onBigBlueButton );
-			//bbb.addEventListener( ConnectionSuccessEvent.SUCCESS, onBigBlueButtonConnectionSuccess );
-			//bbb.addEventListener( ConnectionFailedEvent.FAILED, onBigBlueButtonConnectionFailed );
-			
+		}
+		
+		protected function createPlugins():void
+		{
 			addTestPlugin();
 			addUsersPlugin();
 			addChatPlugin();
@@ -102,6 +117,7 @@ package cc.minos.bigbluebutton
 		protected function addVoicePlugin():void
 		{
 			bbb.addPlugin( new VoicePlugin() );
+			bbb.addEventListener( MicrophoneEvent.WARNING, onMicrophone );
 		}
 		
 		protected function addVideoPlugin():void
@@ -222,7 +238,7 @@ package cc.minos.bigbluebutton
 			{
 				bbb.startAllPlugin();
 			}
-			else if ( e.type == BigBlueButtonEvent.USER_LOGOUT )
+			else if ( e.type == BigBlueButtonEvent.USER_LOGOUT || e.type == BigBlueButtonEvent.END_MEETING )
 			{
 				disconnect();
 			}
@@ -241,6 +257,11 @@ package cc.minos.bigbluebutton
 		//trace( "bbb: connection failed" );
 		//}
 		
+		protected function onMicrophone( e:MicrophoneEvent ):void
+		{
+			dispatchEvent( e );
+		}
+		
 		protected function onVideoConnection( e:VideoConnectionEvent ):void
 		{
 			dispatchEvent( e );
@@ -250,13 +271,18 @@ package cc.minos.bigbluebutton
 		{
 			if ( e.type == PortTestEvent.PORT_TEST_SUCCESS )
 			{
-				Console.log( "[PortTest] success! connecting to bbb." );
+				Console.log( "success! connecting to bbb.", "[PortTest]" );
 				bbb.connect( conferenceParameters );
 			}
 			else if ( e.type == PortTestEvent.PORT_TEST_FAILED )
 			{
-				Console.log( "[PortTest] test failed!" );
+				Console.log( "test failed!", "[PortTest]" );
 			}
+		}
+		
+		public function end():void
+		{
+			api.end( config.meetingID, Role.MODERATOR );
 		}
 		
 		public function connect():void
@@ -266,6 +292,80 @@ package cc.minos.bigbluebutton
 		
 		public function disconnect():void
 		{
+			//remove all events
+			bbb.removeEventListener( BigBlueButtonEvent.USER_LOGIN, onBigBlueButton );
+			bbb.removeEventListener( BigBlueButtonEvent.USER_LOGOUT, onBigBlueButton );
+			bbb.removeEventListener( BigBlueButtonEvent.END_MEETING, onBigBlueButton );
+			bbb.removeEventListener( BigBlueButtonEvent.ERROR, onBigBlueButton );
+			
+			if ( bbb.hasPlugin( 'test' ) )
+			{
+				bbb.removeEventListener( PortTestEvent.PORT_TEST_SUCCESS, onPortTest );
+				bbb.removeEventListener( PortTestEvent.PORT_TEST_FAILED, onPortTest );
+			}
+			if ( bbb.hasPlugin( 'users' ) )
+			{
+				bbb.removeEventListener( UsersEvent.JOINED, onUsers );
+				bbb.removeEventListener( UsersEvent.LEFT, onUsers );
+				bbb.removeEventListener( UsersEvent.RAISE_HAND, onUsers );
+				bbb.removeEventListener( UsersEvent.KICKED, onUsers );
+				bbb.removeEventListener( UsersEvent.USER_VOICE_JOINED, onUsers );
+				bbb.removeEventListener( UsersEvent.USER_VOICE_LEFT, onUsers );
+				bbb.removeEventListener( UsersEvent.USER_VOICE_LOCKED, onUsers );
+				bbb.removeEventListener( UsersEvent.USER_VOICE_MUTED, onUsers );
+				bbb.removeEventListener( UsersEvent.USER_VOICE_TALKING, onUsers );
+				bbb.removeEventListener( UsersEvent.USER_VIDEO_STREAM_STARTED, onUsers );
+				bbb.removeEventListener( UsersEvent.USER_VIDEO_STREAM_STOPED, onUsers );
+				bbb.removeEventListener( MadePresenterEvent.SWITCH_TO_PRESENTER_MODE, onSwitchMode );
+				bbb.removeEventListener( MadePresenterEvent.SWITCH_TO_VIEWER_MODE, onSwitchMode );
+				bbb.removeEventListener( MadePresenterEvent.PRESENTER_NAME_CHANGE, onSwitchMode );
+			}
+			if ( bbb.hasPlugin( 'chat' ) )
+			{
+				bbb.removeEventListener( ChatMessageEvent.PUBLIC_CHAT_MESSAGE, onMessage );
+				bbb.removeEventListener( ChatMessageEvent.PRIVATE_CHAT_MESSAGE, onMessage );
+			}
+			if ( bbb.hasPlugin( 'voice' ) )
+			{
+				bbb.removeEventListener( MicrophoneEvent.WARNING, onMicrophone );
+			}
+			if ( bbb.hasPlugin( 'video' ) )
+			{
+				bbb.removeEventListener( VideoConnectionEvent.SUCCESS, onVideoConnection );
+				bbb.removeEventListener( VideoConnectionEvent.FAILED, onVideoConnection );
+			}
+			if ( bbb.hasPlugin( 'whiteboard' ) )
+			{
+				bbb.removeEventListener( WhiteboardDrawEvent.CHANGE_PRESENTATION, onWhiteboard );
+				bbb.removeEventListener( WhiteboardDrawEvent.CHANGE_PAGE, onWhiteboard );
+				bbb.removeEventListener( WhiteboardDrawEvent.CLEAR, onWhiteboard );
+				bbb.removeEventListener( WhiteboardDrawEvent.UNDO, onWhiteboard );
+				bbb.removeEventListener( WhiteboardDrawEvent.NEW_ANNOTATION, onWhiteboard );
+			}
+			if ( bbb.hasPlugin( 'present' ) )
+			{
+				bbb.removeEventListener( PresentationEvent.PRESENTATION_READY, onPresentation );
+				bbb.removeEventListener( PresentationEvent.PRESENTATION_LOADED, onPresentation );
+				bbb.removeEventListener( PresentationEvent.PRESENTATION_REMOVED_EVENT, onPresentation );
+				bbb.removeEventListener( PresentationEvent.PRESENTATION_ADDED_EVENT, onPresentation );
+				bbb.removeEventListener( NavigationEvent.GOTO_PAGE, onGotoPage );
+				bbb.removeEventListener( CursorEvent.UPDATE_CURSOR, onCursor );
+				bbb.removeEventListener( MoveEvent.CUR_SLIDE_SETTING, onMove );
+				bbb.removeEventListener( MoveEvent.MOVE, onMove );
+				bbb.removeEventListener( ZoomEvent.ZOOM, onZoom );
+				bbb.removeEventListener( ZoomEvent.RESTORE, onZoom );
+				bbb.removeEventListener( ZoomEvent.RESIZE, onZoom );
+				//bbb.addEventListener( ZoomEvent.MAXIMIZE, onZoom );
+				bbb.removeEventListener( UploadEvent.OFFICE_DOC_CONVERSION_SUCCESS, onUpload );
+				bbb.removeEventListener( UploadEvent.OFFICE_DOC_CONVERSION_FAILED, onUpload );
+				bbb.removeEventListener( UploadEvent.SUPPORTED_DOCUMENT, onUpload );
+				bbb.removeEventListener( UploadEvent.UNSUPPORTED_DOCUMENT, onUpload );
+				bbb.removeEventListener( UploadEvent.THUMBNAILS_UPDATE, onUpload );
+				bbb.removeEventListener( UploadEvent.PAGE_COUNT_FAILED, onUpload );
+				bbb.removeEventListener( UploadEvent.CONVERT_UPDATE, onUpload );
+				bbb.removeEventListener( UploadEvent.CLEAR_PRESENTATION, onUpload );
+			}
+			//clear all plugin
 			bbb.disconnect( true );
 		}
 		
@@ -309,6 +409,7 @@ package cc.minos.bigbluebutton
 						
 						break;
 					default: 
+					//trace( response.data );
 				}
 			}
 			else
@@ -357,6 +458,8 @@ package cc.minos.bigbluebutton
 			dispatchEvent( errorEvent );
 		}
 		
+		/* upload file */
+		
 		protected var file:FileReference;
 		protected var uploading:Boolean = false;
 		
@@ -385,7 +488,21 @@ package cc.minos.bigbluebutton
 			uploading = true;
 			file.addEventListener( Event.COMPLETE, onComplete );
 			file.addEventListener( ProgressEvent.PROGRESS, onProgress );
+			file.addEventListener( IOErrorEvent.IO_ERROR, onIOError );
+			file.addEventListener( SecurityErrorEvent.SECURITY_ERROR, onSecurityError );
 			presentPlugin.upload( file );
+		}
+		
+		private function onIOError(e:IOErrorEvent):void 
+		{
+			uploading = false;
+			Console.log( 'bbb: upload io error ' + e.text );
+		}
+		
+		private function onSecurityError(e:SecurityErrorEvent):void 
+		{
+			uploading = false;
+			Console.log( 'bbb: upload security error ' + e.text );
 		}
 		
 		protected function onComplete( e:Event ):void

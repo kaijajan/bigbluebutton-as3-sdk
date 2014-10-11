@@ -50,7 +50,6 @@ package cc.minos.bigbluebutton.core
 				}
 				outgoingStream.attachCamera( camera );
 				outgoingStream.publish( publishName );
-					//outgoingStream.send("|RtmpSampleAccess", true, true);
 			}
 		}
 		

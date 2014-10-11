@@ -8,6 +8,7 @@ package cc.minos.bigbluebutton.plugins.users
 	 */
 	public interface IParticipantsSOServiceClient
 	{
+		function logout():void;
 		function participantJoined( joinedUser:Object ):void;
 		function participantLeft( userID:String ):void;
 		function assignPresenterCallback( userID:String, name:String, assignedBy:String ):void;

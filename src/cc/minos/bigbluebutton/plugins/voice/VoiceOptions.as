@@ -10,9 +10,12 @@ package cc.minos.bigbluebutton.plugins.voice
 	{
 		
 		public var enabledEchoCancel:Boolean = true;
+		
 		public var skipCheck:Boolean = true;
+		
 		public var autoJoin:Boolean = true;
-		public var muteAll:Boolean = true;
+		
+		public var muteAll:Boolean = false;
 		
 		public var codec:String = "SPEEX";
 		

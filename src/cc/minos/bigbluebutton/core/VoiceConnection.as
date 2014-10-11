@@ -7,6 +7,7 @@ package cc.minos.bigbluebutton.core
 	import cc.minos.bigbluebutton.core.IVoiceConnection;
 	import cc.minos.bigbluebutton.events.VideoConnectionEvent;
 	import cc.minos.bigbluebutton.events.VoiceConferenceEvent;
+	import cc.minos.console.Console;
 	import flash.events.AsyncErrorEvent;
 	import flash.events.NetStatusEvent;
 	import flash.media.Microphone;
@@ -52,21 +53,21 @@ package cc.minos.bigbluebutton.core
 		
 		public function failedToJoinVoiceConferenceCallback( message:String ):*
 		{
-			trace( "[VoiceConnection] failedToJoinVoiceConferenceCallback" );
+			Console.log( "failedToJoinVoiceConferenceCallback", "[VoiceConnection]" );
 			var failedEvt:VoiceConferenceEvent = new VoiceConferenceEvent( VoiceConferenceEvent.DISCONNECTED );
 			dispatchEvent( failedEvt );
 		}
 		
 		public function disconnectedFromJoinVoiceConferenceCallback( message:String ):*
 		{
-			trace( "[VoiceConnection] disconnectedFromJoinVoiceConferenceCallback" );
+			Console.log( "disconnectedFromJoinVoiceConferenceCallback", "[VoiceConnection]" );
 			var failedEvt:VoiceConferenceEvent = new VoiceConferenceEvent( VoiceConferenceEvent.DISCONNECTED );
 			dispatchEvent( failedEvt );
 		}
 		
 		public function successfullyJoinedVoiceConferenceCallback( publishName:String, playName:String, codec:String ):*
 		{
-			trace( "[VoiceConnection] successfullyJoinedVoiceConferenceCallback" );
+			Console.log( "successfullyJoinedVoiceConferenceCallback", "[VoiceConnection]" );
 			var joinedEvt:VoiceConferenceEvent = new VoiceConferenceEvent( VoiceConferenceEvent.JOINED );
 			dispatchEvent( joinedEvt );
 			
@@ -163,12 +164,14 @@ package cc.minos.bigbluebutton.core
 		
 		override internal function onSuccess( reason:String = "" ):void
 		{
+			Console.log("success", "[VoiceConnection]" );
 			super.onSuccess( reason );
 			call();
 		}
 		
 		override internal function onFailed( reason:String = "" ):void
 		{
+			Console.log( "failed" , "[VoiceConnection]" );
 			super.onFailed(reason);
 			disconnect(false);
 		}

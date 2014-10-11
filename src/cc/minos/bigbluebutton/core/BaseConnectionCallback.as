@@ -22,9 +22,9 @@ package cc.minos.bigbluebutton.core
 		
 		public function onBWDone( ... rest ):void
 		{
-			var p_bw:Number;
-			if ( rest.length > 0 )
-				p_bw = rest[ 0 ];
+			//var p_bw:Number;
+			//if ( rest.length > 0 )
+			//p_bw = rest[ 0 ];
 		}
 		
 		internal function onSuccess( reason:String = "" ):void

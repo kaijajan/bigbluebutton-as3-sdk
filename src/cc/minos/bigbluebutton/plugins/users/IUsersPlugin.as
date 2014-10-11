@@ -14,7 +14,7 @@ package cc.minos.bigbluebutton.plugins.users
 		function raiseHand( userID:String, raise:Boolean ):void;
 		function kickUser( userID:String ):void;
 		function ejectVoiceUser( voiceID:Number ):void;
-		function muteAllUsers( mute:Boolean ):void
+		function muteAllUsers( mute:Boolean, dontMuteThese:Array = null ):void
 		function muteUser( voiceID:Number, mute:Boolean ):void
 		function lockUser( voiceID:Number, lock:Boolean ):void
 		

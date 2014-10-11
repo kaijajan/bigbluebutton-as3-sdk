@@ -23,7 +23,6 @@ package cc.minos.bigbluebutton.plugins
 		
 		/**
 		 *
-		
 		 */
 		public function setup( bbb:IBigBlueButtonConnection ):void
 		{
@@ -41,7 +40,6 @@ package cc.minos.bigbluebutton.plugins
 		
 		/**
 		 *
-		
 		 */
 		public function dispatchRawEvent( e:Event ):Boolean
 		{

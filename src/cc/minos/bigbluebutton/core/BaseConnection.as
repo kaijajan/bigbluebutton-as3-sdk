@@ -1,6 +1,7 @@
 package cc.minos.bigbluebutton.core
 {
 	import cc.minos.bigbluebutton.events.ConnectionFailedEvent;
+	import cc.minos.console.Console;
 	import flash.events.AsyncErrorEvent;
 	import flash.events.EventDispatcher;
 	import flash.events.IOErrorEvent;
@@ -28,7 +29,6 @@ package cc.minos.bigbluebutton.core
 			_connection.addEventListener( SecurityErrorEvent.SECURITY_ERROR, onSecurityError );
 			_connection.addEventListener( IOErrorEvent.IO_ERROR, onIOError );
 			_connection.addEventListener( AsyncErrorEvent.ASYNC_ERROR, onAsyncError );
-		
 		}
 		
 		private function onNetStatus( e:NetStatusEvent ):void
@@ -39,7 +39,7 @@ package cc.minos.bigbluebutton.core
 					sendConnectionSuccessEvent();
 					break;
 				case "NetConnection.Connect.Failed": 
-					sendConnectionFailedEvent();
+					sendConnectionFailedEvent( ConnectionFailedEvent.FAILED );
 					break;
 				case "NetConnection.Connect.Closed": 
 					sendConnectionFailedEvent( ConnectionFailedEvent.CONNECTION_CLOSED );
@@ -84,20 +84,13 @@ package cc.minos.bigbluebutton.core
 			_uri = uri;
 			try
 			{
-				trace( "[NetConnection] connecting to: " + _uri );
+				Console.log( "connecting to: " + _uri, "[BaseConnection]" );
 				_connection.connect.apply( null, new Array( uri ).concat( params ) );
 			}
-			catch ( er:ArgumentError )
+			catch ( err:ArgumentError )
 			{
-				switch ( er.errorID )
-				{
-					case 2004:
-						
-						break;
-					default: 
-						sendConnectionFailedEvent( ConnectionFailedEvent.UNKNOWN_REASON );
-						break;
-				}
+				Console.log( err.message, "[BaseConnection]" );
+				sendConnectionFailedEvent( ConnectionFailedEvent.UNKNOWN_REASON );
 			}
 		}
 		

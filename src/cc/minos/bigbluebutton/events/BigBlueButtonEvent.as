@@ -8,6 +8,7 @@ package cc.minos.bigbluebutton.events
 	 */
 	public class BigBlueButtonEvent extends Event
 	{
+		public static const END_MEETING:String = "endMeeting";
 		public static const CHANGE_RECORDING_STATUS:String = "changeRecordingStatus";
 		public static const USER_LOGIN:String = "userLogin";
 		public static const USER_LOGOUT:String = "userLogout";

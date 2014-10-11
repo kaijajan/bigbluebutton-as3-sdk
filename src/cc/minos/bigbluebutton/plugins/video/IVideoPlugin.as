@@ -13,6 +13,7 @@ package cc.minos.bigbluebutton.plugins.video
 		function stopPublish():void;
 		function get camera():Camera;
 		function get connection():NetConnection;
+		function get isPublishing():Boolean;
 	}
 
 }

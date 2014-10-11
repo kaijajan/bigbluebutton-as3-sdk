@@ -12,7 +12,7 @@ package cc.minos.bigbluebutton.view.models
 		public var toolType:String = DrawObject.PENCIL;
 		public var drawColor:uint = 0xff0000;
 		public var fillColor:uint = 0x000000;
-		public var thickness:uint = 1;
+		public var thickness:uint = 2;
 		public var _fontStyle:String = "_sans";
 		public var _fontSize:Number = 18;
 		public var _textText:String = "Hello BBB!";

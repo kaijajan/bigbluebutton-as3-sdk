@@ -243,7 +243,18 @@ package cc.minos.bigbluebutton.plugins.users
 		
 		public function kickUserCallback( userID:String ):void
 		{
+			Console.log( "kickUserCallback: " + userID, name );
 			sendUsersEvent( UsersEvent.KICKED, userID );
+			
+			if ( this.userID == userID )
+			{
+				bbb.disconnect( false );
+			}
+		}
+		
+		public function logout():void {
+			var endEvent:BigBlueButtonEvent = new BigBlueButtonEvent( BigBlueButtonEvent.END_MEETING );
+			dispatchRawEvent( endEvent );
 		}
 		
 		public function participantStatusChange( userID:String, status:String, value:Object ):void
@@ -422,8 +433,9 @@ package cc.minos.bigbluebutton.plugins.users
 			bbb.send( SET_KILL_USER, responder, voiceID );
 		}
 		
-		public function muteAllUsers( mute:Boolean ):void
+		public function muteAllUsers( mute:Boolean, dontMuteThese:Array = null ):void
 		{
+			if ( dontMuteThese == null ) dontMuteThese = [];
 			bbb.send( SET_MUTE_ALL_USER, responder, mute );
 		}
 		
