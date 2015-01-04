@@ -11,7 +11,7 @@ package cc.minos.bigbluebutton.plugins.present
 	import flash.net.URLRequest;
 	import flash.net.URLRequestMethod;
 	import flash.net.URLVariables;
-	
+
 	/**
 	 * ...
 	 * @author Minos
@@ -21,11 +21,11 @@ package cc.minos.bigbluebutton.plugins.present
 		private var request:URLRequest = new URLRequest();
 		private var sendVars:URLVariables = new URLVariables();
 		private var fileToUpload:FileReference;
-		
+
 		public function FileUploadService()
 		{
 		}
-		
+
 		public function upload( url:String, name:String, file:FileReference, conference:String, room:String ):void
 		{
 			sendVars.presentation_name = name;
@@ -33,17 +33,23 @@ package cc.minos.bigbluebutton.plugins.present
 			sendVars.room = room;
 			request.url = url;
 			request.data = sendVars;
-			
+
 			fileToUpload = file;
 			fileToUpload.addEventListener( ProgressEvent.PROGRESS, onUploadProgress );
 			fileToUpload.addEventListener( Event.COMPLETE, onUploadComplete );
 			fileToUpload.addEventListener( IOErrorEvent.IO_ERROR, onUploadIoError );
 			fileToUpload.addEventListener( SecurityErrorEvent.SECURITY_ERROR, onUploadSecurityError );
-			
+
 			request.method = URLRequestMethod.POST;
-			fileToUpload.upload( request, "fileUpload", true );
+
+            try{
+			     fileToUpload.upload( request, "fileUpload", true );
+             }catch(e:Error)
+             {
+                trace("upload file error: " + e.message );
+             }
 		}
-		
+
 		private function onUploadProgress( e:ProgressEvent ):void
 		{
 			var percentage:Number = Math.round(( e.bytesLoaded / e.bytesTotal ) * 100 );
@@ -51,21 +57,21 @@ package cc.minos.bigbluebutton.plugins.present
 			uploadEvent.percentageComplete = percentage;
 			dispatchEvent( uploadEvent );
 		}
-		
+
 		private function onUploadComplete( e:Event ):void
 		{
 			dispatchEvent( new UploadEvent( UploadEvent.UPLOAD_COMPLETE ) );
 		}
-		
+
 		private function onUploadIoError( e:IOErrorEvent ):void
 		{
 			dispatchEvent( new UploadEvent( UploadEvent.UPLOAD_IO_ERROR ) );
 		}
-		
+
 		private function onUploadSecurityError( e:SecurityErrorEvent ):void
 		{
 			dispatchEvent( new UploadEvent( UploadEvent.UPLOAD_SECURITY_ERROR ) );
 		}
-	
+
 	}
 }
