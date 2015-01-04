@@ -1,77 +1,77 @@
-package cc.minos.bigbluebutton.plugins.present
-{
-	import cc.minos.bigbluebutton.events.UploadEvent;
-	import flash.events.Event;
-	import flash.events.EventDispatcher;
-	import flash.events.HTTPStatusEvent;
-	import flash.events.IOErrorEvent;
-	import flash.events.ProgressEvent;
-	import flash.events.SecurityErrorEvent;
-	import flash.net.FileReference;
-	import flash.net.URLRequest;
-	import flash.net.URLRequestMethod;
-	import flash.net.URLVariables;
+package cc.minos.bigbluebutton.plugins.present {
+    import cc.minos.bigbluebutton.events.UploadEvent;
 
-	/**
-	 * ...
-	 * @author Minos
-	 */
-	public class FileUploadService extends EventDispatcher
-	{
-		private var request:URLRequest = new URLRequest();
-		private var sendVars:URLVariables = new URLVariables();
-		private var fileToUpload:FileReference;
+    import flash.events.Event;
+    import flash.events.EventDispatcher;
+    import flash.events.HTTPStatusEvent;
+    import flash.events.IOErrorEvent;
+    import flash.events.ProgressEvent;
+    import flash.events.SecurityErrorEvent;
+    import flash.net.FileReference;
+    import flash.net.URLRequest;
+    import flash.net.URLRequestMethod;
+    import flash.net.URLVariables;
 
-		public function FileUploadService()
-		{
-		}
+    /**
+     * ...
+     * @author Minos
+     */
+    public class FileUploadService extends EventDispatcher {
+        private var request:URLRequest = new URLRequest();
+        private var sendVars:URLVariables = new URLVariables();
+        private var fileToUpload:FileReference;
 
-		public function upload( url:String, name:String, file:FileReference, conference:String, room:String ):void
-		{
-			sendVars.presentation_name = name;
-			sendVars.conference = conference;
-			sendVars.room = room;
-			request.url = url;
-			request.data = sendVars;
+        public function FileUploadService()
+        {
+        }
 
-			fileToUpload = file;
-			fileToUpload.addEventListener( ProgressEvent.PROGRESS, onUploadProgress );
-			fileToUpload.addEventListener( Event.COMPLETE, onUploadComplete );
-			fileToUpload.addEventListener( IOErrorEvent.IO_ERROR, onUploadIoError );
-			fileToUpload.addEventListener( SecurityErrorEvent.SECURITY_ERROR, onUploadSecurityError );
+        public function upload(url:String, name:String, file:FileReference, conference:String, room:String):void
+        {
+            sendVars.presentation_name = name;
+            sendVars.conference = conference;
+            sendVars.room = room;
+            request.url = url;
+            request.data = sendVars;
 
-			request.method = URLRequestMethod.POST;
+            fileToUpload = file;
+            fileToUpload.addEventListener(ProgressEvent.PROGRESS, onUploadProgress);
+            fileToUpload.addEventListener(Event.COMPLETE, onUploadComplete);
+            fileToUpload.addEventListener(IOErrorEvent.IO_ERROR, onUploadIoError);
+            fileToUpload.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onUploadSecurityError);
 
-            try{
-			     fileToUpload.upload( request, "fileUpload", true );
-             }catch(e:Error)
-             {
-                trace("upload file error: " + e.message );
-             }
-		}
+            request.method = URLRequestMethod.POST;
 
-		private function onUploadProgress( e:ProgressEvent ):void
-		{
-			var percentage:Number = Math.round(( e.bytesLoaded / e.bytesTotal ) * 100 );
-			var uploadEvent:UploadEvent = new UploadEvent( UploadEvent.UPLOAD_PROGRESS_UPDATE );
-			uploadEvent.percentageComplete = percentage;
-			dispatchEvent( uploadEvent );
-		}
+            try
+            {
+                fileToUpload.upload(request, "fileUpload", true);
+            } catch(e:Error)
+            {
+                trace("upload file error: " + e.message);
+            }
+        }
 
-		private function onUploadComplete( e:Event ):void
-		{
-			dispatchEvent( new UploadEvent( UploadEvent.UPLOAD_COMPLETE ) );
-		}
+        private function onUploadProgress(e:ProgressEvent):void
+        {
+            var percentage:Number = Math.round(( e.bytesLoaded / e.bytesTotal ) * 100);
+            var uploadEvent:UploadEvent = new UploadEvent(UploadEvent.UPLOAD_PROGRESS_UPDATE);
+            uploadEvent.percentageComplete = percentage;
+            dispatchEvent(uploadEvent);
+        }
 
-		private function onUploadIoError( e:IOErrorEvent ):void
-		{
-			dispatchEvent( new UploadEvent( UploadEvent.UPLOAD_IO_ERROR ) );
-		}
+        private function onUploadComplete(e:Event):void
+        {
+            dispatchEvent(new UploadEvent(UploadEvent.UPLOAD_COMPLETE));
+        }
 
-		private function onUploadSecurityError( e:SecurityErrorEvent ):void
-		{
-			dispatchEvent( new UploadEvent( UploadEvent.UPLOAD_SECURITY_ERROR ) );
-		}
+        private function onUploadIoError(e:IOErrorEvent):void
+        {
+            dispatchEvent(new UploadEvent(UploadEvent.UPLOAD_IO_ERROR));
+        }
 
-	}
+        private function onUploadSecurityError(e:SecurityErrorEvent):void
+        {
+            dispatchEvent(new UploadEvent(UploadEvent.UPLOAD_SECURITY_ERROR));
+        }
+
+    }
 }

@@ -16,21 +16,20 @@
  * with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-package cc.minos.bigbluebutton.events
-{
-	import cc.minos.bigbluebutton.plugins.whiteboard.shapes.TextObject;
-	import flash.events.Event;
-	
-	public class GraphicObjectFocusEvent extends Event
-	{
-		public static const OBJECT_SELECTED:String = "objSelect";
-		public static const OBJECT_DESELECTED:String = "objDeselect";
-		
-		public var data:TextObject;
-		
-		public function GraphicObjectFocusEvent( type:String )
-		{
-			super( type, true, false );
-		}
-	}
+package cc.minos.bigbluebutton.events {
+    import cc.minos.bigbluebutton.plugins.whiteboard.shapes.TextObject;
+
+    import flash.events.Event;
+
+    public class GraphicObjectFocusEvent extends Event {
+        public static const OBJECT_SELECTED:String = "objSelect";
+        public static const OBJECT_DESELECTED:String = "objDeselect";
+
+        public var data:TextObject;
+
+        public function GraphicObjectFocusEvent(type:String)
+        {
+            super(type, true, false);
+        }
+    }
 }

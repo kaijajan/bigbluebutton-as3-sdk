@@ -16,35 +16,33 @@
  * with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-package cc.minos.bigbluebutton.events
-{
-	import flash.events.Event;
-	
-	public class MoveEvent extends Event
-	{
-		public static const MOVE:String = "MOVE_SLIDE";
-		public static const CUR_SLIDE_SETTING:String = "CUR_SLIDE_SETTING";
-		
-		public var xOffset:Number;
-		public var yOffset:Number;
-		
-		public var slideToCanvasWidthRatio:Number;
-		public var slideToCanvasHeightRatio:Number;
-		
-		public function MoveEvent( type:String )
-		{
-			super( type, true, false );
-		}
-		
-		override public function clone():Event
-		{
-			var evt:MoveEvent = new MoveEvent( type );
-			evt.xOffset = xOffset;
-			evt.yOffset = yOffset;
-			evt.slideToCanvasHeightRatio = slideToCanvasHeightRatio;
-			evt.slideToCanvasWidthRatio = slideToCanvasWidthRatio;
-			return evt;
-		}
-	
-	}
+package cc.minos.bigbluebutton.events {
+    import flash.events.Event;
+
+    public class MoveEvent extends Event {
+        public static const MOVE:String = "MOVE_SLIDE";
+        public static const CUR_SLIDE_SETTING:String = "CUR_SLIDE_SETTING";
+
+        public var xOffset:Number;
+        public var yOffset:Number;
+
+        public var slideToCanvasWidthRatio:Number;
+        public var slideToCanvasHeightRatio:Number;
+
+        public function MoveEvent(type:String)
+        {
+            super(type, true, false);
+        }
+
+        override public function clone():Event
+        {
+            var evt:MoveEvent = new MoveEvent(type);
+            evt.xOffset = xOffset;
+            evt.yOffset = yOffset;
+            evt.slideToCanvasHeightRatio = slideToCanvasHeightRatio;
+            evt.slideToCanvasWidthRatio = slideToCanvasWidthRatio;
+            return evt;
+        }
+
+    }
 }
