@@ -1,13 +1,9 @@
 package cc.minos.bigbluebutton.core {
-    import cc.minos.bigbluebutton.core.BaseConnection;
-    import cc.minos.bigbluebutton.core.BaseConnectionCallback;
-    import cc.minos.bigbluebutton.core.IBigBlueButtonConnection;
+
     import cc.minos.bigbluebutton.events.BigBlueButtonEvent;
-    import cc.minos.bigbluebutton.events.ConnectionSuccessEvent;
     import cc.minos.bigbluebutton.models.IConferenceParameters;
     import cc.minos.bigbluebutton.models.IConfig;
     import cc.minos.bigbluebutton.plugins.IPlugin;
-    import cc.minos.console.Console;
 
     import flash.net.NetConnection;
     import flash.net.Responder;
@@ -40,7 +36,7 @@ package cc.minos.bigbluebutton.core {
 
         override internal function onSuccess(reason:String = ""):void
         {
-            Console.log("success", "[BigBlueButtonConnection]");
+            trace("success", "[BigBlueButtonConnection]");
             send("getMyUserId", new Responder(
                     //success
                     function (result:Object):void
@@ -60,7 +56,7 @@ package cc.minos.bigbluebutton.core {
 
         override internal function onFailed(reason:String = ""):void
         {
-            Console.log("failed: " + reason, "[BigBlueButtonConnection]");
+            trace("failed: " + reason, "[BigBlueButtonConnection]");
             var failedEvent:BigBlueButtonEvent = new BigBlueButtonEvent(BigBlueButtonEvent.USER_LOGOUT)
             dispatchEvent(failedEvent);
         }
@@ -196,7 +192,7 @@ package cc.minos.bigbluebutton.core {
             {
                 if(p)
                 {
-                    Console.log('starting ' + p.name);
+                    trace('starting ' + p.name);
                     p.start();
                 }
             }

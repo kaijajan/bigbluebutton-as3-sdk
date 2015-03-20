@@ -1,4 +1,5 @@
 package cc.minos.bigbluebutton.plugins.video {
+
     import cc.minos.bigbluebutton.core.IVideoConnection;
     import cc.minos.bigbluebutton.core.VideoConnection;
     import cc.minos.bigbluebutton.events.CameraEvent;
@@ -8,7 +9,6 @@ package cc.minos.bigbluebutton.plugins.video {
     import cc.minos.bigbluebutton.events.VideoConnectionEvent;
     import cc.minos.bigbluebutton.plugins.Plugin;
     import cc.minos.bigbluebutton.plugins.users.IUsersPlugin;
-    import cc.minos.console.Console;
 
     import flash.events.ActivityEvent;
     import flash.events.StatusEvent;
@@ -16,8 +16,6 @@ package cc.minos.bigbluebutton.plugins.video {
     import flash.media.Camera;
     import flash.media.H264VideoStreamSettings;
     import flash.net.NetConnection;
-    import flash.system.Security;
-    import flash.system.SecurityPanel;
     import flash.utils.Timer;
 
     /**
@@ -195,7 +193,7 @@ package cc.minos.bigbluebutton.plugins.video {
          */
         private function sendCameraWarning(text:String, color:uint = 0xff0000):void
         {
-            Console.log(text);
+            trace(text);
             var warningEvent:CameraEvent = new CameraEvent(CameraEvent.WARNING);
             warningEvent.data = { message: text, color: color };
             dispatchRawEvent(warningEvent);
@@ -237,16 +235,16 @@ package cc.minos.bigbluebutton.plugins.video {
 
         public function startPublish():void
         {
-            Console.log("try start publish video");
+            trace("try start publish video");
             if(publishing)
             {
-                Console.log('publishing video');
+                trace('publishing video');
                 return;
             }
 
             if(options.presenterShareOnly && !presenter)
             {
-                Console.log(name + " presenter share only.");
+                trace(name + " presenter share only.");
                 return;
             }
 

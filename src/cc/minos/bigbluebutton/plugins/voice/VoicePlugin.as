@@ -10,9 +10,6 @@ package cc.minos.bigbluebutton.plugins.voice {
     import cc.minos.bigbluebutton.plugins.Plugin;
     import cc.minos.bigbluebutton.plugins.users.IUsersPlugin;
     import cc.minos.bigbluebutton.Role;
-    import cc.minos.console.Console;
-    import cc.minos.utils.VersionUtil;
-
     import flash.events.StatusEvent;
     import flash.media.Microphone;
     import flash.media.MicrophoneEnhancedMode;
@@ -57,7 +54,7 @@ package cc.minos.bigbluebutton.plugins.voice {
             }
             else
             {
-                //Console.log( "not microphone.", name );
+                //trace( "not microphone.", name );
                 //sendWarningEvent( "voice.microphone.notfound" );
             }
             var uname:String = encodeURIComponent(bbb.conferenceParameters.externUserID + "-bbbID-" + bbb.conferenceParameters.username);
@@ -68,7 +65,7 @@ package cc.minos.bigbluebutton.plugins.voice {
         {
             if(!rejoining && !userHangup)
             {
-                Console.log("rejoining voice", name);
+                trace("rejoining voice", name);
                 rejoining = true;
                 join(withMic);
             }
@@ -91,7 +88,7 @@ package cc.minos.bigbluebutton.plugins.voice {
 
         protected function setupMicrophone():void
         {
-            Console.log("Using acoustic echo cancellation.", name);
+            trace("Using acoustic echo cancellation.", name);
             mic = Microphone.getMicrophone();
             var micOptions:MicrophoneEnhancedOptions = new MicrophoneEnhancedOptions();
             micOptions.mode = MicrophoneEnhancedMode.FULL_DUPLEX;
@@ -107,7 +104,7 @@ package cc.minos.bigbluebutton.plugins.voice {
             mic.framesPerPacket = 1;
             //mic.noiseSuppressionLevel = 0;
             mic.rate = 16;
-            Console.log("Using SPEEX whideband codec.", name);
+            trace("Using SPEEX whideband codec.", name);
             mic.gain = 60;
         }
 
@@ -116,18 +113,18 @@ package cc.minos.bigbluebutton.plugins.voice {
             switch(e.code)
             {
                 case "Microphone.Muted":
-                    Console.log("Access to microphone has been denied.", name);
+                    trace("Access to microphone has been denied.", name);
                     sendWarningEvent("voice.microphone.denied");
                     join(false);
                     break;
                 case "Microphone.Unmuted":
-                    Console.log("Access to the microphone has been allowed.", name);
+                    trace("Access to the microphone has been allowed.", name);
                     sendWarningEvent("voice.microphone.allowed");
                     join(true);
                     break;
                 //default:
                 //sendWarningEvent( "voice.microphone.unknown" );
-                //Console.log( "unknown micStatusHandler event: " + e, name );
+                //trace( "unknown micStatusHandler event: " + e, name );
             }
         }
 
@@ -170,12 +167,12 @@ package cc.minos.bigbluebutton.plugins.voice {
                             var p:BBBUser = usersPlugin.usersList.getTheOnlyPresenter();
                             if(( p && p.me ) || ( !p && bbb.conferenceParameters.role == Role.MODERATOR ))
                             {
-                                Console.log('muteAll by ' + p.name, name);
+                                trace('muteAll by ' + p.name, name);
                                 usersPlugin.muteAllUsers(true);
                             }
                             else
                             {
-                                Console.log('you cant mute someone!');
+                                trace('you cant mute someone!');
                             }
                         }
                     }

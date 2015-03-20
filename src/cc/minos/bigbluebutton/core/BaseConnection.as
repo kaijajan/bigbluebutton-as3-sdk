@@ -1,9 +1,6 @@
 package cc.minos.bigbluebutton.core {
     import cc.minos.bigbluebutton.events.ConnectionFailedEvent;
-    import cc.minos.console.Console;
-
     import flash.events.AsyncErrorEvent;
-    import flash.events.EventDispatcher;
     import flash.events.IOErrorEvent;
     import flash.events.NetStatusEvent;
     import flash.events.SecurityErrorEvent;
@@ -83,12 +80,12 @@ package cc.minos.bigbluebutton.core {
             _uri = uri;
             try
             {
-                Console.log("connecting to: " + _uri, "[BaseConnection]");
+                trace("connecting to: " + _uri, "[BaseConnection]");
                 _connection.connect.apply(null, new Array(uri).concat(params));
             }
             catch(err:ArgumentError)
             {
-                Console.log(err.message, "[BaseConnection]");
+                trace(err.message, "[BaseConnection]");
                 sendConnectionFailedEvent(ConnectionFailedEvent.UNKNOWN_REASON);
             }
         }

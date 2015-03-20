@@ -1,20 +1,13 @@
 package cc.minos.bigbluebutton.apis.resources {
     import cc.minos.bigbluebutton.apis.responses.Response;
     import cc.minos.bigbluebutton.apis.utils.SHA1;
-    import cc.minos.console.Console;
-
     import flash.events.Event;
     import flash.events.HTTPStatusEvent;
     import flash.events.IOErrorEvent;
-    import flash.events.ProgressEvent;
     import flash.events.SecurityErrorEvent;
     import flash.events.TimerEvent;
-    import flash.net.navigateToURL;
     import flash.net.URLLoader;
-    import flash.net.URLLoaderDataFormat;
     import flash.net.URLRequest;
-    import flash.net.URLRequestMethod;
-    import flash.net.URLVariables;
     import flash.utils.Timer;
 
     /**
@@ -51,7 +44,7 @@ package cc.minos.bigbluebutton.apis.resources {
         {
             //call(this.host, this.securitySalt);
             loader.load(request);
-            Console.log('[API] call: ' + request.url);
+            trace('[API] call: ' + request.url);
         }
 
         public function call(host:String, securitySalt:String):void
@@ -72,7 +65,7 @@ package cc.minos.bigbluebutton.apis.resources {
             request = new URLRequest(url);
             //request.method = URLRequestMethod.POST;
 
-            Console.log('[API] call: ' + request.url);
+            trace('[API] call: ' + request.url);
 
             loader = new URLLoader();
             loader.addEventListener(Event.COMPLETE, onComplete);
@@ -173,25 +166,25 @@ package cc.minos.bigbluebutton.apis.resources {
                 response.load(loader.data);
                 completedCallback(callName, response);
             }
-            //Console.log( loader.data );
+            //trace( loader.data );
             clean();
         }
 
         protected function onHttpStatus(e:HTTPStatusEvent):void
         {
-            //Console.log( e.status );
+            //trace( e.status );
         }
 
         protected function onIoError(e:IOErrorEvent):void
         {
-            Console.log(e.text);
+            trace(e.text);
             //clean();
             tryAgain();
         }
 
         protected function onSecurityError(e:SecurityErrorEvent):void
         {
-            Console.log(e.text);
+            trace(e.text);
             //clean();
             tryAgain();
         }
@@ -203,7 +196,7 @@ package cc.minos.bigbluebutton.apis.resources {
         {
             if(this.host != '' && this.securitySalt != '')
             {
-                Console.log('try again after 5s.');
+                trace('try again after 5s.');
                 tryTimer = new Timer(5 * 1000, 1);
                 tryTimer.addEventListener(TimerEvent.TIMER_COMPLETE, onTryTimer);
                 tryTimer.start();

@@ -56,7 +56,7 @@ package cc.minos.bigbluebutton.plugins.present {
         {
             var list:XMLList = xml.presentation.slides.slide;
             var item:XML;
-            //Console.log( "Slides: " + xml );
+            //trace( "Slides: " + xml );
 
             var presentationName:String = xml.presentation[ 0 ].@name;
 

@@ -17,7 +17,8 @@
  *
  */
 package cc.minos.bigbluebutton.events {
-    import cc.minos.bigbluebutton.plugins.whiteboard.shapes.TextObject;
+
+    import cc.minos.bigbluebutton.view.shapes.TextObject;
 
     import flash.events.Event;
 

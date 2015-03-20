@@ -1,4 +1,5 @@
 package cc.minos.bigbluebutton.plugins.users {
+
     import cc.minos.bigbluebutton.events.BigBlueButtonEvent;
     import cc.minos.bigbluebutton.events.MadePresenterEvent;
     import cc.minos.bigbluebutton.events.UsersEvent;
@@ -6,7 +7,6 @@ package cc.minos.bigbluebutton.plugins.users {
     import cc.minos.bigbluebutton.models.IUsersList;
     import cc.minos.bigbluebutton.models.UsersList;
     import cc.minos.bigbluebutton.plugins.Plugin;
-    import cc.minos.console.Console;
 
     import flash.net.Responder;
 
@@ -143,7 +143,7 @@ package cc.minos.bigbluebutton.plugins.users {
         {
             if(result.count > 0)
             {
-                Console.log("online: " + result.count, name);
+                trace("online: " + result.count, name);
                 for(var p:Object in result.participants)
                 {
                     participantJoined(result.participants[ p ]);
@@ -154,7 +154,7 @@ package cc.minos.bigbluebutton.plugins.users {
                 var user:BBBUser = usersList.getTheOnlyModerator();
                 if(user)
                 {
-                    Console.log("assign presenter >" + user.name + "[" + user.userID + "]", name);
+                    trace("assign presenter >" + user.name + "[" + user.userID + "]", name);
                     assignPresenter(user.userID, user.name, 1);
                 }
             }
@@ -218,12 +218,12 @@ package cc.minos.bigbluebutton.plugins.users {
 
             if(this.userID == userID)
             {
-                Console.log(this.name + " Received " + name + " switch to presenter");
+                trace(this.name + " Received " + name + " switch to presenter");
                 pEvent = new MadePresenterEvent(MadePresenterEvent.SWITCH_TO_PRESENTER_MODE);
             }
             else
             {
-                Console.log(this.name + " Received " + name + " switch to viewer");
+                trace(this.name + " Received " + name + " switch to viewer");
                 pEvent = new MadePresenterEvent(MadePresenterEvent.SWITCH_TO_VIEWER_MODE);
             }
             pEvent.userID = userID;
@@ -242,7 +242,7 @@ package cc.minos.bigbluebutton.plugins.users {
 
         public function kickUserCallback(userID:String):void
         {
-            Console.log("kickUserCallback: " + userID, name);
+            trace("kickUserCallback: " + userID, name);
             sendUsersEvent(UsersEvent.KICKED, userID);
 
             if(this.userID == userID)
@@ -262,7 +262,7 @@ package cc.minos.bigbluebutton.plugins.users {
             var user:BBBUser = usersList.getUser(userID);
             if(user != null)
             {
-                Console.log("status change: " + userID + "." + status + "=" + value, name);
+                trace("status change: " + userID + "." + status + "=" + value, name);
                 switch(status)
                 {
                     case "presenter":

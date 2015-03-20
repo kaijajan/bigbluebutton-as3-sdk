@@ -221,7 +221,7 @@ package cc.minos.bigbluebutton {
 
         protected function onUsers(e:UsersEvent):void
         {
-            //Console.log( e.type, e.userID );
+            //trace( e.type, e.userID );
             dispatchEvent(e);
         }
 
@@ -407,7 +407,8 @@ package cc.minos.bigbluebutton {
             }
             else
             {
-                trace("error: " + response.message);
+//                trace("error: " + response.message);
+                sendErrorEvent({type:"Error", message: response.message});
             }
         }
 

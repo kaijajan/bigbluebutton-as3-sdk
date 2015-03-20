@@ -1,8 +1,4 @@
 package cc.minos.bigbluebutton.core {
-    import cc.minos.bigbluebutton.core.BaseConnection;
-    import cc.minos.bigbluebutton.core.BaseConnectionCallback;
-    import cc.minos.bigbluebutton.core.IVideoConnection;
-    import cc.minos.console.Console;
 
     import flash.events.IOErrorEvent;
     import flash.events.NetStatusEvent;
@@ -54,12 +50,12 @@ package cc.minos.bigbluebutton.core {
 
         private function onStreamIOError(e:IOErrorEvent):void
         {
-            Console.log("outgoing: " + e.text);
+            trace("outgoing: " + e.text);
         }
 
         private function onStreamNetStatus(e:NetStatusEvent):void
         {
-            Console.log("outgoing: " + e.info.code);
+            trace("outgoing: " + e.info.code);
         }
 
         public function stopPublish():void
@@ -75,21 +71,21 @@ package cc.minos.bigbluebutton.core {
                 }
                 catch(er:ArgumentError)
                 {
-                    Console.log("net connection failed, please check your network.");
+                    trace("net connection failed, please check your network.");
                 }
             }
         }
 
         override internal function onSuccess(reason:String = ""):void
         {
-            Console.log("[VideoConnection] success");
+            trace("[VideoConnection] success");
             outgoingStream = new NetStream(connection);
             super.onSuccess(reason);
         }
 
         override internal function onFailed(reason:String = ""):void
         {
-            Console.log("[VideoConnection] failed " + reason);
+            trace("[VideoConnection] failed " + reason);
             super.onFailed(reason);
             stopPublish();
         }
