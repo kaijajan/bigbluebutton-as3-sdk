@@ -16,116 +16,115 @@
  * with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-package cc.minos.bigbluebutton.view.shapes
-{
-	import cc.minos.bigbluebutton.models.Annotation;
-	import flash.display.DisplayObject;
-	import flash.display.Shape;
-	import flash.display.Sprite;
-	
-	/**
-	 * The DrawObject class provides an interface for other geometric representations.
-	 * This is a simple implementation of the Template design pattern. Other classes extend the
-	 * DrawObject class and inherit it's methods.
-	 * <p>
-	 * The use of the Template pattern allows other classes to create and call methods on the DrawObject
-	 * without having to know anything about the different implementations of those method
-	 * @author dzgonjan
-	 *
-	 */
-	public class DrawObject extends Sprite implements GraphicObject
-	{
-		public static const PENCIL:String = "pencil";
-		public static const HIGHLIGHTER:String = "highlighter";
-		public static const ERASER:String = "eraser";
-		public static const RECTANGLE:String = "rectangle";
-		public static const ELLIPSE:String = "ellipse";
-		public static const TEXT:String = "text";
-		public static const TRIANGLE:String = "triangle";
-		public static const LINE:String = "line";
-		
-		/**
-		 * Status = [START, UPDATE, END]
-		 */
-		public static const DRAW_UPDATE:String = "DRAW_UPDATE";
-		public static const DRAW_END:String = "DRAW_END";
-		public static const DRAW_START:String = "DRAW_START";
-		
-		private var _id:String;
-		private var _type:String;
-		
-		private var _status:String;
-		
-		private var _annotation:Annotation;
-		/**
-		 * ID we can use to match the shape in the client's view
-		 * so we can use modify it; a unique identifier of each GraphicObject
-		 */
-		private var ID:String = WhiteboardConstants.ID_UNASSIGNED;
-		
-		/**
-		 * The default constructor for the DrawObject
-		 *
-		 */
-		public function DrawObject( id:String, type:String, status:String )
-		{
-			_id = id;
-			_type = type;
-			_status = status;
-		}
-		
-		public function get id():String
-		{
-			return _id;
-		}
-		
-		public function get type():String
-		{
-			return _type;
-		}
-		
-		public function get status():String
-		{
-			return _status;
-		}
-		
-		public function set status( s:String ):void
-		{
-			_status = s;
-		}
-		
-		public function get annotation():Annotation 
-		{
-			return _annotation;
-		}
-		
-		public function set annotation(value:Annotation):void 
-		{
-			_annotation = value;
-		}
-		
-		public function denormalize( val:Number, side:Number ):Number
-		{
-			return ( val * side ) / 100.0;
-		}
-		
-		public function normalize( val:Number, side:Number ):Number
-		{
-			return ( val * 100.0 ) / side;
-		}
-		
-		public function makeGraphic( parentWidth:Number, parentHeight:Number ):void
-		{
-		}
-		
-		public function draw( a:Annotation, parentWidth:Number, parentHeight:Number ):void
-		{
-			
-		}
-		
-		public function redraw( a:Annotation, parentWidth:Number, parentHeight:Number ):void
-		{
-		
-		}
-	}
+package cc.minos.bigbluebutton.view.shapes {
+    import cc.minos.bigbluebutton.models.Annotation;
+
+    import flash.display.DisplayObject;
+    import flash.display.Shape;
+    import flash.display.Sprite;
+
+    /**
+     * The DrawObject class provides an interface for other geometric representations.
+     * This is a simple implementation of the Template design pattern. Other classes extend the
+     * DrawObject class and inherit it's methods.
+     * <p>
+     * The use of the Template pattern allows other classes to create and call methods on the DrawObject
+     * without having to know anything about the different implementations of those method
+     * @author dzgonjan
+     *
+     */
+    public class DrawObject extends Sprite implements GraphicObject {
+        public static const PENCIL:String = "pencil";
+        public static const HIGHLIGHTER:String = "highlighter";
+        public static const ERASER:String = "eraser";
+        public static const RECTANGLE:String = "rectangle";
+        public static const ELLIPSE:String = "ellipse";
+        public static const TEXT:String = "text";
+        public static const TRIANGLE:String = "triangle";
+        public static const LINE:String = "line";
+
+        /**
+         * Status = [START, UPDATE, END]
+         */
+        public static const DRAW_UPDATE:String = "DRAW_UPDATE";
+        public static const DRAW_END:String = "DRAW_END";
+        public static const DRAW_START:String = "DRAW_START";
+
+        private var _id:String;
+        private var _type:String;
+
+        private var _status:String;
+
+        private var _annotation:Annotation;
+        /**
+         * ID we can use to match the shape in the client's view
+         * so we can use modify it; a unique identifier of each GraphicObject
+         */
+        private var ID:String = WhiteboardConstants.ID_UNASSIGNED;
+
+        /**
+         * The default constructor for the DrawObject
+         *
+         */
+        public function DrawObject(id:String, type:String, status:String)
+        {
+            _id = id;
+            _type = type;
+            _status = status;
+        }
+
+        public function get id():String
+        {
+            return _id;
+        }
+
+        public function get type():String
+        {
+            return _type;
+        }
+
+        public function get status():String
+        {
+            return _status;
+        }
+
+        public function set status(s:String):void
+        {
+            _status = s;
+        }
+
+        public function get annotation():Annotation
+        {
+            return _annotation;
+        }
+
+        public function set annotation(value:Annotation):void
+        {
+            _annotation = value;
+        }
+
+        public function denormalize(val:Number, side:Number):Number
+        {
+            return ( val * side ) / 100.0;
+        }
+
+        public function normalize(val:Number, side:Number):Number
+        {
+            return ( val * 100.0 ) / side;
+        }
+
+        public function makeGraphic(parentWidth:Number, parentHeight:Number):void
+        {
+        }
+
+        public function draw(a:Annotation, parentWidth:Number, parentHeight:Number):void
+        {
+
+        }
+
+        public function redraw(a:Annotation, parentWidth:Number, parentHeight:Number):void
+        {
+
+        }
+    }
 }

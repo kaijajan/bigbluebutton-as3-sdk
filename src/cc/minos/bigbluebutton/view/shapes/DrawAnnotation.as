@@ -16,32 +16,30 @@
  * with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-package cc.minos.bigbluebutton.view.shapes
-{
-	import cc.minos.bigbluebutton.models.Annotation;
-	
-	public class DrawAnnotation implements IDrawAnnotation
-	{
-		protected var _id:String;
-		protected var _status:String;
-		
-		public function DrawAnnotation()
-		{
-		}
-		
-		public function set id( id:String ):void
-		{
-			_id = id;
-		}
-		
-		public function set status( s:String ):void
-		{
-			_status = s;
-		}
-		
-		public function createAnnotation( ctrlKeyPressed:Boolean = false ):Annotation
-		{
-			return null
-		}
-	}
+package cc.minos.bigbluebutton.view.shapes {
+    import cc.minos.bigbluebutton.models.Annotation;
+
+    public class DrawAnnotation implements IDrawAnnotation {
+        protected var _id:String;
+        protected var _status:String;
+
+        public function DrawAnnotation()
+        {
+        }
+
+        public function set id(id:String):void
+        {
+            _id = id;
+        }
+
+        public function set status(s:String):void
+        {
+            _status = s;
+        }
+
+        public function createAnnotation(ctrlKeyPressed:Boolean = false):Annotation
+        {
+            return null
+        }
+    }
 }

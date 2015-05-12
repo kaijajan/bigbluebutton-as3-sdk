@@ -16,18 +16,16 @@
  * with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-package cc.minos.bigbluebutton.view.shapes
-{
-	
-	public class WhiteboardConstants
-	{
-		public static const TYPE_SHAPE:String = "SHAPE";
-		public static const TYPE_TEXT:String = "text";
-		public static const TYPE_SELECTION:String = "SELECTION";
-		public static const TYPE_CLEAR:String = "WhiteboardClearButton";
-		public static const TYPE_ZOOM:String = "WhiteboardPanZoomButton";
-		public static const TYPE_UNDO:String = "WhiteboardUndoButton";
-		
-		public static const ID_UNASSIGNED:String = "unassigned";
-	}
+package cc.minos.bigbluebutton.view.shapes {
+
+    public class WhiteboardConstants {
+        public static const TYPE_SHAPE:String = "SHAPE";
+        public static const TYPE_TEXT:String = "text";
+        public static const TYPE_SELECTION:String = "SELECTION";
+        public static const TYPE_CLEAR:String = "WhiteboardClearButton";
+        public static const TYPE_ZOOM:String = "WhiteboardPanZoomButton";
+        public static const TYPE_UNDO:String = "WhiteboardUndoButton";
+
+        public static const ID_UNASSIGNED:String = "unassigned";
+    }
 }

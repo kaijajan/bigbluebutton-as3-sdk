@@ -37,3 +37,6 @@ function onAdministrationCallback( callName:String, response:Response ):void
 }
 
 ```
+
+##License
+LGPLv3

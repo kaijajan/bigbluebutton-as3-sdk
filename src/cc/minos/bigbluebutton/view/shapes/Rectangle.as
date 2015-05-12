@@ -16,76 +16,75 @@
  * with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-package cc.minos.bigbluebutton.view.shapes
-{
-	import cc.minos.bigbluebutton.models.Annotation;
-	import flash.display.Sprite;
-	
-	/**
-	 * The Rectangle class. Extends a DrawObject
-	 * @author dzgonjan
-	 *
-	 */
-	public class Rectangle extends DrawObject
-	{
-		public function Rectangle( id:String, type:String, status:String )
-		{
-			super( id, type, status );
-		}
-		
-		/**
-		 * Gets rid of the unnecessary data in the segment array, so that the object can be more easily passed to
-		 * the server
-		 *
-		 */
-		protected function optimize( segment:Array ):Array
-		{
-			var x1:Number = segment[ 0 ];
-			var y1:Number = segment[ 1 ];
-			var x2:Number = segment[ segment.length - 2 ];
-			var y2:Number = segment[ segment.length - 1 ];
-			
-			var shape:Array = new Array();
-			shape.push( x1 );
-			shape.push( y1 );
-			shape.push( x2 );
-			shape.push( y2 );
-			
-			return shape;
-		}
-		
-		override public function draw( a:Annotation, parentWidth:Number, parentHeight:Number ):void
-		{
+package cc.minos.bigbluebutton.view.shapes {
+    import cc.minos.bigbluebutton.models.Annotation;
+
+    import flash.display.Sprite;
+
+    /**
+     * The Rectangle class. Extends a DrawObject
+     * @author dzgonjan
+     *
+     */
+    public class Rectangle extends DrawObject {
+        public function Rectangle(id:String, type:String, status:String)
+        {
+            super(id, type, status);
+        }
+
+        /**
+         * Gets rid of the unnecessary data in the segment array, so that the object can be more easily passed to
+         * the server
+         *
+         */
+        protected function optimize(segment:Array):Array
+        {
+            var x1:Number = segment[ 0 ];
+            var y1:Number = segment[ 1 ];
+            var x2:Number = segment[ segment.length - 2 ];
+            var y2:Number = segment[ segment.length - 1 ];
+
+            var shape:Array = new Array();
+            shape.push(x1);
+            shape.push(y1);
+            shape.push(x2);
+            shape.push(y2);
+
+            return shape;
+        }
+
+        override public function draw(a:Annotation, parentWidth:Number, parentHeight:Number):void
+        {
 //            LogUtil.debug("Drawing RECTANGLE");
-			var ao:Object = a.annotation;
-			if ( !ao.fill )
-				this.graphics.lineStyle( ao.thickness, ao.color, ao.transparency ? 0.6 : 1.0 );
-			else
-				this.graphics.lineStyle( ao.thickness, ao.color );
-			
-			var arrayEnd:Number = ( ao.points as Array ).length;
-			var startX:Number = denormalize(( ao.points as Array )[ 0 ], parentWidth );
-			var startY:Number = denormalize(( ao.points as Array )[ 1 ], parentHeight );
-			var width:Number = denormalize(( ao.points as Array )[ arrayEnd - 2 ], parentWidth ) - startX;
-			var height:Number = denormalize(( ao.points as Array )[ arrayEnd - 1 ], parentHeight ) - startY;
-			
-			if ( ao.fill )
-				this.graphics.beginFill( ao.fillColor, ao.transparency ? 0.6 : 1.0 );
-			
-			if ( ao.square )
-			{
-				this.graphics.drawRect( startX, startY, width, width );
-			}
-			else
-			{
-				this.graphics.drawRect( startX, startY, width, height );
-			}
-		
-		}
-		
-		override public function redraw( a:Annotation, parentWidth:Number, parentHeight:Number ):void
-		{
-			draw( a, parentWidth, parentHeight );
-		}
-	}
+            var ao:Object = a.annotation;
+            if(!ao.fill)
+                this.graphics.lineStyle(ao.thickness, ao.color, ao.transparency ? 0.6 : 1.0);
+            else
+                this.graphics.lineStyle(ao.thickness, ao.color);
+
+            var arrayEnd:Number = ( ao.points as Array ).length;
+            var startX:Number = denormalize(( ao.points as Array )[ 0 ], parentWidth);
+            var startY:Number = denormalize(( ao.points as Array )[ 1 ], parentHeight);
+            var width:Number = denormalize(( ao.points as Array )[ arrayEnd - 2 ], parentWidth) - startX;
+            var height:Number = denormalize(( ao.points as Array )[ arrayEnd - 1 ], parentHeight) - startY;
+
+            if(ao.fill)
+                this.graphics.beginFill(ao.fillColor, ao.transparency ? 0.6 : 1.0);
+
+            if(ao.square)
+            {
+                this.graphics.drawRect(startX, startY, width, width);
+            }
+            else
+            {
+                this.graphics.drawRect(startX, startY, width, height);
+            }
+
+        }
+
+        override public function redraw(a:Annotation, parentWidth:Number, parentHeight:Number):void
+        {
+            draw(a, parentWidth, parentHeight);
+        }
+    }
 }

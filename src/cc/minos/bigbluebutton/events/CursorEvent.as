@@ -16,29 +16,27 @@
  * with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-package cc.minos.bigbluebutton.events
-{
-	import flash.events.Event;
-	
-	public class CursorEvent extends Event
-	{
-		public static const UPDATE_CURSOR:String = "UPDATE_CURSOR";
-		
-		public var xPercent:Number;
-		public var yPercent:Number;
-		
-		public function CursorEvent( type:String )
-		{
-			super( type, true, false );
-		}
-		
-		override public function clone():Event
-		{
-			var evt:CursorEvent = new CursorEvent( type );
-			evt.xPercent = xPercent;
-			evt.yPercent = yPercent
-			return evt;
-		}
-	
-	}
+package cc.minos.bigbluebutton.events {
+    import flash.events.Event;
+
+    public class CursorEvent extends Event {
+        public static const UPDATE_CURSOR:String = "UPDATE_CURSOR";
+
+        public var xPercent:Number;
+        public var yPercent:Number;
+
+        public function CursorEvent(type:String)
+        {
+            super(type, true, false);
+        }
+
+        override public function clone():Event
+        {
+            var evt:CursorEvent = new CursorEvent(type);
+            evt.xPercent = xPercent;
+            evt.yPercent = yPercent
+            return evt;
+        }
+
+    }
 }

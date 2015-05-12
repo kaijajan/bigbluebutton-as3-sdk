@@ -16,21 +16,19 @@
  * with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-package cc.minos.bigbluebutton.view.shapes
-{
-	import flash.display.DisplayObject;
-	
-	public interface GraphicObject
-	{
-		function get type():String;
-		
-		function get id():String;
-		
-		function denormalize( val:Number, side:Number ):Number;
-		
-		function normalize( val:Number, side:Number ):Number;
-		
-		function makeGraphic( parentWidth:Number, parentHeight:Number ):void;
-	
-	}
+package cc.minos.bigbluebutton.view.shapes {
+    import flash.display.DisplayObject;
+
+    public interface GraphicObject {
+        function get type():String;
+
+        function get id():String;
+
+        function denormalize(val:Number, side:Number):Number;
+
+        function normalize(val:Number, side:Number):Number;
+
+        function makeGraphic(parentWidth:Number, parentHeight:Number):void;
+
+    }
 }

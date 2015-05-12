@@ -16,49 +16,48 @@
  * with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-package cc.minos.bigbluebutton.view.shapes
-{
-	import cc.minos.bigbluebutton.models.Annotation;
-	import flash.display.Sprite;
-	
-	/**
-	 * The Pencil class. Extends a DrawObject
-	 * @author dzgonjan
-	 *
-	 */
-	public class Pencil extends DrawObject
-	{
-		public function Pencil( id:String, type:String, status:String )
-		{
-			super( id, type, status );
-		}
-		
-		override public function draw( a:Annotation, parentWidth:Number, parentHeight:Number ):void
-		{
-			var ao:Object = a.annotation;
-			
-			this.graphics.clear();
-			this.graphics.lineStyle( ao.thickness, ao.color );
-			
-			var graphicsCommands:Vector.<int> = new Vector.<int>();
-			graphicsCommands.push( 1 );
-			var coordinates:Vector.<Number> = new Vector.<Number>();
-			coordinates.push( denormalize(( ao.points as Array )[ 0 ], parentWidth ), denormalize(( ao.points as Array )[ 1 ], parentHeight ) );
-			
-			for ( var i:int = 2; i < ( ao.points as Array ).length; i += 2 )
-			{
-				graphicsCommands.push( 2 );
-				coordinates.push( denormalize(( ao.points as Array )[ i ], parentWidth ), denormalize(( ao.points as Array )[ i + 1 ], parentHeight ) );
-			}
-			
-			this.graphics.drawPath( graphicsCommands, coordinates );
-			this.alpha = 1;
-		}
-		
-		override public function redraw( a:Annotation, parentWidth:Number, parentHeight:Number ):void
-		{
-			draw( a, parentWidth, parentHeight );
-		}
-	
-	}
+package cc.minos.bigbluebutton.view.shapes {
+    import cc.minos.bigbluebutton.models.Annotation;
+
+    import flash.display.Sprite;
+
+    /**
+     * The Pencil class. Extends a DrawObject
+     * @author dzgonjan
+     *
+     */
+    public class Pencil extends DrawObject {
+        public function Pencil(id:String, type:String, status:String)
+        {
+            super(id, type, status);
+        }
+
+        override public function draw(a:Annotation, parentWidth:Number, parentHeight:Number):void
+        {
+            var ao:Object = a.annotation;
+
+            this.graphics.clear();
+            this.graphics.lineStyle(ao.thickness, ao.color);
+
+            var graphicsCommands:Vector.<int> = new Vector.<int>();
+            graphicsCommands.push(1);
+            var coordinates:Vector.<Number> = new Vector.<Number>();
+            coordinates.push(denormalize(( ao.points as Array )[ 0 ], parentWidth), denormalize(( ao.points as Array )[ 1 ], parentHeight));
+
+            for(var i:int = 2; i < ( ao.points as Array ).length; i += 2)
+            {
+                graphicsCommands.push(2);
+                coordinates.push(denormalize(( ao.points as Array )[ i ], parentWidth), denormalize(( ao.points as Array )[ i + 1 ], parentHeight));
+            }
+
+            this.graphics.drawPath(graphicsCommands, coordinates);
+            this.alpha = 1;
+        }
+
+        override public function redraw(a:Annotation, parentWidth:Number, parentHeight:Number):void
+        {
+            draw(a, parentWidth, parentHeight);
+        }
+
+    }
 }
