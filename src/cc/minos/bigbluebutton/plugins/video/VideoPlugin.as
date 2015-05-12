@@ -40,7 +40,9 @@ package cc.minos.bigbluebutton.plugins.video {
         {
             super();
             if(options == null)
+            {
                 options = new VideoOptions();
+            }
             this.options = options;
             this._application = "video";
             this._name = "[VideoPlugin]";
