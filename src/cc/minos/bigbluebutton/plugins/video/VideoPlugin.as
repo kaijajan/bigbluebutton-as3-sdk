@@ -171,7 +171,6 @@ package cc.minos.bigbluebutton.plugins.video {
 
         private function onActivationTimer(e:TimerEvent):void
         {
-
             //camera is being used
             updateCamera();
         }
@@ -184,6 +183,18 @@ package cc.minos.bigbluebutton.plugins.video {
                 _camera.removeEventListener(StatusEvent.STATUS, onStatusEvent);
             }
             _camera = null;
+            if(autoPublishTimer)
+            {
+                autoPublishTimer.stop();
+                autoPublishTimer.removeEventListener(TimerEvent.TIMER, onAutoPublishTimer);
+                autoPublishTimer = null;
+            }
+            if(activationTimer)
+            {
+                activationTimer.stop();
+                activationTimer.removeEventListener(TimerEvent.TIMER, onActivationTimer);
+                activationTimer = null;
+            }
             var sEvent:CameraEvent = new CameraEvent(CameraEvent.CLOSE);
             dispatchRawEvent(sEvent);
         }
@@ -240,7 +251,6 @@ package cc.minos.bigbluebutton.plugins.video {
             trace("try start publish video");
             if(publishing)
             {
-                trace('publishing video');
                 return;
             }
 
@@ -254,12 +264,12 @@ package cc.minos.bigbluebutton.plugins.video {
             if(_camera == null)
                 return
 
-            if(autoPublishTimer)
+            /*if(autoPublishTimer)
             {
                 autoPublishTimer.stop();
                 autoPublishTimer.removeEventListener(TimerEvent.TIMER, onAutoPublishTimer);
                 autoPublishTimer = null;
-            }
+            }*/
 
             var h264:H264VideoStreamSettings = null;
             if(options.enableH264)
@@ -280,8 +290,8 @@ package cc.minos.bigbluebutton.plugins.video {
             if(publishing)
             {
                 stopCamera();
-                publishing = false;
                 videoConnection.stopPublish();
+                publishing = false;
                 if(usersPlugin)
                 {
                     usersPlugin.removeStream(userID, streamName);
