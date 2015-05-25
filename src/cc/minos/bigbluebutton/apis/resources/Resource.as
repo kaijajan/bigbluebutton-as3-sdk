@@ -8,6 +8,7 @@ package cc.minos.bigbluebutton.apis.resources {
     import flash.events.TimerEvent;
     import flash.net.URLLoader;
     import flash.net.URLRequest;
+    import flash.net.URLRequestMethod;
     import flash.utils.Timer;
 
     /**
@@ -47,7 +48,7 @@ package cc.minos.bigbluebutton.apis.resources {
             trace('[API] call: ' + request.url);
         }
 
-        public function call(host:String, securitySalt:String):void
+        public function call(host:String, securitySalt:String, fileUrl:String = ""):void
         {
             if(calling)
                 return;
@@ -63,7 +64,12 @@ package cc.minos.bigbluebutton.apis.resources {
             setQuery("checksum", checksum);
 
             request = new URLRequest(url);
-            //request.method = URLRequestMethod.POST;
+            if( fileUrl!= "" && this.callName == CreateResource.CALL_NAME ){
+                request.method = URLRequestMethod.POST;
+                request.contentType = "text/xml";
+                var xml:String = '<?xml version="1.0" encoding="UTF-8"?><modules><module name="presentation"><document url="' + fileUrl +'"></document></module></modules>';
+                request.data = xml;
+            }
 
             trace('[API] call: ' + request.url);
 

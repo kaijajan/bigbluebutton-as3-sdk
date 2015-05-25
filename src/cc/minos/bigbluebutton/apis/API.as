@@ -40,7 +40,7 @@ package cc.minos.bigbluebutton.apis {
          * @param    meta
          * @return
          */
-        public function create(meetingID:String, name:String = null, attendeePW:String = null, moderatorPW:String = null, welcome:String = null, dialNumber:String = null, voiceBridge:String = null, webVoice:String = null, logoutURL:String = null, record:String = "false", duration:Number = 0, meta:String = null):CreateResource
+        public function create(meetingID:String, name:String = null, attendeePW:String = null, moderatorPW:String = null, welcome:String = null, dialNumber:String = null, voiceBridge:String = null, webVoice:String = null, logoutURL:String = null, record:String = "false", duration:Number = 0, meta:String = null, fileUrl:String = ""):CreateResource
         {
             var createRes:CreateResource = new CreateResource(onAdministrationCallback);
             createRes.meetingID = meetingID;
@@ -55,7 +55,7 @@ package cc.minos.bigbluebutton.apis {
             createRes.record = record;
             createRes.duration = duration;
             createRes.meta = meta;
-            createRes.call(host, securitySalt);
+            createRes.call(host, securitySalt, fileUrl);
             return createRes;
         }
 

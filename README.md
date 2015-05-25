@@ -11,7 +11,7 @@
   * ~~視頻，播放webm文件~~
 
 ##API
-```
+```as3
 import cc.minos.bigbluebutton.apis.API;
 
 //settings
